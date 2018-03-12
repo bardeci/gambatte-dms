@@ -107,12 +107,12 @@ void GB::reset() {
 	if (p_->cpu.loaded()) {
 		p_->cpu.saveSavedata();
 
-		/*SaveState state;
+		SaveState state;
 		p_->cpu.setStatePtrs(state);
 		setInitState(state, p_->cpu.isCgb(), p_->loadflags & GBA_CGB);
 		p_->cpu.loadState(state);
-		p_->cpu.loadSavedata();*/
-		p_->full_init();
+		p_->cpu.loadSavedata();
+		//p_->full_init();
 	}
 }
 
