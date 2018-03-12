@@ -30,6 +30,7 @@
 SDL_Surface *lastframe;
 SDL_Surface *currframe;
 SDL_Surface *borderimg;
+SDL_Surface *cfilter;
 
 struct SdlBlitter::SurfaceDeleter {
 	//static void del(SDL_Surface *s) { SDL_FreeSurface(s); }
@@ -67,6 +68,13 @@ void init_ghostframes() {
 	lastframe = SDL_CreateRGBSurface(SDL_SWSURFACE, 160, 144, 16, 0, 0, 0, 0);
 	currframe = SDL_CreateRGBSurface(SDL_SWSURFACE, 160, 144, 16, 0, 0, 0, 0);
 	SDL_SetAlpha(lastframe, SDL_SRCALPHA, 128);
+}
+
+void init_cfilter() {
+	cfilter = SDL_CreateRGBSurface(SDL_SWSURFACE, 160, 144, 16, 0, 0, 0, 0);
+	SDL_SetAlpha(cfilter, SDL_SRCALPHA, 96);
+	uint32_t filtcolor = SDL_MapRGB(cfilter->format, 96, 96, 96);
+	SDL_FillRect(cfilter, NULL, filtcolor);
 }
 
 void init_border_dmg(SDL_Surface *dst){ //load border on emulator start
@@ -162,6 +170,7 @@ void SdlBlitter::setBufferDimensions() {
 	menu_set_screen(screen);
 	surface = SDL_CreateRGBSurface(SDL_SWSURFACE, 160, 144, 16, 0, 0, 0, 0);
 	init_ghostframes();
+	init_cfilter();
 }
 
 void SdlBlitter::setScreenRes() {
@@ -251,6 +260,15 @@ inline void SdlBlitter::swScale() {
 	            screen->pitch / screen->format->BytesPerPixel, screen->h / surface->h);
 }
 
+void apply_cfilter(SDL_Surface *surface) {
+	SDL_Rect rect;
+	rect.x = 0;
+	rect.y = 0;
+	rect.w = 160;
+	rect.h = 144;
+	SDL_BlitSurface(cfilter, NULL, surface, &rect);
+}
+
 void blend_frames(SDL_Surface *surface) {
 	SDL_Rect rect;
 	rect.x = 0;
@@ -315,6 +333,9 @@ void SdlBlitter::draw() {
 	}
 	
 	if(ghosting == 0){
+		if((colorfilter == 1) && (gameiscgb == 1)){
+			apply_cfilter(surface);
+		}
 		switch(selectedscaler) {
 			case 0:		/* no scaler */
 				SDL_Rect dst;
@@ -356,6 +377,9 @@ void SdlBlitter::draw() {
 	} else if(ghosting == 1){
 		blend_frames(surface);
 		store_lastframe(surface);
+		if((colorfilter == 1) && (gameiscgb == 1)){
+			apply_cfilter(currframe);
+		}
 		switch(selectedscaler) {
 			case 0:		/* no scaler */
 				SDL_Rect dst;
@@ -413,7 +437,10 @@ void SdlBlitter::scaleMenu() {
 		return;
 
 	if(gambatte_p->isCgb()){
-		convert_bw_surface_colors(menuscreen, menuscreencolored, 0xC00000, 0xA0A030, 0xFFFF80, 0xFFFFFF); //if game is GBC, then menu has different colors
+		convert_bw_surface_colors(menuscreen, menuscreencolored, 0xFFFFFF, 0x6397FF, 0x083CA8, 0x000000); //if game is GBC, then menu has different colors
+		if((colorfilter == 1) && (gameiscgb == 1)){
+			apply_cfilter(menuscreen);
+		}
 	} else {
 		convert_bw_surface_colors(menuscreen, menuscreencolored, menupalblack, menupaldark, menupallight, menupalwhite); //if game is DMG, then menu matches DMG palette
 	}
