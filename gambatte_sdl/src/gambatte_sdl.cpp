@@ -53,7 +53,7 @@ bool get_bootloader_from_file(void* userdata, bool isgbc, uint8_t* data, uint32_
 
 	//get path
 	std::string path;
-	path += homedir + "/.gambatte/";
+	path += homedir + "/.gambatte/bios/";
 
 	unsigned int size;
 	if(isgbc){
@@ -619,6 +619,9 @@ int GambatteSdl::exec(int const argc, char const *const argv[]) {
 	mkdir(basicdirpath.c_str(), 0777);
 
 	basicdirpath = (homedir + "/.gambatte/saves/");
+	mkdir(basicdirpath.c_str(), 0777);
+
+	basicdirpath = (homedir + "/.gambatte/bios/");
 	mkdir(basicdirpath.c_str(), 0777);
 
 
