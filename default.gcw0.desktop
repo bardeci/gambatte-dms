@@ -1,5 +1,5 @@
 [Desktop Entry]
-Name=Gambatte r572
+Name=Gambatte
 Comment=Gameboy emulator
 Exec=gambatte_sdl %f
 Terminal=false
