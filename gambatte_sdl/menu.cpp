@@ -842,7 +842,11 @@ static void callback_about(menu_t *caller_menu) {
     menu_entry->callback = callback_about_back;
 
     menu_entry = new_menu_entry(0);
-    menu_entry_set_text(menu_entry, "0.4.1");
+#ifdef GAMBATTE_SDL_VERSION_STR
+    menu_entry_set_text(menu_entry, GAMBATTE_SDL_VERSION_STR);
+#else
+    menu_entry_set_text(menu_entry, "r572u2");
+#endif
     menu_add_entry(menu, menu_entry);
     menu_entry->selectable = 0;
     menu_entry->callback = callback_about_back;
