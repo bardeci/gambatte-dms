@@ -20,33 +20,34 @@
 
 static SDL_Surface *screen;
 static SFont_Font* font;
+static SFont_Font* fpsfont;
+static SDL_Surface *font_bitmap_surface = NULL;
+static SDL_Surface *fpsfont_bitmap_surface = NULL;
+static SDL_RWops *RWops;
 
 int init_fps_font() {
-    SDL_Surface *font_bitmap_surface = NULL;
-    SDL_RWops *RWops;
-    
+
+    SDL_FreeSurface(fpsfont_bitmap_surface);
     RWops = SDL_RWFromMem(sfont_gameboy_fps, 1234);
-    font_bitmap_surface = IMG_LoadPNG_RW(RWops);
+    fpsfont_bitmap_surface = IMG_LoadPNG_RW(RWops);
     SDL_FreeRW(RWops);
-    if (!font_bitmap_surface) {
+    if (!fpsfont_bitmap_surface) {
         fprintf(stderr, "fps: font load error\n");
         exit(1);
     }
-    font = SFont_InitFont(font_bitmap_surface);
-    if (!font) {
+    fpsfont = SFont_InitFont(fpsfont_bitmap_surface);
+    if (!fpsfont) {
         fprintf(stderr, "fps: font init error\n");
         exit(1);
     }
-
-    libmenu_set_font(font);
+    
     return 0;
 }
 
 int init_menu() {
-    SDL_Surface *font_bitmap_surface = NULL;
-    SDL_RWops *RWops;
     
-	RWops = SDL_RWFromMem(sfont_gameboy_black, 894);
+    SDL_FreeSurface(font_bitmap_surface);
+	RWops = SDL_RWFromMem(sfont_gameboy_black, 895);
     font_bitmap_surface = IMG_LoadPNG_RW(RWops);
     SDL_FreeRW(RWops);
     if (!font_bitmap_surface) {
@@ -60,6 +61,7 @@ int init_menu() {
     }
 
 	libmenu_set_font(font);
+    
 	return 0;
 }
 
@@ -69,10 +71,10 @@ void menu_set_screen(SDL_Surface *set_screen) {
 }
 
 void show_fps(SDL_Surface *surface, int fps) {
-    char buffer[64];
+    char buffer[8];
     sprintf(buffer, "%d", fps);
     if (showfps) {
-        SFont_Write(surface, font, 0, 0, buffer);
+        SFont_Write(surface, fpsfont, 0, 0, buffer);
     }
 }
 
@@ -157,7 +159,6 @@ void main_menu(gambatte::GB *gambatte, BlitterWrapper *blitter) {
 
     SDL_EnableKeyRepeat(250, 83);
     init_menusurfaces();
-    init_menu();
 
     menu_t *menu;
 	menu_entry_t *menu_entry;
@@ -224,7 +225,6 @@ void main_menu(gambatte::GB *gambatte, BlitterWrapper *blitter) {
 
     free_menusurfaces();
     SDL_EnableKeyRepeat(0, 100);
-    init_fps_font();
 }
 
 static void callback_quit(menu_t *caller_menu) {
