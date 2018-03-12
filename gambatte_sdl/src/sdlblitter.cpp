@@ -72,9 +72,9 @@ void init_ghostframes() {
 
 void init_cfilter() {
 	cfilter = SDL_CreateRGBSurface(SDL_SWSURFACE, 160, 144, 16, 0, 0, 0, 0);
-	SDL_SetAlpha(cfilter, SDL_SRCALPHA, 96);
-	uint32_t filtcolor = SDL_MapRGB(cfilter->format, 96, 96, 96);
-	SDL_FillRect(cfilter, NULL, filtcolor);
+	//SDL_SetAlpha(cfilter, SDL_SRCALPHA, 96);
+	//uint32_t filtcolor = SDL_MapRGB(cfilter->format, 96, 96, 96);
+	//SDL_FillRect(cfilter, NULL, filtcolor);
 }
 
 void init_border_dmg(SDL_Surface *dst){ //load border on emulator start
@@ -111,8 +111,8 @@ void init_border_gbc(SDL_Surface *dst){ //load border on emulator start
 	    printf("error loading %s\n", fullimgpath.c_str());
 	    return;
 	}
-	if(dmgbordername != "No border.png") { // if system is DMG
-		clear_surface(dst, 0xFFFFFF);
+	if(gbcbordername != "No border.png") { // if system is GBC
+		clear_surface(dst, 0x000000);
 		paint_border(dst);
 	}
 }
@@ -266,6 +266,13 @@ void apply_cfilter(SDL_Surface *surface) {
 	rect.y = 0;
 	rect.w = 160;
 	rect.h = 144;
+	SDL_SetAlpha(cfilter, SDL_SRCALPHA, 96);
+	uint32_t filtcolor = SDL_MapRGB(cfilter->format, 0, 0, 0);
+	SDL_FillRect(cfilter, NULL, filtcolor);
+	SDL_BlitSurface(cfilter, NULL, surface, &rect);
+	SDL_SetAlpha(cfilter, SDL_SRCALPHA, 32);
+	filtcolor = SDL_MapRGB(cfilter->format, 255, 255, 255);
+	SDL_FillRect(cfilter, NULL, filtcolor);
 	SDL_BlitSurface(cfilter, NULL, surface, &rect);
 }
 
