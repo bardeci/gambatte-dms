@@ -1055,7 +1055,7 @@ static void redraw(menu_t *menu) {
 		clear_surface(screen, convert_hexcolor(screen, menupalwhite));
 		paint_border(screen);
 	} else if((gambatte_p->isCgb()) && (gbcbordername != "No border.png")) { // if system is GBC
-		clear_surface(screen, 0xFFFFFF);
+		clear_surface(screen, 0x000000);
 		paint_border(screen);
 	}
 		
@@ -1070,7 +1070,7 @@ static void redraw_cheat(menu_t *menu) {
 		clear_surface(screen, convert_hexcolor(screen, menupalwhite));
 		paint_border(screen);
 	} else if((gambatte_p->isCgb()) && (gbcbordername != "No border.png")) { // if system is GBC
-		clear_surface(screen, 0xFFFFFF);
+		clear_surface(screen, 0x000000);
 		paint_border(screen);
 	}
 		

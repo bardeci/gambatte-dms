@@ -553,14 +553,22 @@ static void callback_nopalette(menu_t *caller_menu) {
     }
     set_menu_palette(0xF8FCF8, 0xA8A8A8, 0x505450, 0x000000);
     palname = "No palette.pal";
-    caller_menu->quit = 0;
+    if(gameiscgb == 1){
+        caller_menu->quit = 1;
+    } else {
+        caller_menu->quit = 0;
+    }
 }
 
 static void callback_selectedpalette(menu_t *caller_menu) {
     palname = palettelist[caller_menu->selected_entry + 1]->d_name; // we previously skipped 2 entries, but we added an extra "no palette" entry, so we have to do "+2 -1 = +1" here.
     //palname = palname.substr(0, palname.size() - 4);
     loadPalette(palname);
-    caller_menu->quit = 0;
+    if(gameiscgb == 1){
+        caller_menu->quit = 1;
+    } else {
+        caller_menu->quit = 0;
+    }
 }
 
 static void callback_dmgpalette_back(menu_t *caller_menu) {
@@ -602,7 +610,11 @@ static void callback_colorfilter(menu_t *caller_menu) {
 
 static void callback_selectedfilter(menu_t *caller_menu) {
     colorfilter = caller_menu->selected_entry;
-    caller_menu->quit = 1;
+    if(gameiscgb == 1){
+        caller_menu->quit = 0;
+    } else {
+        caller_menu->quit = 1;
+    }
 }
 
 static void callback_colorfilter_back(menu_t *caller_menu) {
@@ -660,18 +672,22 @@ static void callback_dmgborderimage(menu_t *caller_menu) {
 
 static void callback_nodmgborder(menu_t *caller_menu) {
     dmgbordername = "No border.png";
-    if(!gambatte_p->isCgb()){
+    if(gameiscgb == 1){
+        caller_menu->quit = 1;
+    } else {
         load_border(dmgbordername);
+        caller_menu->quit = 0;
     }
-    caller_menu->quit = 0;
 }
 
 static void callback_selecteddmgborder(menu_t *caller_menu) {
     dmgbordername = dmgborderlist[caller_menu->selected_entry + 1]->d_name; // we previously skipped 2 entries, but we added an extra "no border" entry, so we have to do "+2 -1 = +1" here.
-    if(!gambatte_p->isCgb()){
+    if(gameiscgb == 1){
+        caller_menu->quit = 1;
+    } else {
         load_border(dmgbordername);
+        caller_menu->quit = 0;
     }
-    caller_menu->quit = 0;
 }
 
 static void callback_dmgborderimage_back(menu_t *caller_menu) {
@@ -729,18 +745,22 @@ static void callback_gbcborderimage(menu_t *caller_menu) {
 
 static void callback_nogbcborder(menu_t *caller_menu) {
     gbcbordername = "No border.png";
-    if(gambatte_p->isCgb()){
+    if(gameiscgb == 1){
         load_border(gbcbordername);
+        caller_menu->quit = 0;
+    } else {
+        caller_menu->quit = 1;
     }
-    caller_menu->quit = 0;
 }
 
 static void callback_selectedgbcborder(menu_t *caller_menu) {
     gbcbordername = gbcborderlist[caller_menu->selected_entry + 1]->d_name; // we previously skipped 2 entries, but we added an extra "no border" entry, so we have to do "+2 -1 = +1" here.
-    if(gambatte_p->isCgb()){
+    if(gameiscgb == 1){
         load_border(gbcbordername);
+        caller_menu->quit = 0;
+    } else {
+        caller_menu->quit = 1;
     }
-    caller_menu->quit = 0;
 }
 
 static void callback_gbcborderimage_back(menu_t *caller_menu) {
