@@ -139,6 +139,7 @@ static void callback_quit(menu_t *caller_menu);
 static void callback_showfps(menu_t *caller_menu);
 static void callback_scaler(menu_t *caller_menu);
 static void callback_dmgpalette(menu_t *caller_menu);
+static void callback_colorfilter(menu_t *caller_menu);
 static void callback_dmgborderimage(menu_t *caller_menu);
 static void callback_gbcborderimage(menu_t *caller_menu);
 static void callback_usebios(menu_t *caller_menu);
@@ -318,6 +319,11 @@ static void callback_options(menu_t *caller_menu) {
     menu_entry->callback = callback_dmgpalette;
 
     menu_entry = new_menu_entry(0);
+    menu_entry_set_text(menu_entry, "Color Filter");
+    menu_add_entry(menu, menu_entry);
+    menu_entry->callback = callback_colorfilter;
+
+    menu_entry = new_menu_entry(0);
     menu_entry_set_text(menu_entry, "DMG Border");
     menu_add_entry(menu, menu_entry);
     menu_entry->callback = callback_dmgborderimage;
@@ -328,7 +334,7 @@ static void callback_options(menu_t *caller_menu) {
     menu_entry->callback = callback_gbcborderimage;
 
     menu_entry = new_menu_entry(0);
-    menu_entry_set_text(menu_entry, "Use BIOS");
+    menu_entry_set_text(menu_entry, "Boot logos");
     menu_add_entry(menu, menu_entry);
     menu_entry->callback = callback_usebios;
 
@@ -561,6 +567,48 @@ static void callback_dmgpalette_back(menu_t *caller_menu) {
     caller_menu->quit = 1;
 }
 
+/* ==================== COLOR FILTER MENU =========================== */
+
+static void callback_selectedfilter(menu_t *caller_menu);
+static void callback_colorfilter_back(menu_t *caller_menu);
+
+static void callback_colorfilter(menu_t *caller_menu) {
+
+    menu_t *menu;
+    menu_entry_t *menu_entry;
+    (void) caller_menu;
+    menu = new_menu();
+
+    menu_set_header(menu, menu_main_title.c_str());
+    menu_set_title(menu, "Color Filter");
+    menu->back_callback = callback_colorfilter_back;
+
+    menu_entry = new_menu_entry(0);
+    menu_entry_set_text(menu_entry, "OFF");
+    menu_add_entry(menu, menu_entry);
+    menu_entry->callback = callback_selectedfilter;
+
+    menu_entry = new_menu_entry(0);
+    menu_entry_set_text(menu_entry, "ON");
+    menu_add_entry(menu, menu_entry);
+    menu_entry->callback = callback_selectedfilter;
+
+    menu->selected_entry = colorfilter; 
+    
+    menu_main(menu);
+
+    delete_menu(menu);
+}
+
+static void callback_selectedfilter(menu_t *caller_menu) {
+    colorfilter = caller_menu->selected_entry;
+    caller_menu->quit = 1;
+}
+
+static void callback_colorfilter_back(menu_t *caller_menu) {
+    caller_menu->quit = 1;
+}
+
 /* ==================== DMG BORDER IMAGE MENU =========================== */
 
 struct dirent **dmgborderlist = NULL;
@@ -699,7 +747,7 @@ static void callback_gbcborderimage_back(menu_t *caller_menu) {
     caller_menu->quit = 1;
 }
 
-/* ==================== USE BIOS MENU =========================== */
+/* ==================== BOOT LOGOS MENU =========================== */
 
 static void callback_selectedbios(menu_t *caller_menu);
 static void callback_usebios_back(menu_t *caller_menu);
@@ -712,7 +760,7 @@ static void callback_usebios(menu_t *caller_menu) {
     menu = new_menu();
 
     menu_set_header(menu, menu_main_title.c_str());
-    menu_set_title(menu, "Use BIOS");
+    menu_set_title(menu, "Boot Logos");
     menu->back_callback = callback_usebios_back;
 
     menu_entry = new_menu_entry(0);

@@ -46,7 +46,7 @@ struct Menu_t {
 
 extern SDL_Surface *menuscreen;
 extern SDL_Surface *menuscreencolored;
-extern int selectedscaler, showfps, ghosting, biosenabled, gameiscgb;
+extern int selectedscaler, showfps, ghosting, biosenabled, colorfilter, gameiscgb;
 extern uint32_t menupalblack, menupaldark, menupallight, menupalwhite;
 extern std::string dmgbordername, gbcbordername, palname, homedir;
 extern int numcodes_gg, numcodes_gs, selectedcode, editmode;

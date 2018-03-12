@@ -34,7 +34,7 @@ SDL_Surface *menuscreen;
 SDL_Surface *menuscreencolored;
 
 // Default config values
-int selectedscaler = 0, showfps = 0, ghosting = 1, biosenabled = 0, gameiscgb = 0;
+int selectedscaler = 0, showfps = 0, ghosting = 1, biosenabled = 0, colorfilter = 0, gameiscgb = 0;
 uint32_t menupalblack = 0x000000, menupaldark = 0x505450, menupallight = 0xA8A8A8, menupalwhite = 0xF8FCF8;
 std::string dmgbordername = "No border.png", gbcbordername = "No border.png", palname = "No palette.png";
 std::string homedir = getenv("HOME");
@@ -1171,6 +1171,7 @@ void saveConfig(){
 		"SHOWFPS %d\n"
 		"SELECTEDSCALER %d\n"
 		"PALNAME %s\n"
+		"COLORFILTER %d\n"
 		"DMGBORDERNAME %s\n"
 		"GBCBORDERNAME %s\n"
 		"BIOSENABLED %d\n"
@@ -1178,6 +1179,7 @@ void saveConfig(){
 		showfps,
 		selectedscaler,
 		palname.c_str(),
+		colorfilter,
 		dmgbordername.c_str(),
 		gbcbordername.c_str(),
 		biosenabled,
@@ -1223,6 +1225,9 @@ void loadConfig(){
 			}
 			strcpy(charvalue, arg);
 			palname = std::string(charvalue);
+		} else if (!strcmp(line, "COLORFILTER")) {
+			sscanf(arg, "%d", &value);
+			colorfilter = value;
 		} else if (!strcmp(line, "DMGBORDERNAME")) {
 			int len = strlen(arg);
 			if (len == 0 || len > sizeof(charvalue) - 1) {
