@@ -758,6 +758,7 @@ int GambatteSdl::exec(int const argc, char const *const argv[]) {
 
 	init_fps_font(); // load fps font on startup
 	init_menu(); //load menu font on startup
+	init_menusurfaces(); //init menu surfaces on startup
 
 	if(gambatte.isCgb()){
 		gameiscgb = 1;

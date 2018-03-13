@@ -309,6 +309,53 @@ void store_lastframe2(SDL_Surface *surface) { // test function - currently not u
 	SDL_SetAlpha(surface, SDL_SRCALPHA, SDL_ALPHA_OPAQUE);
 }
 
+void anim_menuin(SDL_Surface *surface) { // test function - surface = game surface - menuscreen = menu surface
+	
+	if(menuin >= 0){
+		menuin += 16;
+		SDL_Rect srcrect;
+		srcrect.x = 0;
+		srcrect.y = 0;
+		srcrect.w = 160;
+		srcrect.h = (0 + menuin); // ++
+		SDL_Rect dstrect;
+		dstrect.x = 0;
+		dstrect.y = (144 - menuin); // --
+		dstrect.w = 160;
+		dstrect.h = 0;
+		SDL_BlitSurface(surface, NULL, surface_menuinout, NULL);
+		if((colorfilter == 1) && (gameiscgb == 1)){
+			apply_cfilter(surface_menuinout);
+		}
+		SDL_BlitSurface(menuscreen, &srcrect, surface_menuinout, &dstrect);
+		SDL_BlitSurface(surface_menuinout, NULL, menuscreen, NULL);
+	}
+	if(menuin >=144){
+		menuin = -1;
+	}
+}
+
+void anim_menuout(SDL_Surface *surface) { // test function - surface = game surface - menuscreen = menu surface
+
+	if(menuout >= 0){
+		menuout += 16;
+		SDL_Rect srcrect;
+		srcrect.x = 0;
+		srcrect.y = 0;
+		srcrect.w = 160;
+		srcrect.h = (144 - menuout); // --
+		SDL_Rect dstrect;
+		dstrect.x = 0;
+		dstrect.y = (0 + menuout); // --
+		dstrect.w = 160;
+		dstrect.h = 0;
+		SDL_BlitSurface(surface_menuinout, &srcrect, surface, &dstrect);
+	}
+	if(menuout >=144){
+		menuout = -1;
+	}
+}
+
 static int frames = 0;
 static clock_t old_time = 0;
 static int fps = 0;
@@ -345,6 +392,9 @@ void SdlBlitter::draw() {
 	if(ghosting == 0){
 		if((colorfilter == 1) && (gameiscgb == 1)){
 			apply_cfilter(surface);
+		}
+		if(menuout >= 0){
+			anim_menuout(surface);
 		}
 		switch(selectedscaler) {
 			case 0:		/* no scaler */
@@ -389,6 +439,9 @@ void SdlBlitter::draw() {
 		store_lastframe(surface);
 		if((colorfilter == 1) && (gameiscgb == 1)){
 			apply_cfilter(currframe);
+		}
+		if(menuout >= 0){
+			anim_menuout(currframe);
 		}
 		switch(selectedscaler) {
 			case 0:		/* no scaler */
@@ -453,6 +506,10 @@ void SdlBlitter::scaleMenu() {
 		}
 	} else {
 		convert_bw_surface_colors(menuscreen, menuscreencolored, menupalblack, menupaldark, menupallight, menupalwhite); //if game is DMG, then menu matches DMG palette
+	}
+
+	if(menuin >= 0){
+		anim_menuin(surface);
 	}
 
 	switch(selectedscaler) {
