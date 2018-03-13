@@ -32,6 +32,7 @@ static SFont_Font* font = NULL;
 
 SDL_Surface *menuscreen;
 SDL_Surface *menuscreencolored;
+SDL_Surface *surface_menuinout;
 
 // Default config values
 int selectedscaler = 0, showfps = 0, ghosting = 1, biosenabled = 0, colorfilter = 0, gameiscgb = 0;
@@ -42,6 +43,7 @@ int numcodes_gg = NUM_GG_CODES, numcodes_gs = NUM_GS_CODES, selectedcode = 0, ed
 int ggcheats[NUM_GG_CODES *9] = {0};
 int gscheats[NUM_GS_CODES *8] = {0};
 int gscheatsenabled[NUM_GS_CODES] = {0};
+int menuin = -1, menuout = -1;
 
 
 void libmenu_set_screen(SDL_Surface *set_screen) {
@@ -66,7 +68,7 @@ int menu_main(menu_t *menu) {
 	}
     redraw(menu);
 	quit_menu = 0;
-    while (menu->quit == 0) {
+    while (menu->quit == 0){
         dirty = 0;
 		while (SDL_PollEvent(&event)) {
 			switch (event.type) {
@@ -123,14 +125,18 @@ int menu_main(menu_t *menu) {
 							break;
 						case SDLK_RETURN: 	/* start button */
 						case SDLK_LCTRL:	/* A button */
-							if (menu->entries[menu->selected_entry]->callback != NULL) {
-								menu->entries[menu->selected_entry]->callback(menu);
-								redraw(menu);
+							if(menuin == -1){
+								if (menu->entries[menu->selected_entry]->callback != NULL) {
+									menu->entries[menu->selected_entry]->callback(menu);
+									redraw(menu);
+								}
 							}
 							break;
 						case SDLK_LALT: /* B button, being used as 'back' */
-							if (menu->back_callback != NULL) {
-								menu->back_callback(menu);
+							if(menuin == -1){
+								if (menu->back_callback != NULL) {
+									menu->back_callback(menu);
+								}
 							}
 							break;
 						default:
@@ -140,15 +146,18 @@ int menu_main(menu_t *menu) {
 					break;
 			}
 		}
+		if(menuin >= 0){
+			dirty = 1;
+		}
 		if (dirty) {
 			redraw(menu);
 		}
-		SDL_Delay(10);
+		SDL_Delay(1);
 	}
+	SDL_BlitSurface(menuscreen, NULL, surface_menuinout, NULL);
 	quit_menu = 0;
 	/* doing this twice is just an ugly hack to get round an 
 	 * opendingux pre-release hardware surfaces bug */
-
 	clear_surface(screen, 0);
 	redraw(menu);
 	//SDL_Flip(screen);
@@ -723,10 +732,18 @@ menu_entry_t *new_menu_entry(int is_shiftable) {
 }
 
 void delete_menu_entry(menu_entry_t *entry) {
-	if (entry->entries != NULL)
+	int i;
+	if (entry->entries != NULL){
+		if(entry->n_entries > 0){
+			for (i = 0; i < entry->n_entries; i++) {
+				free(entry->entries[i]);
+			}
+		}
 		free(entry->entries);
-	if (entry->text != NULL)
+	}
+	if (entry->text != NULL){
 		free(entry->text);
+	}
 	free(entry);
 }
 
@@ -755,6 +772,7 @@ void menu_entry_add_entry(menu_entry_t *entry, const char* text) {
 }
 
 void callback_menu_quit(menu_t *caller_menu) {
+	menuout = 0;
 	caller_menu->quit = 1;
 }
 
@@ -768,6 +786,7 @@ void set_menu_palette(uint32_t valwhite, uint32_t vallight, uint32_t valdark, ui
 void init_menusurfaces(){
 	menuscreen = SDL_CreateRGBSurface(SDL_SWSURFACE, 160, 144, 16, 0, 0, 0, 0);
 	menuscreencolored = SDL_CreateRGBSurface(SDL_SWSURFACE, 160, 144, 32, 0, 0, 0, 0);
+	surface_menuinout = SDL_CreateRGBSurface(SDL_SWSURFACE, 160, 144, 16, 0, 0, 0, 0);
 }
 
 void free_menusurfaces(){

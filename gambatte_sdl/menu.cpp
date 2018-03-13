@@ -159,7 +159,6 @@ void main_menu(gambatte::GB *gambatte, BlitterWrapper *blitter) {
     gambatte_p = gambatte;
 
     SDL_EnableKeyRepeat(250, 83);
-    init_menusurfaces();
 
     menu_t *menu;
 	menu_entry_t *menu_entry;
@@ -220,11 +219,12 @@ void main_menu(gambatte::GB *gambatte, BlitterWrapper *blitter) {
 	menu_add_entry(menu, menu_entry);
     menu_entry->callback = callback_quit;
 
-	menu_main(menu);
+	menuin = 0;
+    menu_main(menu);
     
     delete_menu(menu);
 
-    free_menusurfaces();
+    //free_menusurfaces();
     SDL_EnableKeyRepeat(0, 100);
 }
 
@@ -234,27 +234,32 @@ static void callback_quit(menu_t *caller_menu) {
 }
 
 static void callback_return(menu_t *caller_menu) {
+    menuout = 0;
     caller_menu->quit = 1;
 }
 
 static void callback_savestate(menu_t *caller_menu) {
     gambatte_p->saveState(blitter_p->inBuf().pixels, blitter_p->inBuf().pitch);
+    menuout = 0;
     caller_menu->quit = 1;
 }
 
 static void callback_loadstate(menu_t *caller_menu) {
 	gambatte_p->loadState();
+    menuout = 0;
     caller_menu->quit = 1;
 }
 
 static void callback_restart(menu_t *caller_menu) {
     gambatte_p->reset();
+    menuout = 0;
     caller_menu->quit = 1;
 }
 
 /* ==================== SELECT STATE MENU =========================== */
 
 static void callback_selectedstate(menu_t *caller_menu);
+static void callback_selectstate_back(menu_t *caller_menu);
 
 static void callback_selectstate(menu_t *caller_menu) {
     #define N_STATES 10
@@ -267,7 +272,7 @@ static void callback_selectstate(menu_t *caller_menu) {
 
     menu_set_header(menu, menu_main_title.c_str());
     menu_set_title(menu, "Select State");
-	menu->back_callback = callback_menu_quit;
+	menu->back_callback = callback_selectstate_back;
 	
     for (i = 0; i < N_STATES; i++) {
         menu_entry = new_menu_entry(0);
@@ -286,6 +291,10 @@ static void callback_selectstate(menu_t *caller_menu) {
 static void callback_selectedstate(menu_t *caller_menu) {
 	gambatte_p->selectState(caller_menu->selected_entry);
 	caller_menu->quit = 1;
+}
+
+static void callback_selectstate_back(menu_t *caller_menu) {
+    caller_menu->quit = 1;
 }
 
 /* ==================== OPTIONS MENU ================================ */
