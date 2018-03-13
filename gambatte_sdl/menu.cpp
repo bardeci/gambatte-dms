@@ -552,7 +552,7 @@ static void callback_nopalette(menu_t *caller_menu) {
         }
     }
     set_menu_palette(0xF8FCF8, 0xA8A8A8, 0x505450, 0x000000);
-    palname = "No palette.pal";
+    palname = "NONE";
     if(gameiscgb == 1){
         caller_menu->quit = 1;
     } else {
@@ -627,6 +627,7 @@ struct dirent **dmgborderlist = NULL;
 int numdmgborders;
 
 static void callback_nodmgborder(menu_t *caller_menu);
+static void callback_defaultdmgborder(menu_t *caller_menu);
 static void callback_selecteddmgborder(menu_t *caller_menu);
 static void callback_dmgborderimage_back(menu_t *caller_menu);
 
@@ -645,6 +646,11 @@ static void callback_dmgborderimage(menu_t *caller_menu) {
     menu_entry_set_text(menu_entry, "No border");
     menu_add_entry(menu, menu_entry);
     menu_entry->callback = callback_nodmgborder;
+
+    menu_entry = new_menu_entry(0);
+    menu_entry_set_text(menu_entry, "Default");
+    menu_add_entry(menu, menu_entry);
+    menu_entry->callback = callback_defaultdmgborder;
 
     std::string borderdir = (homedir + "/.gambatte/borders");
     numdmgborders = scandir(borderdir.c_str(), &dmgborderlist, parse_ext_png, alphasort);
@@ -671,7 +677,17 @@ static void callback_dmgborderimage(menu_t *caller_menu) {
 }
 
 static void callback_nodmgborder(menu_t *caller_menu) {
-    dmgbordername = "No border.png";
+    dmgbordername = "NONE";
+    if(gameiscgb == 1){
+        caller_menu->quit = 1;
+    } else {
+        load_border(dmgbordername);
+        caller_menu->quit = 0;
+    }
+}
+
+static void callback_defaultdmgborder(menu_t *caller_menu) {
+    dmgbordername = "DEFAULT";
     if(gameiscgb == 1){
         caller_menu->quit = 1;
     } else {
@@ -681,7 +697,7 @@ static void callback_nodmgborder(menu_t *caller_menu) {
 }
 
 static void callback_selecteddmgborder(menu_t *caller_menu) {
-    dmgbordername = dmgborderlist[caller_menu->selected_entry + 1]->d_name; // we previously skipped 2 entries, but we added an extra "no border" entry, so we have to do "+2 -1 = +1" here.
+    dmgbordername = dmgborderlist[caller_menu->selected_entry]->d_name; // we previously skipped 2 entries, but we also added 2 entries, so we leave this untouched.
     if(gameiscgb == 1){
         caller_menu->quit = 1;
     } else {
@@ -700,6 +716,7 @@ struct dirent **gbcborderlist = NULL;
 int numgbcborders;
 
 static void callback_nogbcborder(menu_t *caller_menu);
+static void callback_defaultgbcborder(menu_t *caller_menu);
 static void callback_selectedgbcborder(menu_t *caller_menu);
 static void callback_gbcborderimage_back(menu_t *caller_menu);
 
@@ -718,6 +735,11 @@ static void callback_gbcborderimage(menu_t *caller_menu) {
     menu_entry_set_text(menu_entry, "No border");
     menu_add_entry(menu, menu_entry);
     menu_entry->callback = callback_nogbcborder;
+
+    menu_entry = new_menu_entry(0);
+    menu_entry_set_text(menu_entry, "Default");
+    menu_add_entry(menu, menu_entry);
+    menu_entry->callback = callback_defaultgbcborder;
 
     std::string borderdir = (homedir + "/.gambatte/borders");
     numgbcborders = scandir(borderdir.c_str(), &gbcborderlist, parse_ext_png, alphasort);
@@ -744,7 +766,17 @@ static void callback_gbcborderimage(menu_t *caller_menu) {
 }
 
 static void callback_nogbcborder(menu_t *caller_menu) {
-    gbcbordername = "No border.png";
+    gbcbordername = "NONE";
+    if(gameiscgb == 1){
+        load_border(gbcbordername);
+        caller_menu->quit = 0;
+    } else {
+        caller_menu->quit = 1;
+    }
+}
+
+static void callback_defaultgbcborder(menu_t *caller_menu) {
+    gbcbordername = "DEFAULT";
     if(gameiscgb == 1){
         load_border(gbcbordername);
         caller_menu->quit = 0;
@@ -754,7 +786,7 @@ static void callback_nogbcborder(menu_t *caller_menu) {
 }
 
 static void callback_selectedgbcborder(menu_t *caller_menu) {
-    gbcbordername = gbcborderlist[caller_menu->selected_entry + 1]->d_name; // we previously skipped 2 entries, but we added an extra "no border" entry, so we have to do "+2 -1 = +1" here.
+    gbcbordername = gbcborderlist[caller_menu->selected_entry]->d_name; // we previously skipped 2 entries, but we also added 2 entries, so we leave this untouched.
     if(gameiscgb == 1){
         load_border(gbcbordername);
         caller_menu->quit = 0;

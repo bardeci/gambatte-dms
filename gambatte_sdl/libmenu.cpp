@@ -36,7 +36,7 @@ SDL_Surface *menuscreencolored;
 // Default config values
 int selectedscaler = 0, showfps = 0, ghosting = 1, biosenabled = 0, colorfilter = 0, gameiscgb = 0;
 uint32_t menupalblack = 0x000000, menupaldark = 0x505450, menupallight = 0xA8A8A8, menupalwhite = 0xF8FCF8;
-std::string dmgbordername = "No border.png", gbcbordername = "No border.png", palname = "No palette.png";
+std::string dmgbordername = "NONE", gbcbordername = "NONE", palname = "NONE";
 std::string homedir = getenv("HOME");
 int numcodes_gg = NUM_GG_CODES, numcodes_gs = NUM_GS_CODES, selectedcode = 0, editmode = 0, blink = 0;
 int ggcheats[NUM_GG_CODES *9] = {0};
@@ -776,6 +776,11 @@ void free_menusurfaces(){
 }
 
 int currentEntryInList(menu_t *menu, std::string fname){
+	if(fname == "NONE"){
+		return 0;
+	} else if (fname == "DEFAULT"){
+		return 1;
+	}
 	fname = fname.substr(0, fname.length() - 4);
     int count = menu->n_entries;
     int i;
@@ -805,6 +810,13 @@ void load_border(std::string borderfilename){ //load border from menu
 	SDL_FreeSurface(borderimg);
 	std::string fullimgpath = (homedir + "/.gambatte/borders/");
 	fullimgpath += (borderfilename);
+	if (borderfilename == "DEFAULT"){
+		if(gameiscgb == 0){
+			fullimgpath = "./DefaultDMG.png";
+		} else {
+			fullimgpath = "./DefaultGBC.png";
+		}
+	}
     borderimg = IMG_Load(fullimgpath.c_str());
     if(!borderimg){
     	clear_surface(screen, 0);
@@ -813,7 +825,7 @@ void load_border(std::string borderfilename){ //load border from menu
 		clear_surface(screen, 0);
 		clear_surface(menuscreen, 0xFFFFFF);
 		blitter_p->scaleMenu();
-    	if(borderfilename != "No border.png"){
+    	if(borderfilename != "NONE"){
     		printf("error loading %s\n", fullimgpath.c_str());
     	}
     }
@@ -1051,10 +1063,10 @@ static void invert_rect(SDL_Surface* surface, SDL_Rect *rect) {
 
 static void redraw(menu_t *menu) {
 	clear_surface(menuscreen, 0xFFFFFF);
-	if((!gambatte_p->isCgb()) && (dmgbordername != "No border.png")) { // if system is DMG
+	if((!gambatte_p->isCgb()) && (dmgbordername != "NONE")) { // if system is DMG
 		clear_surface(screen, convert_hexcolor(screen, menupalwhite));
 		paint_border(screen);
-	} else if((gambatte_p->isCgb()) && (gbcbordername != "No border.png")) { // if system is GBC
+	} else if((gambatte_p->isCgb()) && (gbcbordername != "NONE")) { // if system is GBC
 		clear_surface(screen, 0x000000);
 		paint_border(screen);
 	}
@@ -1066,10 +1078,10 @@ static void redraw(menu_t *menu) {
 
 static void redraw_cheat(menu_t *menu) {
 	clear_surface(menuscreen, 0xFFFFFF);
-	if((!gambatte_p->isCgb()) && (dmgbordername != "No border.png")) { // if system is DMG
+	if((!gambatte_p->isCgb()) && (dmgbordername != "NONE")) { // if system is DMG
 		clear_surface(screen, convert_hexcolor(screen, menupalwhite));
 		paint_border(screen);
-	} else if((gambatte_p->isCgb()) && (gbcbordername != "No border.png")) { // if system is GBC
+	} else if((gambatte_p->isCgb()) && (gbcbordername != "NONE")) { // if system is GBC
 		clear_surface(screen, 0x000000);
 		paint_border(screen);
 	}
