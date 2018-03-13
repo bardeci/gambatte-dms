@@ -72,9 +72,6 @@ void init_ghostframes() {
 
 void init_cfilter() {
 	cfilter = SDL_CreateRGBSurface(SDL_SWSURFACE, 160, 144, 16, 0, 0, 0, 0);
-	//SDL_SetAlpha(cfilter, SDL_SRCALPHA, 96);
-	//uint32_t filtcolor = SDL_MapRGB(cfilter->format, 96, 96, 96);
-	//SDL_FillRect(cfilter, NULL, filtcolor);
 }
 
 void init_border_dmg(SDL_Surface *dst){ //load border on emulator start
@@ -86,12 +83,15 @@ void init_border_dmg(SDL_Surface *dst){ //load border on emulator start
 	std::string fullimgpath;
     fullimgpath = (homedir + "/.gambatte/borders/");
 	fullimgpath += (dmgbordername);
+	if (dmgbordername == "DEFAULT"){
+		fullimgpath = "./DefaultDMG.png";
+	}
 	borderimg = IMG_Load(fullimgpath.c_str());
-	if(!borderimg){
+	if((!borderimg) && (dmgbordername != "NONE")){
 	    printf("error loading %s\n", fullimgpath.c_str());
 	    return;
 	}
-	if(dmgbordername != "No border.png") { // if system is DMG
+	if(dmgbordername != "NONE") {
 		clear_surface(dst, convert_hexcolor(dst, menupalwhite));
 		paint_border(dst);
 	}
@@ -106,12 +106,15 @@ void init_border_gbc(SDL_Surface *dst){ //load border on emulator start
 	std::string fullimgpath;
     fullimgpath = (homedir + "/.gambatte/borders/");
 	fullimgpath += (gbcbordername);
+	if (gbcbordername == "DEFAULT"){
+		fullimgpath = "./DefaultGBC.png";
+	}
 	borderimg = IMG_Load(fullimgpath.c_str());
-	if(!borderimg){
+	if((!borderimg) && (gbcbordername != "NONE")){
 	    printf("error loading %s\n", fullimgpath.c_str());
 	    return;
 	}
-	if(gbcbordername != "No border.png") { // if system is GBC
+	if(gbcbordername != "NONE") {
 		clear_surface(dst, 0x000000);
 		paint_border(dst);
 	}
