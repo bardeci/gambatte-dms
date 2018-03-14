@@ -774,28 +774,29 @@ int GambatteSdl::exec(int const argc, char const *const argv[]) {
 	    fpal = fopen(filepath.c_str(), "r");
 	    if (fpal == NULL) {
 			printf("Failed to open palette file %s\n", filepath.c_str());
-			return 0;
 		}
-	    int j = 0;
-	    for (int i = 0; i < 12; ++i) { // TODO: Find a better way of parsing the palette values.
-	        if(fscanf(fpal, "%x", &values[j]) == 1){
-	            j++;
-	        }
-	    }
-	    if (j == 12){ // all 12 palette values were successfully loaded
-	        set_menu_palette(values[0], values[1], values[2], values[3]);
-	        int m = 0;
-	        for (int i = 0; i < 3; ++i) {
-	            for (int k = 0; k < 4; ++k) {
-	                gambatte.setDmgPaletteColor(i, k, values[m]);
-	                m++;
-	            }
-	        }
-	    } else {
-	        printf("error reading: %s:\n",filepath.c_str());
-	        printf("bad file format or file does not exist.\n");
-	    }
-	    fclose(fpal);
+		if(fpal){
+			int j = 0;
+		    for (int i = 0; i < 12; ++i) { // TODO: Find a better way of parsing the palette values.
+		        if(fscanf(fpal, "%x", &values[j]) == 1){
+		            j++;
+		        }
+		    }
+		    if (j == 12){ // all 12 palette values were successfully loaded
+		        set_menu_palette(values[0], values[1], values[2], values[3]);
+		        int m = 0;
+		        for (int i = 0; i < 3; ++i) {
+		            for (int k = 0; k < 4; ++k) {
+		                gambatte.setDmgPaletteColor(i, k, values[m]);
+		                m++;
+		            }
+		        }
+		    } else {
+		        printf("Error reading: %s:\n",filepath.c_str());
+		        printf("Bad file format.\n");
+		    }
+		    fclose(fpal);
+		}    
 	}
 
 	return run(rateOption.rate(), latencyOption.latency(), periodsOption.periods(),
@@ -962,17 +963,11 @@ int GambatteSdl::run(long const sampleRate, int const latency, int const periods
 	return 0;
 }
 
-void do_onExit(void){
-	gambatte_p->saveSavedata();
-	printf("Exiting...\n");
-}
 
 } // anon namespace
 
 
-
 int main(int argc, char **argv) {
 	GambatteSdl gambatteSdl;
-	atexit (do_onExit); //ensure to save game data on exit
 	return gambatteSdl.exec(argc, argv);
 }

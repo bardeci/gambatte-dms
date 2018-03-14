@@ -168,7 +168,9 @@ void SdlBlitter::setBufferDimensions() {
 			surface = screen = SDL_SetVideoMode(320, 240, 16, SDL_HWSURFACE | SDL_DOUBLEBUF);
 			break;
 	}
-	fclose(aspect_ratio_file);
+	if(aspect_ratio_file){
+		fclose(aspect_ratio_file);
+	}
 
 	menu_set_screen(screen);
 	surface = SDL_CreateRGBSurface(SDL_SWSURFACE, 160, 144, 16, 0, 0, 0, 0);
@@ -231,7 +233,9 @@ void SdlBlitter::setScreenRes() {
 				screen = SDL_SetVideoMode(320, 240, 16, SDL_HWSURFACE | SDL_DOUBLEBUF);
 			break;
 	}
-	fclose(aspect_ratio_file);
+	if(aspect_ratio_file){
+		fclose(aspect_ratio_file);
+	}
 }
 
 void SdlBlitter::force320x240() {
