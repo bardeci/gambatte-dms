@@ -803,6 +803,27 @@ int GambatteSdl::exec(int const argc, char const *const argv[]) {
 	           resamplerOption.resampler(), blitter);
 }
 
+void resetSDLKeys(){
+	SDL_Event sdlevent;
+	sdlevent.type = SDL_KEYUP;
+	sdlevent.key.keysym.sym = SDLK_RETURN;
+	SDL_PushEvent(&sdlevent);
+	sdlevent.key.keysym.sym = SDLK_ESCAPE;
+	SDL_PushEvent(&sdlevent);
+	sdlevent.key.keysym.sym = SDLK_LCTRL;
+	SDL_PushEvent(&sdlevent);
+	sdlevent.key.keysym.sym = SDLK_LALT;
+	SDL_PushEvent(&sdlevent);
+	sdlevent.key.keysym.sym = SDLK_UP;
+	SDL_PushEvent(&sdlevent);
+	sdlevent.key.keysym.sym = SDLK_DOWN;
+	SDL_PushEvent(&sdlevent);
+	sdlevent.key.keysym.sym = SDLK_LEFT;
+	SDL_PushEvent(&sdlevent);
+	sdlevent.key.keysym.sym = SDLK_RIGHT;
+	SDL_PushEvent(&sdlevent);
+}
+
 bool GambatteSdl::handleEvents(BlitterWrapper &blitter) {
 	JoyData jd;
 	SDL_Event e;
@@ -863,9 +884,11 @@ bool GambatteSdl::handleEvents(BlitterWrapper &blitter) {
 			case SDLK_BACKSPACE:
 			case SDLK_TAB:
 			case SDLK_HOME:
-				main_menu(&gambatte, &blitter);
+				if(menuout == -1){
+					main_menu(&gambatte, &blitter);
+					inputGetter.is = 0;
+				}
 				break;
-				//return true;
 			case SDLK_F5:
 				gambatte.saveState(blitter.inBuf().pixels, blitter.inBuf().pitch);
 				break;
