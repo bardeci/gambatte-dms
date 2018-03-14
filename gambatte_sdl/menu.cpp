@@ -229,6 +229,7 @@ void main_menu(gambatte::GB *gambatte, BlitterWrapper *blitter) {
 }
 
 static void callback_quit(menu_t *caller_menu) {
+    gambatte_p->saveSavedata();
     caller_menu->quit = 1;
     exit(0);
 }

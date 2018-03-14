@@ -1184,8 +1184,8 @@ void loadPalette(std::string palettefile){
             }
         }
     } else {
-        printf("error reading: %s:\n",filepath.c_str());
-        printf("bad file format or file does not exist.\n");
+        printf("Error reading: %s:\n",filepath.c_str());
+        printf("Bad file format.\n");
     }
     fclose(fpal);
 }
