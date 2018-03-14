@@ -803,27 +803,6 @@ int GambatteSdl::exec(int const argc, char const *const argv[]) {
 	           resamplerOption.resampler(), blitter);
 }
 
-void resetSDLKeys(){
-	SDL_Event sdlevent;
-	sdlevent.type = SDL_KEYUP;
-	sdlevent.key.keysym.sym = SDLK_RETURN;
-	SDL_PushEvent(&sdlevent);
-	sdlevent.key.keysym.sym = SDLK_ESCAPE;
-	SDL_PushEvent(&sdlevent);
-	sdlevent.key.keysym.sym = SDLK_LCTRL;
-	SDL_PushEvent(&sdlevent);
-	sdlevent.key.keysym.sym = SDLK_LALT;
-	SDL_PushEvent(&sdlevent);
-	sdlevent.key.keysym.sym = SDLK_UP;
-	SDL_PushEvent(&sdlevent);
-	sdlevent.key.keysym.sym = SDLK_DOWN;
-	SDL_PushEvent(&sdlevent);
-	sdlevent.key.keysym.sym = SDLK_LEFT;
-	SDL_PushEvent(&sdlevent);
-	sdlevent.key.keysym.sym = SDLK_RIGHT;
-	SDL_PushEvent(&sdlevent);
-}
-
 bool GambatteSdl::handleEvents(BlitterWrapper &blitter) {
 	JoyData jd;
 	SDL_Event e;
