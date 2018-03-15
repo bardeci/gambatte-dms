@@ -490,6 +490,7 @@ static void callback_scaler(menu_t *caller_menu) {
 static void callback_selectedscaler(menu_t *caller_menu) {
     selectedscaler = caller_menu->selected_entry;
     blitter_p->setScreenRes(); /* switch to selected resolution */
+    clean_menu_screen(caller_menu);
     caller_menu->quit = 0;
 }
 
@@ -692,6 +693,7 @@ static void callback_nodmgborder(menu_t *caller_menu) {
         caller_menu->quit = 1;
     } else {
         load_border(dmgbordername);
+        clean_menu_screen(caller_menu);
         caller_menu->quit = 0;
     }
 }
@@ -702,6 +704,7 @@ static void callback_defaultdmgborder(menu_t *caller_menu) {
         caller_menu->quit = 1;
     } else {
         load_border(dmgbordername);
+        clean_menu_screen(caller_menu);
         caller_menu->quit = 0;
     }
 }
@@ -712,6 +715,7 @@ static void callback_selecteddmgborder(menu_t *caller_menu) {
         caller_menu->quit = 1;
     } else {
         load_border(dmgbordername);
+        clean_menu_screen(caller_menu);
         caller_menu->quit = 0;
     }
 }
@@ -779,6 +783,7 @@ static void callback_nogbcborder(menu_t *caller_menu) {
     gbcbordername = "NONE";
     if(gameiscgb == 1){
         load_border(gbcbordername);
+        clean_menu_screen(caller_menu);
         caller_menu->quit = 0;
     } else {
         caller_menu->quit = 1;
@@ -789,6 +794,7 @@ static void callback_defaultgbcborder(menu_t *caller_menu) {
     gbcbordername = "DEFAULT";
     if(gameiscgb == 1){
         load_border(gbcbordername);
+        clean_menu_screen(caller_menu);
         caller_menu->quit = 0;
     } else {
         caller_menu->quit = 1;
@@ -799,6 +805,7 @@ static void callback_selectedgbcborder(menu_t *caller_menu) {
     gbcbordername = gbcborderlist[caller_menu->selected_entry]->d_name; // we previously skipped 2 entries, but we also added 2 entries, so we leave this untouched.
     if(gameiscgb == 1){
         load_border(gbcbordername);
+        clean_menu_screen(caller_menu);
         caller_menu->quit = 0;
     } else {
         caller_menu->quit = 1;

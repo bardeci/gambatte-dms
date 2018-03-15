@@ -54,6 +54,34 @@ void libmenu_set_font(SFont_Font *set_font) {
 	font = set_font;
 }
 
+void clean_menu_screen(menu_t *menu){
+	/* doing this twice is just an ugly hack to get round an 
+	 * opendingux pre-release hardware surfaces bug */
+	clear_surface(screen, 0);
+	redraw(menu);
+	//SDL_Flip(screen);
+	clear_surface(screen, 0);
+	redraw(menu); // redraw function also flips the screen. delete and restore sdl_flip if problematic
+	//SDL_Flip(screen);
+	clear_surface(screen, 0);
+	redraw(menu); // this third one is for triple-buffer
+	//SDL_Flip(screen);
+}
+
+void clean_menu_screen_cheat(menu_t *menu){
+	/* doing this twice is just an ugly hack to get round an 
+	 * opendingux pre-release hardware surfaces bug */
+	clear_surface(screen, 0);
+	redraw_cheat(menu);
+	//SDL_Flip(screen);
+	clear_surface(screen, 0);
+	redraw_cheat(menu); // redraw function also flips the screen. delete and restore sdl_flip if problematic
+	//SDL_Flip(screen);
+	clear_surface(screen, 0);
+	redraw_cheat(menu); // this third one is for triple-buffer
+	//SDL_Flip(screen);
+}
+
 int menu_main(menu_t *menu) {
     SDL_Event event;
 	int dirty, loop;
@@ -156,14 +184,7 @@ int menu_main(menu_t *menu) {
 	}
 	SDL_BlitSurface(menuscreen, NULL, surface_menuinout, NULL);
 	quit_menu = 0;
-	/* doing this twice is just an ugly hack to get round an 
-	 * opendingux pre-release hardware surfaces bug */
-	clear_surface(screen, 0);
-	redraw(menu);
-	//SDL_Flip(screen);
-	clear_surface(screen, 0);
-	redraw(menu); // redraw function also flips the screen. delete and restore sdl_flip if problematic
-	//SDL_Flip(screen);
+	clean_menu_screen(menu);
 	
 	return menu->selected_entry;
 }
@@ -333,15 +354,7 @@ int menu_cheat(menu_t *menu) {
 		SDL_Delay(10);
 	}
 	quit_menu = 0;
-	/* doing this twice is just an ugly hack to get round an 
-	 * opendingux pre-release hardware surfaces bug */
-
-	clear_surface(screen, 0);
-	redraw_cheat(menu);
-	//SDL_Flip(screen);
-	clear_surface(screen, 0);
-	redraw_cheat(menu); // redraw function also flips the screen. delete and restore sdl_flip if problematic
-	//SDL_Flip(screen);
+	clean_menu_screen_cheat(menu);
 	
 	return menu->selected_entry;
 }
@@ -838,12 +851,6 @@ void load_border(std::string borderfilename){ //load border from menu
 	}
     borderimg = IMG_Load(fullimgpath.c_str());
     if(!borderimg){
-    	clear_surface(screen, 0);
-    	blitter_p->scaleMenu();
-		SDL_Flip(screen); // ugly workaround for double-buffer
-		clear_surface(screen, 0);
-		clear_surface(menuscreen, 0xFFFFFF);
-		blitter_p->scaleMenu();
     	if(borderfilename != "NONE"){
     		printf("error loading %s\n", fullimgpath.c_str());
     	}
