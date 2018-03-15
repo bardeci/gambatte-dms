@@ -119,7 +119,7 @@ class RateOption : public DescOption {
 public:
 	RateOption()
 	: DescOption("sample-rate", 'r', 1)
-	, rate_(48000)
+	, rate_(44100)
 	{
 	}
 
@@ -133,7 +133,7 @@ public:
 
 	virtual std::string const desc() const {
 		return " N\t\tUse audio sample rate of N Hz\n"
-		       "\t\t\t\t    4000 <= N <= 192000, default: 48000\n";
+		       "\t\t\t\t    4000 <= N <= 192000, default: 44100\n";
 	}
 
 	long rate() const { return rate_; }
@@ -146,7 +146,7 @@ class LatencyOption : public DescOption {
 public:
 	LatencyOption()
 	: DescOption("latency", 'l', 1)
-	, latency_(133)
+	, latency_(64)
 	{
 	}
 
@@ -750,13 +750,14 @@ int GambatteSdl::exec(int const argc, char const *const argv[]) {
 	                       fsOption.isSet());
 
 	
-	blitter.setBufferDimensions(); //set appropiate resolution on startup
+
 	SDL_ShowCursor(SDL_DISABLE);
 	SDL_WM_SetCaption("Gambatte SDL", 0);
 
-	
-
 	init_fps_font(); // load fps font on startup
+
+	blitter.setBufferDimensions(); //set appropiate resolution on startup
+
 	init_menu(); //load menu font on startup
 	init_menusurfaces(); //init menu surfaces on startup
 

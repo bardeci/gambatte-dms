@@ -52,8 +52,8 @@ public:
 	void setScreenRes();
 	void force320x240();
 	void scaleMenu();
-	SDL_Surface *surface;
 	SDL_Surface *screen;
+	SDL_Surface *surface;
 
 
 private:
