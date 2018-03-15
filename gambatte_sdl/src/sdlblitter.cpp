@@ -380,7 +380,7 @@ void SdlBlitter::draw() {
 	if (!screen || !surface)
 		return;
 
-	if(firstframe >= 0){ // paints border on frames 0 and 1 to avoid double-buffer flickering
+	if(firstframe >= 0){ // paints border on frames 0,1 and 2 to avoid triple-buffer flickering
 		if(gameiscgb == 1)
 			init_border_gbc(screen);
 		else
