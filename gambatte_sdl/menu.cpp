@@ -105,6 +105,7 @@ static int parse_ext_pal(const struct dirent *dir) {
             }
         }
     }
+    return 0;
 }
 
 static int parse_ext_png(const struct dirent *dir) {
@@ -122,6 +123,7 @@ static int parse_ext_png(const struct dirent *dir) {
             }
         }
     }
+    return 0;
 }
 
 /* ============================ MAIN MENU =========================== */
@@ -534,7 +536,7 @@ static void callback_dmgpalette(menu_t *caller_menu) {
     if (numpalettes <= 0) {
         printf("scandir for ./gambatte/palettes/ failed.");
     } else {
-        for (int i = 2; i < numpalettes; ++i){ //first 2 entries are "." and ".." so we skip those.
+        for (int i = 0; i < numpalettes; ++i){
             menu_entry = new_menu_entry(0);
             menu_entry_set_text_no_ext(menu_entry, palettelist[i]->d_name);
             menu_add_entry(menu, menu_entry);
@@ -588,7 +590,7 @@ static void callback_defaultpalette(menu_t *caller_menu) {
 }
 
 static void callback_selectedpalette(menu_t *caller_menu) {
-    palname = palettelist[caller_menu->selected_entry]->d_name; // we previously skipped 2 entries, but we added 2 extra entries, so we do nothing.
+    palname = palettelist[caller_menu->selected_entry - 2]->d_name; // we added 2 extra entries before the list, so we do (-2).
     loadPalette(palname);
     if(gameiscgb == 1){
         caller_menu->quit = 1;
@@ -683,7 +685,7 @@ static void callback_dmgborderimage(menu_t *caller_menu) {
     if (numdmgborders <= 0) {
         printf("scandir for ./gambatte/borders/ failed.");
     } else {
-        for (int i = 2; i < numdmgborders; ++i){ //first 2 entries are "." and ".." so we skip those.
+        for (int i = 0; i < numdmgborders; ++i){
             menu_entry = new_menu_entry(0);
             menu_entry_set_text_no_ext(menu_entry, dmgborderlist[i]->d_name);
             menu_add_entry(menu, menu_entry);
@@ -725,7 +727,7 @@ static void callback_defaultdmgborder(menu_t *caller_menu) {
 }
 
 static void callback_selecteddmgborder(menu_t *caller_menu) {
-    dmgbordername = dmgborderlist[caller_menu->selected_entry]->d_name; // we previously skipped 2 entries, but we also added 2 entries, so we leave this untouched.
+    dmgbordername = dmgborderlist[caller_menu->selected_entry - 2]->d_name; // we added 2 extra entries before the list, so we do (-2).
     if(gameiscgb == 1){
         caller_menu->quit = 1;
     } else {
@@ -775,7 +777,7 @@ static void callback_gbcborderimage(menu_t *caller_menu) {
     if (numgbcborders <= 0) {
         printf("scandir for ./gambatte/borders/ failed.");
     } else {
-        for (int i = 2; i < numgbcborders; ++i){ //first 2 entries are "." and ".." so we skip those.
+        for (int i = 0; i < numgbcborders; ++i){
             menu_entry = new_menu_entry(0);
             menu_entry_set_text_no_ext(menu_entry, gbcborderlist[i]->d_name);
             menu_add_entry(menu, menu_entry);
@@ -817,7 +819,7 @@ static void callback_defaultgbcborder(menu_t *caller_menu) {
 }
 
 static void callback_selectedgbcborder(menu_t *caller_menu) {
-    gbcbordername = gbcborderlist[caller_menu->selected_entry]->d_name; // we previously skipped 2 entries, but we also added 2 entries, so we leave this untouched.
+    gbcbordername = gbcborderlist[caller_menu->selected_entry - 2]->d_name; // we added 2 extra entries before the list, so we do (-2).
     if(gameiscgb == 1){
         load_border(gbcbordername);
         clean_menu_screen(caller_menu);
