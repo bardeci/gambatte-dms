@@ -37,7 +37,7 @@ SDL_Surface *surface_menuinout;
 // Default config values
 int selectedscaler = 0, showfps = 0, ghosting = 1, biosenabled = 0, colorfilter = 0, gameiscgb = 0;
 uint32_t menupalblack = 0x000000, menupaldark = 0x505450, menupallight = 0xA8A8A8, menupalwhite = 0xF8FCF8;
-std::string dmgbordername = "NONE", gbcbordername = "NONE", palname = "NONE";
+std::string dmgbordername = "DEFAULT", gbcbordername = "DEFAULT", palname = "DEFAULT";
 std::string homedir = getenv("HOME");
 int numcodes_gg = NUM_GG_CODES, numcodes_gs = NUM_GS_CODES, selectedcode = 0, editmode = 0, blink = 0;
 int ggcheats[NUM_GG_CODES *9] = {0};
@@ -1168,33 +1168,39 @@ void loadPalette(std::string palettefile){
 	Uint32 values[12];
 	std::string filepath = (homedir + "/.gambatte/palettes/");
     filepath.append(palettefile);
-
-	FILE * fpal;
-    fpal = fopen(filepath.c_str(), "r");
-    if (fpal == NULL) {
-		printf("Failed to open palette file %s\n", filepath.c_str());
-		return;
+    if (palettefile == "DEFAULT"){
+		filepath = "./Default.pal";
 	}
-    int j = 0;
-    for (int i = 0; i < 20; ++i) { // i do 20 tries, but 12 is enough. TODO: Find a better way of parsing the palette values.
-        if(fscanf(fpal, "%x", &values[j]) == 1){
-            j++;
-        }
-    }
-    if (j == 12){ // all 12 palette values were successfully loaded
-        set_menu_palette(values[0], values[1], values[2], values[3]);
-        int m = 0;
-        for (int i = 0; i < 3; ++i) {
-            for (int k = 0; k < 4; ++k) {
-                gambatte_p->setDmgPaletteColor(i, k, values[m]);
-                m++;
-            }
-        }
-    } else {
-        printf("Error reading: %s:\n",filepath.c_str());
-        printf("Bad file format.\n");
-    }
-    fclose(fpal);
+	FILE *fpal = NULL;
+	if (palettefile != "NONE"){
+	    fpal = fopen(filepath.c_str(), "r");
+	    if (fpal == NULL) {
+			printf("Failed to open palette file %s\n", filepath.c_str());
+			return;
+		}
+	}
+	if(fpal){
+	    int j = 0;
+	    for (int i = 0; i < 12; ++i) { // TODO: Find a better way of parsing the palette values.
+	        if(fscanf(fpal, "%x", &values[j]) == 1){
+	            j++;
+	        }
+	    }
+	    if (j == 12){ // all 12 palette values were successfully loaded
+	        set_menu_palette(values[0], values[1], values[2], values[3]);
+	        int m = 0;
+	        for (int i = 0; i < 3; ++i) {
+	            for (int k = 0; k < 4; ++k) {
+	                gambatte_p->setDmgPaletteColor(i, k, values[m]);
+	                m++;
+	            }
+	        }
+	    } else {
+	        printf("Error reading: %s:\n",filepath.c_str());
+	        printf("Bad file format.\n");
+	    }
+	    fclose(fpal);
+	}
 }
 
 void saveConfig(){

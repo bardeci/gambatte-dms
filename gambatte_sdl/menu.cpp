@@ -504,6 +504,7 @@ struct dirent **palettelist = NULL;
 int numpalettes;
 
 static void callback_nopalette(menu_t *caller_menu);
+static void callback_defaultpalette(menu_t *caller_menu);
 static void callback_selectedpalette(menu_t *caller_menu);
 static void callback_dmgpalette_back(menu_t *caller_menu);
 
@@ -522,6 +523,11 @@ static void callback_dmgpalette(menu_t *caller_menu) {
     menu_entry_set_text(menu_entry, "No palette");
     menu_add_entry(menu, menu_entry);
     menu_entry->callback = callback_nopalette;
+
+    menu_entry = new_menu_entry(0);
+    menu_entry_set_text(menu_entry, "Default");
+    menu_add_entry(menu, menu_entry);
+    menu_entry->callback = callback_defaultpalette;
 
     std::string palettedir = (homedir + "/.gambatte/palettes");
     numpalettes = scandir(palettedir.c_str(), &palettelist, parse_ext_pal, alphasort);
@@ -571,9 +577,18 @@ static void callback_nopalette(menu_t *caller_menu) {
     }
 }
 
+static void callback_defaultpalette(menu_t *caller_menu) {
+    palname = "DEFAULT";
+    loadPalette(palname);
+    if(gameiscgb == 1){
+        caller_menu->quit = 1;
+    } else {
+        caller_menu->quit = 0;
+    }
+}
+
 static void callback_selectedpalette(menu_t *caller_menu) {
-    palname = palettelist[caller_menu->selected_entry + 1]->d_name; // we previously skipped 2 entries, but we added an extra "no palette" entry, so we have to do "+2 -1 = +1" here.
-    //palname = palname.substr(0, palname.size() - 4);
+    palname = palettelist[caller_menu->selected_entry]->d_name; // we previously skipped 2 entries, but we added 2 extra entries, so we do nothing.
     loadPalette(palname);
     if(gameiscgb == 1){
         caller_menu->quit = 1;
@@ -953,6 +968,18 @@ static void callback_about(menu_t *caller_menu) {
     menu_entry->callback = callback_about_back;
 
     menu_entry = new_menu_entry(0);
+    menu_entry_set_text(menu_entry, "Special thanks to");
+    menu_add_entry(menu, menu_entry);
+    menu_entry->selectable = 0;
+    menu_entry->callback = callback_about_back;
+
+    menu_entry = new_menu_entry(0);
+    menu_entry_set_text(menu_entry, "Senquack");
+    menu_add_entry(menu, menu_entry);
+    menu_entry->selectable = 0;
+    menu_entry->callback = callback_about_back;
+
+    /*menu_entry = new_menu_entry(0);
     menu_entry_set_text(menu_entry, "Gambatte version:");
     menu_add_entry(menu, menu_entry);
     menu_entry->selectable = 0;
@@ -966,7 +993,7 @@ static void callback_about(menu_t *caller_menu) {
 #endif
     menu_add_entry(menu, menu_entry);
     menu_entry->selectable = 0;
-    menu_entry->callback = callback_about_back;
+    menu_entry->callback = callback_about_back;*/
 
     menu_entry = new_menu_entry(0);
     menu_entry_set_text(menu_entry, "");
