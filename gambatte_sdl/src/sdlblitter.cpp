@@ -44,13 +44,8 @@ struct SdlBlitter::SurfaceDeleter {
 
 SdlBlitter::SdlBlitter(unsigned inwidth, unsigned inheight,
                        int scale, bool yuv, bool startFull)
-: screen(SDL_SetVideoMode(inwidth * scale, inheight * scale,
-                           16,
-                           SDL_HWSURFACE | SDL_TRIPLEBUF | (startFull ? SDL_FULLSCREEN : 0)))
-, surface(screen && scale > 1 && !yuv
-           ? SDL_CreateRGBSurface(SDL_SWSURFACE, inwidth, inheight,
-                                  screen->format->BitsPerPixel, 0, 0, 0, 0)
-           : 0)
+: screen()
+, surface(SDL_CreateRGBSurface(SDL_SWSURFACE, 160, 144, 16, 0, 0, 0, 0))
 , overlay_(screen && scale > 1 && yuv
            ? SDL_CreateYUVOverlay(inwidth * 2, inheight, SDL_UYVY_OVERLAY, screen)
            : 0)
@@ -173,7 +168,7 @@ void SdlBlitter::setBufferDimensions() {
 	}
 
 	menu_set_screen(screen);
-	surface = SDL_CreateRGBSurface(SDL_SWSURFACE, 160, 144, 16, 0, 0, 0, 0);
+	//surface = SDL_CreateRGBSurface(SDL_SWSURFACE, 160, 144, 16, 0, 0, 0, 0); <---redundant
 	init_ghostframes();
 	init_cfilter();
 }
