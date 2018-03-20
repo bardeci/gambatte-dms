@@ -28,7 +28,7 @@ env = Environment(CPPPATH = ['src', '../libgambatte/include', '../common'],
                   CXXFLAGS = global_cxxflags + global_defines,
                   CC = bin_path + 'gcc',
                   CXX = bin_path + 'g++',
-                  LINKFLAGS = global_linkflags + ' -lSDL_image',
+                  LINKFLAGS = global_linkflags + ' -lSDL_image -lSDL_mixer',
                   variables = vars)
 
 env.ParseConfig(sdl_path + 'sdl-config --cflags --libs')
