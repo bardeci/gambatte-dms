@@ -19,6 +19,26 @@
 #include "audiosink.h"
 #include <SDL_thread.h>
 #include <cstdio>
+#include "../menu.h"
+
+static SDL_AudioSpec cur_sdl_audio_spec;
+static bool          cur_sdl_audio_spec_set;
+
+//NOTE THIS IS A NEW FUNCTION AND NOT DECLARED 'static' (so it can be called from menu):
+// It should be added to audiosink.h header file
+int reopenAudio() //dirty and nasty sorcery
+{
+    if (!cur_sdl_audio_spec_set)
+        return -1;
+ 
+    if (SDL_OpenAudio(&cur_sdl_audio_spec, 0) < 0) {
+        cur_sdl_audio_spec_set = false;
+        std::fprintf(stderr, "Could not re-open audio: %s\n", SDL_GetError());
+        return -1;
+    }
+    SDL_PauseAudio(0);
+    return 0;
+}
 
 namespace {
 
@@ -41,19 +61,23 @@ static int openAudio(long srate, std::size_t samples,
                      void (*callback)(void *userdata, Uint8 *stream, int len),
                      void *userdata)
 {
-	SDL_AudioSpec spec;
-	spec.freq = srate;
-	spec.format = AUDIO_S16SYS;
-	spec.channels = 2;
-	spec.samples = samples;
-	spec.callback = callback;
-	spec.userdata = userdata;
-	if (SDL_OpenAudio(&spec, 0) < 0) {
-		std::fprintf(stderr, "Could not open audio: %s\n", SDL_GetError());
-		return -1;
-	}
-
-	return 0;
+    SDL_AudioSpec spec;
+    spec.freq = srate;
+    spec.format = AUDIO_S16SYS;
+    spec.channels = 2;
+    spec.samples = samples;
+    spec.callback = callback;
+    spec.userdata = userdata;
+ 
+    if (SDL_OpenAudio(&spec, 0) < 0) {
+        cur_sdl_audio_spec_set = false;
+        std::fprintf(stderr, "Could not open audio: %s\n", SDL_GetError());
+        return -1;
+    }
+ 
+    cur_sdl_audio_spec_set = true;
+    cur_sdl_audio_spec = spec;
+    return 0;
 }
 
 class LockGuard {
@@ -89,6 +113,7 @@ AudioSink::~AudioSink() {
 AudioSink::Status AudioSink::write(Sint16 const *inBuf, std::size_t samples) {
 	if (failed_)
 		return Status(rbuf_.size() / 2, 0, rateEst_.result());
+
 
 	LockGuard lock(mut_.get());
 	Status const status(rbuf_.used() / 2, rbuf_.avail() / 2, rateEst_.result());

@@ -58,4 +58,6 @@ private:
 	void read(Uint8 *stream, std::size_t len);
 };
 
+int reopenAudio();
+
 #endif

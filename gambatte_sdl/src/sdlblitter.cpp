@@ -329,7 +329,7 @@ void anim_menuin(SDL_Surface *surface) { // test function - surface = game surfa
 		SDL_BlitSurface(menuscreen, &srcrect, surface_menuinout, &dstrect);
 		SDL_BlitSurface(surface_menuinout, NULL, menuscreen, NULL);
 	}
-	if(menuin >=144){
+	if(menuin >= 144){
 		menuin = -1;
 	}
 }
@@ -348,9 +348,12 @@ void anim_menuout(SDL_Surface *surface) { // test function - surface = game surf
 		dstrect.y = (0 + menuout); // --
 		dstrect.w = 160;
 		dstrect.h = 0;
-		SDL_BlitSurface(surface_menuinout, &srcrect, surface, &dstrect);
+		if(menuout < 144){
+			SDL_BlitSurface(surface_menuinout, &srcrect, surface, &dstrect);
+		}
+		
 	}
-	if(menuout >=144){
+	if(menuout >= 144){
 		menuout = -1;
 	}
 }
