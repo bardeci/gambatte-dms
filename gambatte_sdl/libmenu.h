@@ -13,7 +13,7 @@ extern "C" {
 
 #define NUM_GG_CODES 20
 #define NUM_GS_CODES 20
-#define BLINK_SPEED 12
+#define BLINK_SPEED 48
 
 
 #include <SDL/SDL.h>
@@ -90,6 +90,21 @@ void clear_surface(SDL_Surface *surface, Uint32 color);
 void loadPalette(std::string palettefile);
 void saveConfig();
 void loadConfig();
+
+void openMenuAudio();
+void closeMenuAudio();
+void loadMenuSounds();
+void freeMenuSounds();
+
+void switchToMenuAudio();
+void switchToEmulatorAudio();
+
+void playMenuSound_intro();
+void playMenuSound_in();
+void playMenuSound_back();
+void playMenuSound_move();
+void playMenuSound_ok();
+void playMenuSound_cancel();
 
 
 #ifdef __cplusplus

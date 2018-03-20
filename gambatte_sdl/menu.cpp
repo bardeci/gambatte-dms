@@ -1,6 +1,7 @@
 #include <SDL/SDL.h>
 #include <SDL/SDL_video.h>
 #include <SDL/SDL_image.h>
+#include <SDL/SDL_mixer.h>
 
 #include <gambatte.h>
 #include "src/blitterwrapper.h"
@@ -16,6 +17,8 @@
 #include <stdlib.h>
 #include <dirent.h>
 #include <math.h>
+
+#include "src/audiosink.h"
 
 
 static SDL_Surface *screen;
@@ -169,7 +172,7 @@ void main_menu(gambatte::GB *gambatte, BlitterWrapper *blitter) {
     menu = new_menu();
     menu_set_header(menu, menu_main_title.c_str());
 	menu_set_title(menu, "Main Menu");
-	menu->back_callback = callback_menu_quit;
+	menu->back_callback = callback_return;
 	
 	menu_entry = new_menu_entry(0);
 	menu_entry_set_text(menu_entry, "Back to game");
@@ -220,40 +223,54 @@ void main_menu(gambatte::GB *gambatte, BlitterWrapper *blitter) {
 	menu_entry_set_text(menu_entry, "Quit");
 	menu_add_entry(menu, menu_entry);
     menu_entry->callback = callback_quit;
+    
+    switchToMenuAudio();
 
-	menuin = 0;
+    menuin = 0;
+    playMenuSound_intro();
     menu_main(menu);
     
+    switchToEmulatorAudio();
+
     delete_menu(menu);
 
-    //free_menusurfaces();
     SDL_EnableKeyRepeat(0, 100);
 }
 
 static void callback_quit(menu_t *caller_menu) {
+    playMenuSound_ok();
+    SDL_Delay(500);
     gambatte_p->saveSavedata();
     caller_menu->quit = 1;
     exit(0);
 }
 
 static void callback_return(menu_t *caller_menu) {
+    playMenuSound_back();
+    SDL_Delay(208);
     menuout = 0;
     caller_menu->quit = 1;
 }
 
 static void callback_savestate(menu_t *caller_menu) {
+    playMenuSound_ok();
+    SDL_Delay(250);
     gambatte_p->saveState(blitter_p->inBuf().pixels, blitter_p->inBuf().pitch);
     menuout = 0;
     caller_menu->quit = 1;
 }
 
 static void callback_loadstate(menu_t *caller_menu) {
+    playMenuSound_ok();
+    SDL_Delay(250);
 	gambatte_p->loadState();
     menuout = 0;
     caller_menu->quit = 1;
 }
 
 static void callback_restart(menu_t *caller_menu) {
+    playMenuSound_ok();
+    SDL_Delay(250);
     gambatte_p->reset();
     menuout = 0;
     caller_menu->quit = 1;
@@ -286,17 +303,20 @@ static void callback_selectstate(menu_t *caller_menu) {
     }
     menu->selected_entry = gambatte_p->currentState();
     
+    playMenuSound_in();
 	menu_main(menu);
     
     delete_menu(menu);
 }
 
 static void callback_selectedstate(menu_t *caller_menu) {
+    playMenuSound_ok();
 	gambatte_p->selectState(caller_menu->selected_entry);
 	caller_menu->quit = 1;
 }
 
 static void callback_selectstate_back(menu_t *caller_menu) {
+    playMenuSound_back();
     caller_menu->quit = 1;
 }
 
@@ -370,17 +390,20 @@ static void callback_options(menu_t *caller_menu) {
     menu_add_entry(menu, menu_entry);
     menu_entry->callback = callback_options_back;
     
-	menu_main(menu);
+	playMenuSound_in();
+    menu_main(menu);
     
     delete_menu(menu);
 }
 
 static void callback_saveconfig(menu_t *caller_menu) {
+    playMenuSound_ok();
     saveConfig();
     caller_menu->quit = 1;
 }
 
 static void callback_options_back(menu_t *caller_menu) {
+    playMenuSound_back();
     caller_menu->quit = 1;
 }
 
@@ -412,17 +435,20 @@ static void callback_showfps(menu_t *caller_menu) {
 
     menu->selected_entry = showfps; 
     
+    playMenuSound_in();
     menu_main(menu);
 
     delete_menu(menu);
 }
 
 static void callback_selectedshowfps(menu_t *caller_menu) {
+    playMenuSound_ok();
     showfps = caller_menu->selected_entry;
     caller_menu->quit = 1;
 }
 
 static void callback_showfps_back(menu_t *caller_menu) {
+    playMenuSound_back();
     caller_menu->quit = 1;
 }
 
@@ -484,12 +510,14 @@ static void callback_scaler(menu_t *caller_menu) {
 
     menu->selected_entry = selectedscaler; 
     
+    playMenuSound_in();
     menu_main(menu);
 
     delete_menu(menu);
 }
 
 static void callback_selectedscaler(menu_t *caller_menu) {
+    playMenuSound_ok();
     selectedscaler = caller_menu->selected_entry;
     blitter_p->setScreenRes(); /* switch to selected resolution */
     clean_menu_screen(caller_menu);
@@ -497,6 +525,7 @@ static void callback_selectedscaler(menu_t *caller_menu) {
 }
 
 static void callback_scaler_back(menu_t *caller_menu) {
+    playMenuSound_back();
     caller_menu->quit = 1;
 }
 
@@ -546,7 +575,9 @@ static void callback_dmgpalette(menu_t *caller_menu) {
 
     menu->selected_entry = currentEntryInList(menu, palname); 
     
+    playMenuSound_in();
     menu_main(menu);
+
     delete_menu(menu);
 
     for (int i = 0; i < numpalettes; ++i){
@@ -556,6 +587,7 @@ static void callback_dmgpalette(menu_t *caller_menu) {
 }
 
 static void callback_nopalette(menu_t *caller_menu) {
+    playMenuSound_ok();
     Uint32 value;
     for (int i = 0; i < 3; ++i) {
         for (int k = 0; k < 4; ++k) {
@@ -580,6 +612,7 @@ static void callback_nopalette(menu_t *caller_menu) {
 }
 
 static void callback_defaultpalette(menu_t *caller_menu) {
+    playMenuSound_ok();
     palname = "DEFAULT";
     loadPalette(palname);
     if(gameiscgb == 1){
@@ -590,6 +623,7 @@ static void callback_defaultpalette(menu_t *caller_menu) {
 }
 
 static void callback_selectedpalette(menu_t *caller_menu) {
+    playMenuSound_ok();
     palname = palettelist[caller_menu->selected_entry - 2]->d_name; // we added 2 extra entries before the list, so we do (-2).
     loadPalette(palname);
     if(gameiscgb == 1){
@@ -600,6 +634,7 @@ static void callback_selectedpalette(menu_t *caller_menu) {
 }
 
 static void callback_dmgpalette_back(menu_t *caller_menu) {
+    playMenuSound_back();
     caller_menu->quit = 1;
 }
 
@@ -631,12 +666,14 @@ static void callback_colorfilter(menu_t *caller_menu) {
 
     menu->selected_entry = colorfilter; 
     
+    playMenuSound_in();
     menu_main(menu);
 
     delete_menu(menu);
 }
 
 static void callback_selectedfilter(menu_t *caller_menu) {
+    playMenuSound_ok();
     colorfilter = caller_menu->selected_entry;
     if(gameiscgb == 1){
         caller_menu->quit = 0;
@@ -646,6 +683,7 @@ static void callback_selectedfilter(menu_t *caller_menu) {
 }
 
 static void callback_colorfilter_back(menu_t *caller_menu) {
+    playMenuSound_back();
     caller_menu->quit = 1;
 }
 
@@ -695,7 +733,9 @@ static void callback_dmgborderimage(menu_t *caller_menu) {
 
     menu->selected_entry = currentEntryInList(menu, dmgbordername); 
     
+    playMenuSound_in();
     menu_main(menu);
+
     delete_menu(menu);
 
     for (int i = 0; i < numdmgborders; ++i){
@@ -705,6 +745,7 @@ static void callback_dmgborderimage(menu_t *caller_menu) {
 }
 
 static void callback_nodmgborder(menu_t *caller_menu) {
+    playMenuSound_ok();
     dmgbordername = "NONE";
     if(gameiscgb == 1){
         caller_menu->quit = 1;
@@ -716,6 +757,7 @@ static void callback_nodmgborder(menu_t *caller_menu) {
 }
 
 static void callback_defaultdmgborder(menu_t *caller_menu) {
+    playMenuSound_ok();
     dmgbordername = "DEFAULT";
     if(gameiscgb == 1){
         caller_menu->quit = 1;
@@ -727,6 +769,7 @@ static void callback_defaultdmgborder(menu_t *caller_menu) {
 }
 
 static void callback_selecteddmgborder(menu_t *caller_menu) {
+    playMenuSound_ok();
     dmgbordername = dmgborderlist[caller_menu->selected_entry - 2]->d_name; // we added 2 extra entries before the list, so we do (-2).
     if(gameiscgb == 1){
         caller_menu->quit = 1;
@@ -738,6 +781,7 @@ static void callback_selecteddmgborder(menu_t *caller_menu) {
 }
 
 static void callback_dmgborderimage_back(menu_t *caller_menu) {
+    playMenuSound_back();
     caller_menu->quit = 1;
 }
 
@@ -787,7 +831,9 @@ static void callback_gbcborderimage(menu_t *caller_menu) {
 
     menu->selected_entry = currentEntryInList(menu, gbcbordername); 
     
+    playMenuSound_in();
     menu_main(menu);
+
     delete_menu(menu);
 
     for (int i = 0; i < numgbcborders; ++i){
@@ -797,6 +843,7 @@ static void callback_gbcborderimage(menu_t *caller_menu) {
 }
 
 static void callback_nogbcborder(menu_t *caller_menu) {
+    playMenuSound_ok();
     gbcbordername = "NONE";
     if(gameiscgb == 1){
         load_border(gbcbordername);
@@ -808,6 +855,7 @@ static void callback_nogbcborder(menu_t *caller_menu) {
 }
 
 static void callback_defaultgbcborder(menu_t *caller_menu) {
+    playMenuSound_ok();
     gbcbordername = "DEFAULT";
     if(gameiscgb == 1){
         load_border(gbcbordername);
@@ -819,6 +867,7 @@ static void callback_defaultgbcborder(menu_t *caller_menu) {
 }
 
 static void callback_selectedgbcborder(menu_t *caller_menu) {
+    playMenuSound_ok();
     gbcbordername = gbcborderlist[caller_menu->selected_entry - 2]->d_name; // we added 2 extra entries before the list, so we do (-2).
     if(gameiscgb == 1){
         load_border(gbcbordername);
@@ -830,6 +879,7 @@ static void callback_selectedgbcborder(menu_t *caller_menu) {
 }
 
 static void callback_gbcborderimage_back(menu_t *caller_menu) {
+    playMenuSound_back();
     caller_menu->quit = 1;
 }
 
@@ -861,17 +911,20 @@ static void callback_usebios(menu_t *caller_menu) {
 
     menu->selected_entry = biosenabled; 
     
+    playMenuSound_in();
     menu_main(menu);
 
     delete_menu(menu);
 }
 
 static void callback_selectedbios(menu_t *caller_menu) {
+    playMenuSound_ok();
     biosenabled = caller_menu->selected_entry;
     caller_menu->quit = 1;
 }
 
 static void callback_usebios_back(menu_t *caller_menu) {
+    playMenuSound_back();
     caller_menu->quit = 1;
 }
 
@@ -903,17 +956,20 @@ static void callback_ghosting(menu_t *caller_menu) {
 
     menu->selected_entry = ghosting; 
     
+    playMenuSound_in();
     menu_main(menu);
 
     delete_menu(menu);
 }
 
 static void callback_selectedghosting(menu_t *caller_menu) {
+    playMenuSound_ok();
     ghosting = caller_menu->selected_entry;
     caller_menu->quit = 1;
 }
 
 static void callback_ghosting_back(menu_t *caller_menu) {
+    playMenuSound_back();
     caller_menu->quit = 1;
 }
 
@@ -1015,12 +1071,14 @@ static void callback_about(menu_t *caller_menu) {
     menu_entry->selectable = 0;
     menu_entry->callback = callback_about_back;
     
+    playMenuSound_in();
     menu_main(menu);
 
     delete_menu(menu);
 }
 
 static void callback_about_back(menu_t *caller_menu) {
+    playMenuSound_back();
     caller_menu->quit = 1;
 }
 
@@ -1058,12 +1116,14 @@ static void callback_cheats(menu_t *caller_menu) {
     menu_add_entry(menu, menu_entry);
     menu_entry->callback = callback_cheats_back;
     
+    playMenuSound_in();
     menu_main(menu);
     
     delete_menu(menu);
 }
 
 static void callback_cheats_back(menu_t *caller_menu) {
+    playMenuSound_back();
     caller_menu->quit = 1;
 }
 
@@ -1193,6 +1253,7 @@ static void callback_gamegenie(menu_t *caller_menu) {
         menu->entries[10 + offset]->selected_entry = ggcheats[8 + offset2];
     }
     
+    playMenuSound_in();
     menu_cheat(menu);
 
     delete_menu(menu);
@@ -1200,7 +1261,7 @@ static void callback_gamegenie(menu_t *caller_menu) {
 
 static void callback_gamegenie_confirm(menu_t *caller_menu) {
 
-    if (editmode == 0){ //user pressed START, he wants to apply cheats   
+    if (editmode == 0){ //user pressed START, he wants to apply cheats
 
         menu_t *menu;
         menu_entry_t *menu_entry;
@@ -1217,6 +1278,7 @@ static void callback_gamegenie_confirm(menu_t *caller_menu) {
         menu_entry->selectable = 0;
         menu_entry->callback = callback_gamegenie_apply;
         
+        playMenuSound_in();
         menu_main(menu);
 
         delete_menu(menu);
@@ -1277,6 +1339,7 @@ static void callback_gamegenie_apply(menu_t *caller_menu) {
         } 
     }
 
+    playMenuSound_ok();
     gambatte_p->setGameGenie(multicheat); // apply cheats
 
     // clear all codes after applying them
@@ -1291,11 +1354,13 @@ static void callback_gamegenie_edit(menu_t *caller_menu) {
 
     if(editmode == 0){ //enter edit mode
 
+        playMenuSound_in();
         selectedcode = floor(caller_menu->selected_entry / 11);
         editmode = 1;
 
     } else if (editmode == 1){ //exit edit mode
 
+        playMenuSound_ok();
         editmode = 0;
         int loop = 0;
         int i, offset, offset2;
@@ -1333,6 +1398,7 @@ static void callback_gamegenie_back(menu_t *caller_menu) {
 
     if(editmode == 0){ // exit to previous menu screen
 
+        playMenuSound_back();
         selectedcode = 0;
         /*int i;
 
@@ -1345,6 +1411,7 @@ static void callback_gamegenie_back(menu_t *caller_menu) {
 
     } else if (editmode == 1){ // exit edit mode without saving changes
 
+        playMenuSound_back();
         editmode = 0;
         int loop = 0;
         int i, offset, offset2;
@@ -1457,6 +1524,7 @@ static void callback_gameshark(menu_t *caller_menu) {
         menu->entries[9 + offset]->selected_entry = gscheats[7 + offset2]; 
     }
     
+    playMenuSound_in();
     menu_cheat(menu);
 
     delete_menu(menu);
@@ -1465,8 +1533,10 @@ static void callback_gameshark(menu_t *caller_menu) {
 static void callback_gameshark_enabledisable(menu_t *caller_menu) {
 
     if (caller_menu->entries[caller_menu->selected_entry]->selected_entry == 0) {
+        playMenuSound_in();
         caller_menu->entries[caller_menu->selected_entry]->selected_entry = 1;
     } else {
+        playMenuSound_back();
         caller_menu->entries[caller_menu->selected_entry]->selected_entry = 0;
     }
     gscheatsenabled[(caller_menu->selected_entry / 10)] = caller_menu->entries[caller_menu->selected_entry]->selected_entry; //store the value
@@ -1478,11 +1548,13 @@ static void callback_gameshark_edit(menu_t *caller_menu) {
 
     if(editmode == 0){ //enter edit mode
 
+        playMenuSound_in();
         selectedcode = floor(caller_menu->selected_entry / 10);
         editmode = 1;
 
     } else if (editmode == 1){ //exit edit mode
 
+        playMenuSound_ok();
         editmode = 0;
         int loop = 0;
         int i, offset, offset2;
@@ -1520,6 +1592,7 @@ static void callback_gameshark_back(menu_t *caller_menu) {
 
     if(editmode == 0){ // exit to previous menu screen and apply cheats
 
+        playMenuSound_back();
         selectedcode = 0;
         std::string a1 = "0", a2 = "0", a3 = "0", a4 = "0", a5 = "0", a6 = "0", a7 = "0", a8 = "0";
         int i, offset, enabled;
@@ -1552,6 +1625,7 @@ static void callback_gameshark_back(menu_t *caller_menu) {
 
     } else if (editmode == 1){ // exit edit mode without saving changes
 
+        playMenuSound_back();
         editmode = 0;
         int loop = 0;
         int i, offset, offset2;

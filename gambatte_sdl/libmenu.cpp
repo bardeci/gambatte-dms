@@ -10,11 +10,15 @@
 #include <assert.h>
 #include <SDL/SDL.h>
 #include <SDL/SDL_image.h>
+#include <SDL/SDL_mixer.h>
 #include <math.h>
 
 #include "libmenu.h"
 #include "SFont.h"
 #include "menu.h"
+
+#include "src/audiosink.h"
+#include "menusounds.h"
 
 static void display_menu(SDL_Surface *surface, menu_t *menu);
 static void display_menu_cheat(SDL_Surface *surface, menu_t *menu);
@@ -29,10 +33,17 @@ void load_border(std::string borderfilename);
 static int quit_menu;
 static SDL_Surface *screen = NULL;
 static SFont_Font* font = NULL;
+static SDL_RWops *RWops;
 
 SDL_Surface *menuscreen;
 SDL_Surface *menuscreencolored;
 SDL_Surface *surface_menuinout;
+
+Mix_Chunk *menusound_intro = NULL;
+Mix_Chunk *menusound_in = NULL;
+Mix_Chunk *menusound_back = NULL;
+Mix_Chunk *menusound_move = NULL;
+Mix_Chunk *menusound_ok = NULL;
 
 // Default config values
 int selectedscaler = 0, showfps = 0, ghosting = 1, biosenabled = 0, colorfilter = 0, gameiscgb = 0;
@@ -45,6 +56,73 @@ int gscheats[NUM_GS_CODES *8] = {0};
 int gscheatsenabled[NUM_GS_CODES] = {0};
 int menuin = -1, menuout = -1;
 
+
+void openMenuAudio(){
+	Mix_OpenAudio(44100, AUDIO_S16SYS, 2, 1792);
+	Mix_AllocateChannels(2);
+}
+
+void closeMenuAudio(){
+	Mix_CloseAudio();
+}
+
+void loadMenuSounds() {
+    RWops = SDL_RWFromMem(ogg_menu_intro, 8591);
+    menusound_intro = Mix_LoadWAV_RW(RWops, 1);
+
+    RWops = SDL_RWFromMem(ogg_menu_in, 6456);
+    menusound_in = Mix_LoadWAV_RW(RWops, 1);
+
+    RWops = SDL_RWFromMem(ogg_menu_back, 6177);
+    menusound_back = Mix_LoadWAV_RW(RWops, 1);
+
+    RWops = SDL_RWFromMem(ogg_menu_move, 4725);
+    menusound_move = Mix_LoadWAV_RW(RWops, 1);
+
+    RWops = SDL_RWFromMem(ogg_menu_ok, 10826);
+    menusound_ok = Mix_LoadWAV_RW(RWops, 1);  
+}
+
+void freeMenuSounds(){
+	Mix_FreeChunk(menusound_intro);
+	Mix_FreeChunk(menusound_in);
+	Mix_FreeChunk(menusound_back);
+	Mix_FreeChunk(menusound_move);
+	Mix_FreeChunk(menusound_ok);
+}
+
+void playMenuSound_intro(){
+	Mix_PlayChannel(-1, menusound_intro, 0);
+}
+
+void playMenuSound_in(){
+	Mix_PlayChannel(-1, menusound_in, 0);
+}
+
+void playMenuSound_back(){
+	Mix_PlayChannel(-1, menusound_back, 0);
+}
+
+void playMenuSound_move(){
+	Mix_PlayChannel(-1, menusound_move, 0);
+}
+
+void playMenuSound_ok(){
+	Mix_PlayChannel(-1, menusound_ok, 0);
+}
+
+void switchToMenuAudio(){
+	SDL_PauseAudio(1);
+    SDL_CloseAudio(); //disable emulator audio, otherwise menu audio wont work
+    openMenuAudio(); //enable menu audio
+    loadMenuSounds();
+}
+
+void switchToEmulatorAudio(){
+	freeMenuSounds();
+    closeMenuAudio();//disable menu audio, otherwise emulator audio wont work
+    reopenAudio(); //re-enable emulator audio before resuming emulation, otherwise gambatte will freeze.
+}
 
 void libmenu_set_screen(SDL_Surface *set_screen) {
 	screen = set_screen;
@@ -84,8 +162,14 @@ void clean_menu_screen_cheat(menu_t *menu){
 
 int menu_main(menu_t *menu) {
     SDL_Event event;
-	int dirty, loop;
+	int dirty, loop, i;
 	loop = 0;
+	int num_selectable = 0;
+	for (i = 0; i < menu->n_entries; i++) {
+		if(menu->entries[i]->selectable == 1){
+			num_selectable++; // count num of selectable entries
+		}
+	}
 	while((menu->entries[menu->selected_entry]->selectable == 0) && (loop < menu->n_entries)) { //ensure we select a selectable entry, if there is any.
 		if (menu->selected_entry < menu->n_entries - 1) {
 			++menu->selected_entry;
@@ -106,6 +190,9 @@ int menu_main(menu_t *menu) {
 				case SDL_KEYDOWN:
 					switch(event.key.keysym.sym) {
 						case SDLK_UP:
+							if(num_selectable > 0){
+								playMenuSound_move();
+							}
 							loop = 0;
 							do {
 								if (menu->selected_entry > 0) {
@@ -118,6 +205,9 @@ int menu_main(menu_t *menu) {
 							dirty = 1;
 							break;
 						case SDLK_DOWN:
+							if(num_selectable > 0){
+								playMenuSound_move();
+							}
 							loop = 0;
 							do {
 								if (menu->selected_entry < menu->n_entries - 1) {
@@ -180,7 +270,7 @@ int menu_main(menu_t *menu) {
 		if (dirty) {
 			redraw(menu);
 		}
-		SDL_Delay(1);
+		SDL_Delay(0);
 	}
 	SDL_BlitSurface(menuscreen, NULL, surface_menuinout, NULL);
 	quit_menu = 0;
@@ -223,6 +313,7 @@ int menu_cheat(menu_t *menu) {
 				case SDL_KEYDOWN:
 					switch(event.key.keysym.sym) {
 						case SDLK_LEFT:
+							playMenuSound_move();
 							if (editmode == 0){
 								if (collimit == 10){ // gameshark
 									if ((menu->selected_entry % collimit == 0) || (menu->selected_entry == 0)){
@@ -247,6 +338,7 @@ int menu_cheat(menu_t *menu) {
 							dirty = 1;
 							break;
 						case SDLK_RIGHT:
+							playMenuSound_move();
 							if (editmode == 0){
 								if (collimit == 10){ // gameshark
 									if ((menu->selected_entry % collimit == 0) || (menu->selected_entry == 0)){
@@ -271,6 +363,7 @@ int menu_cheat(menu_t *menu) {
 							dirty = 1;
 							break;
 						case SDLK_UP:
+							playMenuSound_move();
 							if (editmode == 0){
 								for (i = 0; i < collimit; i++) { // go up 1 line
 									if (menu->selected_entry > 0) {
@@ -293,6 +386,7 @@ int menu_cheat(menu_t *menu) {
 							dirty = 1;
 							break;
 						case SDLK_DOWN:
+							playMenuSound_move();
 							if (editmode == 0){
 								for (i = 0; i < collimit; i++) { // go down 1 line
 									if (menu->selected_entry < menu->n_entries - 1) {
@@ -351,7 +445,7 @@ int menu_cheat(menu_t *menu) {
 		if ((dirty) || ((editmode == 1) && ((blink == 0) || (blink == floor(BLINK_SPEED * 3 / 4))))) {
 			redraw_cheat(menu);
 		}
-		SDL_Delay(10);
+		SDL_Delay(0);
 	}
 	quit_menu = 0;
 	clean_menu_screen_cheat(menu);
