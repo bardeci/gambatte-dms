@@ -81,6 +81,8 @@ bool get_bootloader_from_file(void* userdata, bool isgbc, uint8_t* data, uint32_
 		return false;
 	}
 
+	is_using_bios = 1;
+
 	return true;
 }
 
