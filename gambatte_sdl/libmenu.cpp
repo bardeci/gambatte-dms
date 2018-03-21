@@ -20,6 +20,8 @@
 #include "src/audiosink.h"
 #include "menusounds.h"
 
+#include <fstream>
+
 static void display_menu(SDL_Surface *surface, menu_t *menu);
 static void display_menu_cheat(SDL_Surface *surface, menu_t *menu);
 static void redraw(menu_t *menu);
@@ -36,8 +38,10 @@ static SFont_Font* font = NULL;
 static SDL_RWops *RWops;
 
 SDL_Surface *menuscreen;
-SDL_Surface *menuscreencolored;
 SDL_Surface *surface_menuinout;
+SDL_Surface *statepreview;
+SDL_Surface *textoverlay;
+SDL_Surface *textoverlaycolored;
 
 Mix_Chunk *menusound_intro = NULL;
 Mix_Chunk *menusound_in = NULL;
@@ -54,8 +58,70 @@ int numcodes_gg = NUM_GG_CODES, numcodes_gs = NUM_GS_CODES, selectedcode = 0, ed
 int ggcheats[NUM_GG_CODES *9] = {0};
 int gscheats[NUM_GS_CODES *8] = {0};
 int gscheatsenabled[NUM_GS_CODES] = {0};
-int menuin = -1, menuout = -1;
+int menuin = -1, menuout = -1, showoverlay = -1, overlay_inout = 0;
 
+
+std::string getSaveStateFilename(int statenum){
+	std::string result = gambatte_p->getSaveStatePath(statenum);
+	return result;
+}
+
+void getSaveStatePreview(int statenum){
+
+	uint32_t pixels[80 * 72];
+	std::ifstream file(getSaveStateFilename(statenum).c_str(), std::ios_base::binary);
+	if (file) {
+		file.ignore(5);
+		file.read(reinterpret_cast<char*>(pixels), sizeof pixels);
+		SDL_FillRect(statepreview, NULL, 0xA0A0A0);
+		memcpy((uint32_t*)statepreview->pixels, pixels, statepreview->h * statepreview->pitch );
+		
+	} else {
+		uint32_t hlcolor;
+		if(gameiscgb == 1){
+			hlcolor = SDL_MapRGB(statepreview->format, 232, 16, 16);
+		} else {
+			hlcolor = SDL_MapRGB(statepreview->format, 168, 168, 168);
+		}
+		SDL_FillRect(statepreview, NULL, hlcolor);
+		SFont_WriteCenter(statepreview, font, 32, "No data");
+	}
+}
+
+void printSaveStatePreview(SDL_Surface *surface, int posx, int posy){
+	SFont_Write(surface, font, posx + 13, posy, "Preview");
+	SDL_Rect rect;
+	rect.x = posx;
+    rect.y = posy;
+    rect.w = 82;
+    rect.h = 81;
+    invert_rect(surface, &rect);
+    //SDL_FillRect(surface, &rect, 0x000000);
+    rect.x = posx + 1;
+    rect.y = posy + 8;
+    rect.w = 80;
+    rect.h = 72;
+    SDL_BlitSurface(statepreview, NULL, surface, &rect);
+}
+
+void printOverlay(const char *text){
+	uint32_t hlcolor = SDL_MapRGB(textoverlay->format, 248, 252, 248);
+	SDL_FillRect(textoverlay, NULL, hlcolor);
+	SFont_WriteCenter(textoverlay, font, 0, text);
+	SDL_Rect rect;
+	rect.x = 0;
+    rect.y = 0;
+    rect.w = 160;
+    rect.h = 8;
+	invert_rect(textoverlay, &rect);
+	if(gameiscgb == 0){
+		convert_bw_surface_colors(textoverlay, textoverlaycolored, menupalblack, menupaldark, menupallight, menupalwhite, 0); //if game is DMG, then apply DMG palette to overlay
+	} else if (gameiscgb == 1){
+		SDL_BlitSurface(textoverlay, NULL, textoverlaycolored, NULL);
+	}
+	overlay_inout = 0;
+	showoverlay = 0; //start animation
+}
 
 void openMenuAudio(){
 	Mix_OpenAudio(44100, AUDIO_S16SYS, 2, 1792);
@@ -519,7 +585,7 @@ static void display_menu(SDL_Surface *surface, menu_t *menu) {
     }
 
     const int highlight_margin = 0;
-    paint_titlebar();
+    paint_titlebar(surface);
     SFont_WriteCenter(surface, font, (line * font_height), menu->header);
     line ++;
     SFont_WriteCenter(surface, font, (line * font_height), menu->title);
@@ -544,14 +610,26 @@ static void display_menu(SDL_Surface *surface, menu_t *menu) {
 		} else {
 			text = menu->entries[i]->text;
 		}
-		SFont_WriteCenter(surface, font, line * font_height, text);
-		if ((menu->selected_entry == i) && (menu->entries[i]->selectable == 1)){ // only highlight selected entry if it's selectable
-			width = SFont_TextWidth(font, text);
-			highlight.x = ((surface->w - width) / 2) - highlight_margin;
-			highlight.y = line * font_height;
-			highlight.w = width + (highlight_margin * 2);
-			highlight.h = font_height;
-			invert_rect(surface, &highlight);
+		if(strcmp(menu->title, "Select State") == 0){ // select state screen
+			SFont_Write(surface, font, 8, line * font_height, text);
+			if ((menu->selected_entry == i) && (menu->entries[i]->selectable == 1)){ // only highlight selected entry if it's selectable
+				width = SFont_TextWidth(font, text);
+				highlight.x = 8 - highlight_margin;
+				highlight.y = line * font_height;
+				highlight.w = width + (highlight_margin * 2);
+				highlight.h = font_height;
+				invert_rect(surface, &highlight);
+			}
+		} else { // rest of menu screens
+			SFont_WriteCenter(surface, font, line * font_height, text);
+			if ((menu->selected_entry == i) && (menu->entries[i]->selectable == 1)){ // only highlight selected entry if it's selectable
+				width = SFont_TextWidth(font, text);
+				highlight.x = ((surface->w - width) / 2) - highlight_margin;
+				highlight.y = line * font_height;
+				highlight.w = width + (highlight_margin * 2);
+				highlight.h = font_height;
+				invert_rect(surface, &highlight);
+			}
 		}
 		line++;
 	}
@@ -559,6 +637,12 @@ static void display_menu(SDL_Surface *surface, menu_t *menu) {
 	if(downarrow == 1){
 	    SFont_WriteCenter(surface, font, line * font_height, "}"); // down arrow
 	}
+
+	if(strcmp(menu->title, "Select State") == 0){ // select state screen
+		getSaveStatePreview(menu->selected_entry);
+		printSaveStatePreview(surface, 71, 32);
+	}
+	
 
 	for (i = 0; i < menu->n_entries; i++) {
 		if(menu->entries[i]->selectable == 1){
@@ -655,7 +739,7 @@ static void display_menu_cheat(SDL_Surface *surface, menu_t *menu) {
     }
 
     const int highlight_margin = 0;
-    paint_titlebar();
+    paint_titlebar(surface);
     SFont_WriteCenter(surface, font, (line * font_height), menu->header);
     line ++;
     if(editmode == 1){
@@ -884,21 +968,29 @@ void callback_menu_quit(menu_t *caller_menu) {
 }
 
 void set_menu_palette(uint32_t valwhite, uint32_t vallight, uint32_t valdark, uint32_t valblack) {
-		menupalwhite = valwhite;
-		menupallight = vallight;
-		menupaldark = valdark;
-		menupalblack = valblack;
+	menupalwhite = valwhite;
+	menupallight = vallight;
+	menupaldark = valdark;
+	menupalblack = valblack;
+	if(gameiscgb == 0){
+		convert_bw_surface_colors(textoverlay, textoverlaycolored, menupalblack, menupaldark, menupallight, menupalwhite, 0); //if game is DMG, then apply DMG palette to overlay
+	}
 }
 
 void init_menusurfaces(){
 	menuscreen = SDL_CreateRGBSurface(SDL_SWSURFACE, 160, 144, 16, 0, 0, 0, 0);
-	menuscreencolored = SDL_CreateRGBSurface(SDL_SWSURFACE, 160, 144, 32, 0, 0, 0, 0);
 	surface_menuinout = SDL_CreateRGBSurface(SDL_SWSURFACE, 160, 144, 16, 0, 0, 0, 0);
+	statepreview = SDL_CreateRGBSurface(SDL_SWSURFACE, 80, 72, 32, 0, 0, 0, 0);
+	textoverlay = SDL_CreateRGBSurface(SDL_SWSURFACE, 160, 8, 16, 0, 0, 0, 0);
+	textoverlaycolored = SDL_CreateRGBSurface(SDL_SWSURFACE, 160, 8, 16, 0, 0, 0, 0);
 }
 
-void free_menusurfaces(){
+void free_menusurfaces(){ //currently unused
 	SDL_FreeSurface(menuscreen);
-	SDL_FreeSurface(menuscreencolored);
+	SDL_FreeSurface(surface_menuinout);
+	SDL_FreeSurface(statepreview);
+	SDL_FreeSurface(textoverlay);
+	SDL_FreeSurface(textoverlaycolored);
 }
 
 int currentEntryInList(menu_t *menu, std::string fname){
@@ -918,18 +1010,25 @@ int currentEntryInList(menu_t *menu, std::string fname){
     return 0;
 }
 
-void paint_titlebar(){
+void paint_titlebar(SDL_Surface *surface){
+	uint32_t hlcolor = SDL_MapRGB(surface->format, 255, 255, 255);
+	SDL_FillRect(menuscreen, NULL, hlcolor);
+	if(gameiscgb == 1){
+		hlcolor = SDL_MapRGB(surface->format, 64, 128, 255);
+	} else {
+		hlcolor = SDL_MapRGB(surface->format, 168, 168, 168);
+	}
     SDL_Rect rect;
     rect.x = 0;
     rect.y = 0;
     rect.w = 160;
     rect.h = 16;
-    SDL_FillRect(menuscreen, &rect, 0xA0A0A0);
+    SDL_FillRect(menuscreen, &rect, hlcolor);
     rect.x = 0;
     rect.y = 136;
     rect.w = 160;
     rect.h = 8;
-    SDL_FillRect(menuscreen, &rect, 0xA0A0A0);
+    SDL_FillRect(menuscreen, &rect, hlcolor);
 }
 
 void load_border(std::string borderfilename){ //load border from menu
@@ -1087,6 +1186,27 @@ void putpixel(SDL_Surface *surface, int x, int y, uint32_t pixel)
             break;
     }
 }
+
+uint32_t fixcolor(SDL_Surface *surface, uint32_t srccolor){
+	uint8_t r, g, b;
+    r = (srccolor >> 16) & 0xff;
+    g = (srccolor >> 8) & 0xff;
+    b = srccolor & 0xff;
+    uint32_t dstcolor = SDL_MapRGB(surface->format, r, g, b);
+    return dstcolor;
+}
+
+uint32_t mixfixcolor(SDL_Surface *surface, uint32_t srccolor1, uint32_t srccolor2){
+	uint8_t r1, g1, b1, r2, g2, b2;
+    r1 = (srccolor1 >> 16) & 0xff;
+    g1 = (srccolor1 >> 8) & 0xff;
+    b1 = srccolor1 & 0xff;
+    r2 = (srccolor2 >> 16) & 0xff;
+    g2 = (srccolor2 >> 8) & 0xff;
+    b2 = srccolor2 & 0xff;
+    uint32_t dstcolor = SDL_MapRGB(surface->format, (r1 + r2)/2, (g1 + g2)/2, (b1 + b2)/2);
+    return dstcolor;
+}
  
 //----------------------------------------------------------------------------------------
 // CALL THIS FUNCTION LIKE SO TO SWAP BLACK->WHITE
@@ -1099,47 +1219,84 @@ void putpixel(SDL_Surface *surface, int x, int y, uint32_t pixel)
 // uint32_t repl_col_black = SDL_MapRGB(my_surface->format, black_r, black_g, black_b);
 // uint32_t repl_col_white = SDL_MapRGB(my_surface->format, white_r, white_g, white_b);
 // convert_bw_surface_colors(my_surface, repl_col_black, repl_col_white);
+// MODE parameter: 0 = converts to 4 color shades. 1 = converts to 7 color shades.
 //----------------------------------------------------------------------------------------
-void convert_bw_surface_colors(SDL_Surface *surface, SDL_Surface *surface2, const uint32_t repl_col_black, const uint32_t repl_col_dark, const uint32_t repl_col_light, const uint32_t repl_col_white)
+void convert_bw_surface_colors(SDL_Surface *surface, SDL_Surface *surface2, const uint32_t repl_col_black, const uint32_t repl_col_dark, const uint32_t repl_col_light, const uint32_t repl_col_white, int mode)
 {
-    const uint32_t col_black = SDL_MapRGB(surface->format, 0x40, 0x40, 0x40);
-    const uint32_t col_dark = SDL_MapRGB(surface->format, 0x80, 0x80, 0x80);
-    const uint32_t col_light = SDL_MapRGB(surface->format, 0xC0, 0xC0, 0xC0);
-    const uint32_t col_white = SDL_MapRGB(surface->format, 0xff, 0xff, 0xff);
- 
-    SDL_LockSurface(surface);
-    SDL_LockSurface(surface2);
- 
-    int x,y;
-    for (y=0; y < surface->h; ++y)
-    {
-        for (x=0; x < surface->w; ++x)
-        {
-            const uint32_t pix = getpixel(surface, x, y);
-            uint32_t new_pix = pix;
- 
-            if (pix <= col_black)
-                new_pix = repl_col_black;
-            else if (pix <= col_dark)
-                new_pix = repl_col_dark;
-            else if (pix <= col_light)
-                new_pix = repl_col_light;
-            else if (pix <= col_white)
-                new_pix = repl_col_white;
- 
-            putpixel(surface2, x, y, new_pix);
-        }
-    }
- 
-    SDL_UnlockSurface(surface);
-    SDL_UnlockSurface(surface2);
-
-    SDL_Rect rect;
-    rect.x = 0;
-    rect.y = 0;
-    rect.w = 160;
-    rect.h = 144;
-    SDL_BlitSurface(surface2, NULL, surface, &rect);
+	if(mode == 0){
+	    uint32_t col_black = SDL_MapRGB(surface->format, 63, 63, 63);
+	    uint32_t col_dark = SDL_MapRGB(surface->format, 127, 127, 127);
+	    uint32_t col_light = SDL_MapRGB(surface->format, 191, 191, 191);
+	    uint32_t col_white = SDL_MapRGB(surface->format, 255, 255, 255);
+	 
+	    SDL_LockSurface(surface);
+	    SDL_LockSurface(surface2);
+	 
+	    int x,y;
+	    for (y=0; y < surface->h; ++y)
+	    {
+	        for (x=0; x < surface->w; ++x)
+	        {
+	            const uint32_t pix = getpixel(surface, x, y);
+	            uint32_t new_pix = pix;
+	 
+	            if (pix <= col_black)
+	                new_pix = fixcolor(surface2, repl_col_black);
+	            else if (pix <= col_dark)
+	                new_pix = fixcolor(surface2, repl_col_dark);
+	            else if (pix <= col_light)
+	                new_pix = fixcolor(surface2, repl_col_light);
+	            else if (pix <= col_white)
+	                new_pix = fixcolor(surface2, repl_col_white);
+	 
+	            putpixel(surface2, x, y, new_pix);
+	        }
+	    }
+	 
+	    SDL_UnlockSurface(surface);
+	    SDL_UnlockSurface(surface2);
+	} else if(mode == 1){
+		uint32_t col_1 = SDL_MapRGB(surface->format, 36, 36, 36);
+		uint32_t col_2 = SDL_MapRGB(surface->format, 72, 72, 72);
+	    uint32_t col_3 = SDL_MapRGB(surface->format, 109, 109, 109);
+	    uint32_t col_4 = SDL_MapRGB(surface->format, 145, 145, 145);
+	    uint32_t col_5 = SDL_MapRGB(surface->format, 182, 182, 182);
+	    uint32_t col_6 = SDL_MapRGB(surface->format, 218, 218, 218);
+	    uint32_t col_7 = SDL_MapRGB(surface->format, 255, 255, 255);
+	 
+	    SDL_LockSurface(surface);
+	    SDL_LockSurface(surface2);
+	 
+	    int x,y;
+	    for (y=0; y < surface->h; ++y)
+	    {
+	        for (x=0; x < surface->w; ++x)
+	        {
+	            const uint32_t pix = getpixel(surface, x, y);
+	            uint32_t new_pix = pix;
+	 
+	            if (pix <= col_1)
+	                new_pix = fixcolor(surface2, repl_col_black);
+	            else if (pix <= col_2)
+	                new_pix = mixfixcolor(surface2, repl_col_black, repl_col_dark);
+	            else if (pix <= col_3)
+	                new_pix = fixcolor(surface2, repl_col_dark);
+	            else if (pix <= col_4)
+	                new_pix = mixfixcolor(surface2, repl_col_dark, repl_col_light);
+	            else if (pix <= col_5)
+	                new_pix = fixcolor(surface2, repl_col_light);
+	            else if (pix <= col_6)
+	                new_pix = mixfixcolor(surface2, repl_col_light, repl_col_white);
+	            else if (pix <= col_7)
+	                new_pix = fixcolor(surface2, repl_col_white);
+	 
+	            putpixel(surface2, x, y, new_pix);
+	        }
+	    }
+	 
+	    SDL_UnlockSurface(surface);
+	    SDL_UnlockSurface(surface2);
+	}
 }
 
 /********************************END OF COLORIZE MENU***********************************/

@@ -45,8 +45,9 @@ struct Menu_t {
 };
 
 extern SDL_Surface *menuscreen;
-extern SDL_Surface *menuscreencolored;
 extern SDL_Surface *surface_menuinout;
+extern SDL_Surface *textoverlay;
+extern SDL_Surface *textoverlaycolored;
 extern int selectedscaler, showfps, ghosting, biosenabled, colorfilter, gameiscgb;
 extern uint32_t menupalblack, menupaldark, menupallight, menupalwhite;
 extern std::string dmgbordername, gbcbordername, palname, homedir;
@@ -54,7 +55,7 @@ extern int numcodes_gg, numcodes_gs, selectedcode, editmode;
 extern int ggcheats[NUM_GG_CODES*9];
 extern int gscheats[NUM_GS_CODES*8];
 extern int gscheatsenabled[NUM_GS_CODES];
-extern int menuin, menuout;
+extern int menuin, menuout, showoverlay, overlay_inout;
 
 
 
@@ -79,9 +80,9 @@ void set_menu_palette(uint32_t valwhite, uint32_t vallight, uint32_t valdark, ui
 void init_menusurfaces();
 void free_menusurfaces();
 void clean_menu_screen(menu_t *menu);
-void paint_titlebar();
+void paint_titlebar(SDL_Surface *surface);
 void paint_titlebar_cheat();
-void convert_bw_surface_colors(SDL_Surface *surface, SDL_Surface *surface2, const uint32_t repl_col_black, const uint32_t repl_col_dark, const uint32_t repl_col_light, const uint32_t repl_col_white);
+void convert_bw_surface_colors(SDL_Surface *surface, SDL_Surface *surface2, const uint32_t repl_col_black, const uint32_t repl_col_dark, const uint32_t repl_col_light, const uint32_t repl_col_white, int mode);
 void load_border(std::string borderfilename);
 void paint_border(SDL_Surface *surface);
 uint32_t convert_hexcolor(SDL_Surface *surface, const uint32_t color);
@@ -105,6 +106,11 @@ void playMenuSound_back();
 void playMenuSound_move();
 void playMenuSound_ok();
 void playMenuSound_cancel();
+
+std::string getSaveStateFilename(int statenum);
+void getSaveStatePreview(int statenum);
+void printSaveStatePreview(SDL_Surface *surface);
+void printOverlay(const char *text);
 
 
 #ifdef __cplusplus
