@@ -117,6 +117,9 @@ public:
 	/** Writes persistent cartridge data to disk. Done implicitly on ROM close. */
 	void saveSavedata();
 
+	/** Returns the savestate path for <statenum> slot */
+	std::string getSaveStatePath(int statenum);
+
 	/**
 	  * Saves emulator state to the state slot selected with selectState().
 	  * The data will be stored in the directory given by setSaveDir().
@@ -128,12 +131,16 @@ public:
 	  * @return success
 	  */
 	bool saveState(gambatte::uint_least32_t const *videoBuf, std::ptrdiff_t pitch);
+	/** NoOsd version does not create overlays */
+	bool saveState_NoOsd(gambatte::uint_least32_t const *videoBuf, std::ptrdiff_t pitch);
 
 	/**
 	  * Loads emulator state from the state slot selected with selectState().
 	  * @return success
 	  */
 	bool loadState();
+	/** NoOsd version does not create overlays */
+	bool loadState_NoOsd();
 
 	/**
 	  * Saves emulator state to the file given by 'filepath'.
@@ -158,6 +165,8 @@ public:
 	  * There are 10 such slots, numbered from 0 to 9 (periodically extended for all n).
 	  */
 	void selectState(int n);
+	/** NoOsd version does not create overlays */
+	void selectState_NoOsd(int n);
 
 	/**
 	  * Current state slot selected with selectState().
