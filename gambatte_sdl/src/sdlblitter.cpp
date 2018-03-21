@@ -168,7 +168,7 @@ void SdlBlitter::setBufferDimensions() {
 	}
 
 	menu_set_screen(screen);
-	//surface = SDL_CreateRGBSurface(SDL_SWSURFACE, 160, 144, 16, 0, 0, 0, 0); <---redundant
+
 	init_ghostframes();
 	init_cfilter();
 }
@@ -308,7 +308,7 @@ void store_lastframe2(SDL_Surface *surface) { // test function - currently not u
 	SDL_SetAlpha(surface, SDL_SRCALPHA, SDL_ALPHA_OPAQUE);
 }
 
-void anim_menuin(SDL_Surface *surface) { // test function - surface = game surface - menuscreen = menu surface
+void anim_menuin(SDL_Surface *surface) { 
 	
 	if(menuin >= 0){
 		menuin += 16;
@@ -334,7 +334,7 @@ void anim_menuin(SDL_Surface *surface) { // test function - surface = game surfa
 	}
 }
 
-void anim_menuout(SDL_Surface *surface) { // test function - surface = game surface - menuscreen = menu surface
+void anim_menuout(SDL_Surface *surface) { 
 
 	if(menuout >= 0){
 		menuout += 16;
@@ -355,6 +355,35 @@ void anim_menuout(SDL_Surface *surface) { // test function - surface = game surf
 	}
 	if(menuout >= 144){
 		menuout = -1;
+	}
+}
+
+void anim_textoverlay(SDL_Surface *surface) { 
+
+	if(showoverlay >= 0){
+		SDL_Rect dstrect;
+		dstrect.x = 0;
+		if(showoverlay - 8 > 0){
+			dstrect.y = 0;
+		} else {
+			dstrect.y = showoverlay - 8;
+		}
+		dstrect.w = 160;
+		dstrect.h = 8;
+		if(showoverlay > 0){
+			SDL_BlitSurface(textoverlaycolored, NULL, surface, &dstrect);
+		}
+	}
+	if(showoverlay >= 64){
+		overlay_inout = 1;
+	}
+	if(overlay_inout == 0){
+		showoverlay += 1;
+	} else if (overlay_inout == 1){
+		showoverlay -= 1;
+		if(showoverlay == -1){ //animation ended
+			overlay_inout = 0;
+		}
 	}
 }
 
@@ -392,6 +421,9 @@ void SdlBlitter::draw() {
 	}
 	
 	if(ghosting == 0){
+		if(showoverlay >= 0){
+			anim_textoverlay(surface);
+		}
 		if((colorfilter == 1) && (gameiscgb == 1)){
 			apply_cfilter(surface);
 		}
@@ -437,6 +469,9 @@ void SdlBlitter::draw() {
 				break;
 		}
 	} else if(ghosting == 1){
+		if(showoverlay >= 0){
+			anim_textoverlay(surface);
+		}
 		blend_frames(surface);
 		store_lastframe(surface);
 		if((colorfilter == 1) && (gameiscgb == 1)){
@@ -502,12 +537,11 @@ void SdlBlitter::scaleMenu() {
 		return;
 
 	if(gambatte_p->isCgb()){
-		convert_bw_surface_colors(menuscreen, menuscreencolored, 0xFFFFFF, 0x6397FF, 0x083CA8, 0x000000); //if game is GBC, then menu has different colors
 		if((colorfilter == 1) && (gameiscgb == 1)){
 			apply_cfilter(menuscreen);
 		}
 	} else {
-		convert_bw_surface_colors(menuscreen, menuscreencolored, menupalblack, menupaldark, menupallight, menupalwhite); //if game is DMG, then menu matches DMG palette
+		convert_bw_surface_colors(menuscreen, menuscreen, menupalblack, menupaldark, menupallight, menupalwhite, 1); //if game is DMG, then menu matches DMG palette
 	}
 
 	if(menuin >= 0){
