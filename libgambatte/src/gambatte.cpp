@@ -59,6 +59,10 @@ GB::~GB() {
 	delete p_;
 }
 
+std::string GB::getSaveStatePath(int statenum){
+	return statePath(p_->cpu.saveBasePath(), statenum);
+}
+
 std::ptrdiff_t GB::runFor(gambatte::uint_least32_t *const videoBuf, std::ptrdiff_t const pitch,
                           gambatte::uint_least32_t *const soundBuf, std::size_t &samples) {
 	if (!p_->cpu.loaded()) {
@@ -196,9 +200,25 @@ bool GB::saveState(gambatte::uint_least32_t const *videoBuf, std::ptrdiff_t pitc
 	return false;
 }
 
+bool GB::saveState_NoOsd(gambatte::uint_least32_t const *videoBuf, std::ptrdiff_t pitch) {
+	if (saveState(videoBuf, pitch, statePath(p_->cpu.saveBasePath(), p_->stateNo))) {
+		return true;
+	}
+
+	return false;
+}
+
 bool GB::loadState() {
 	if (loadState(statePath(p_->cpu.saveBasePath(), p_->stateNo))) {
 		p_->cpu.setOsdElement(newStateLoadedOsdElement(p_->stateNo));
+		return true;
+	}
+
+	return false;
+}
+
+bool GB::loadState_NoOsd() {
+	if (loadState(statePath(p_->cpu.saveBasePath(), p_->stateNo))) {
 		return true;
 	}
 
@@ -224,6 +244,15 @@ void GB::selectState(int n) {
 	if (p_->cpu.loaded()) {
 		std::string const &path = statePath(p_->cpu.saveBasePath(), p_->stateNo);
 		p_->cpu.setOsdElement(newSaveStateOsdElement(path, p_->stateNo));
+	}
+}
+
+void GB::selectState_NoOsd(int n) {
+	n -= (n / 10) * 10;
+	p_->stateNo = n < 0 ? n + 10 : n;
+
+	if (p_->cpu.loaded()) {
+		std::string const &path = statePath(p_->cpu.saveBasePath(), p_->stateNo);
 	}
 }
 

@@ -29,8 +29,8 @@ struct SaveState;
 
 class StateSaver {
 public:
-	enum { ss_shift = 2 };
-	enum { ss_div = 1 << 2 };
+	enum { ss_shift = 1 };
+	enum { ss_div = 1 << 1};
 	enum { ss_width = 160 >> ss_shift };
 	enum { ss_height = 144 >> ss_shift };
 

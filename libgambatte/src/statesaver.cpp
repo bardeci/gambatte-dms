@@ -353,42 +353,43 @@ SaverList::SaverList() {
 
 namespace {
 
-struct PxlSum { unsigned long rb, g; };
+static uint32_t mixPixels(const uint32_t* srccolor1, const uint32_t* srccolor2, const uint32_t* srccolor3, const uint32_t* srccolor4){
 
-static void addPxlPairs(PxlSum *const sum, uint_least32_t const *const p) {
-	sum[0].rb += (p[0] & 0xFF00FF) + (p[3] & 0xFF00FF);
-	sum[0].g  += (p[0] & 0x00FF00) + (p[3] & 0x00FF00);
-	sum[1].rb += (p[1] & 0xFF00FF) + (p[2] & 0xFF00FF);
-	sum[1].g  += (p[1] & 0x00FF00) + (p[2] & 0x00FF00);
+	uint8_t r1, g1, b1, r2, g2, b2, r3, g3, b3, r4, g4, b4;
+
+	uint32_t color1 = *srccolor1;
+	uint32_t color2 = *srccolor2;
+	uint32_t color3 = *srccolor3;
+	uint32_t color4 = *srccolor4;
+
+    r1 = (color1 >> 16) & 0xff;
+    g1 = (color1 >> 8) & 0xff;
+    b1 = color1 & 0xff;
+    r2 = (color2 >> 16) & 0xff;
+    g2 = (color2 >> 8) & 0xff;
+    b2 = color2 & 0xff;
+    r3 = (color3 >> 16) & 0xff;
+    g3 = (color3 >> 8) & 0xff;
+    b3 = color3 & 0xff;
+    r4 = (color4 >> 16) & 0xff;
+    g4 = (color4 >> 8) & 0xff;
+    b4 = color4 & 0xff;
+    uint32_t dstcolor = ((r1 + r2 + r3 + r4) / 4) << 16 | ((g1 + g2 + g3 + g4) / 4) << 8 | ((b1 + b2 + b3 + b4) / 4);
+    return dstcolor;
 }
 
-static void blendPxlPairs(PxlSum *const dst, PxlSum const *const sums) {
-	dst->rb = sums[1].rb * 8 + (sums[0].rb - sums[1].rb) * 3;
-	dst->g  = sums[1].g  * 8 + (sums[0].g  - sums[1].g ) * 3;
-}
-
-static void writeSnapShot(std::ofstream &file, uint_least32_t const *pixels, std::ptrdiff_t const pitch) {
-	put24(file, pixels ? StateSaver::ss_width * StateSaver::ss_height * sizeof(uint_least32_t) : 0);
+static void writeSnapShot(std::ofstream &file, uint32_t const *pixels, std::ptrdiff_t const pitch) {
+	put24(file, pixels ? StateSaver::ss_width * StateSaver::ss_height * sizeof(uint32_t) : 0);
 
 	if (pixels) {
-		uint_least32_t buf[StateSaver::ss_width];
+		uint32_t buf[StateSaver::ss_width];
 
 		for (unsigned h = StateSaver::ss_height; h--;) {
 			for (unsigned x = 0; x < StateSaver::ss_width; ++x) {
-				uint_least32_t const *const p = pixels + x * StateSaver::ss_div;
-				PxlSum pxlsum[4] = { {0, 0}, {0, 0}, {0, 0}, {0, 0} };
+				uint32_t const *p = pixels + x * StateSaver::ss_div;
 
-				addPxlPairs(pxlsum    , p            );
-				addPxlPairs(pxlsum + 2, p + pitch    );
-				addPxlPairs(pxlsum + 2, p + pitch * 2);
-				addPxlPairs(pxlsum    , p + pitch * 3);
-
-				blendPxlPairs(pxlsum    , pxlsum    );
-				blendPxlPairs(pxlsum + 1, pxlsum + 2);
-
-				blendPxlPairs(pxlsum    , pxlsum    );
-
-				buf[x] = ((pxlsum[0].rb & 0xFF00FF00U) | (pxlsum[0].g & 0x00FF0000U)) >> 8;
+				uint32_t mixedpixel = mixPixels((p), (p + 1), (p + pitch), (p + pitch + 1));
+				buf[x] = mixedpixel;
 			}
 
 			file.write(reinterpret_cast<char const *>(buf), sizeof buf);
