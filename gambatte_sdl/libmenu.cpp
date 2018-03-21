@@ -58,7 +58,7 @@ int numcodes_gg = NUM_GG_CODES, numcodes_gs = NUM_GS_CODES, selectedcode = 0, ed
 int ggcheats[NUM_GG_CODES *9] = {0};
 int gscheats[NUM_GS_CODES *8] = {0};
 int gscheatsenabled[NUM_GS_CODES] = {0};
-int menuin = -1, menuout = -1, showoverlay = -1, overlay_inout = 0;
+int menuin = -1, menuout = -1, showoverlay = -1, overlay_inout = 0, is_using_bios = 0, can_reset = 1;
 
 
 std::string getSaveStateFilename(int statenum){

@@ -306,9 +306,13 @@ static void callback_loadstate(menu_t *caller_menu) {
 static void callback_restart(menu_t *caller_menu) {
     playMenuSound_ok();
     SDL_Delay(250);
-    gambatte_p->reset();
+    if(can_reset == 1){
+        gambatte_p->reset();
+        printOverlay("Reset ok");//print overlay text
+    } else if (can_reset == 0){
+        printOverlay("Unable to reset");//print overlay text
+    }
     menuout = 0;
-    printOverlay("Reset ok");//print overlay text
     caller_menu->quit = 1;
 }
 
