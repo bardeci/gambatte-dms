@@ -14,3 +14,7 @@ rm -f *gambatte*/config.log
 
 echo "rm -rf *gambatte*/.scon*"
 rm -rf *gambatte*/.scon*
+
+find . -type f -iname \*.o -delete
+
+find . -type f -iname gambatte_sdl -delete
