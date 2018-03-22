@@ -1038,12 +1038,10 @@ void load_border(std::string borderfilename){ //load border from menu
 	fullimgpath += (borderfilename);
 	if (borderfilename == "DEFAULT"){
 		if(gameiscgb == 0){
-			//fullimgpath = "./DefaultDMG.png";
 			RWops = SDL_RWFromMem(border_default_dmg, 5303);
     		borderimg = IMG_LoadPNG_RW(RWops);
     		SDL_FreeRW(RWops);
 		} else {
-			//fullimgpath = "./DefaultGBC.png";
 			RWops = SDL_RWFromMem(border_default_gbc, 10285);
     		borderimg = IMG_LoadPNG_RW(RWops);
     		SDL_FreeRW(RWops);
@@ -1424,41 +1422,58 @@ static Uint32 get_pixel(SDL_Surface *surface, int x, int y) {
 }
 
 void loadPalette(std::string palettefile){
-	Uint32 values[12];
-	std::string filepath = (homedir + "/.gambatte/palettes/");
-    filepath.append(palettefile);
-    if (palettefile == "DEFAULT"){
-		filepath = "./Default.pal";
-	}
-	FILE *fpal = NULL;
-	if (palettefile != "NONE"){
-	    fpal = fopen(filepath.c_str(), "r");
-	    if (fpal == NULL) {
+    if(palettefile == "NONE"){
+    	return;
+    } else if(palettefile == "DEFAULT"){
+		Uint32 value;
+	    for (int i = 0; i < 3; ++i) {
+	        for (int k = 0; k < 4; ++k) {
+	            if(k == 0)
+	                value = 0x64960a;
+	            if(k == 1)
+	                value = 0x1b7e3e;
+	            if(k == 2)
+	                value = 0x084e3c;
+	            if(k == 3)
+	                value = 0x003236;
+	            gambatte_p->setDmgPaletteColor(i, k, value);
+	        }
+	    }
+	    set_menu_palette(0x64960a, 0x1b7e3e, 0x084e3c, 0x003236);
+		return;
+	} else {
+		Uint32 values[12];
+		std::string filepath = (homedir + "/.gambatte/palettes/");
+    	filepath.append(palettefile);
+		FILE *fpal = NULL;
+		fpal = fopen(filepath.c_str(), "r");
+		if (fpal == NULL) {
 			printf("Failed to open palette file %s\n", filepath.c_str());
 			return;
 		}
-	}
-	if(fpal){
-	    int j = 0;
-	    for (int i = 0; i < 12; ++i) { // TODO: Find a better way of parsing the palette values.
-	        if(fscanf(fpal, "%x", &values[j]) == 1){
-	            j++;
-	        }
-	    }
-	    if (j == 12){ // all 12 palette values were successfully loaded
-	        set_menu_palette(values[0], values[1], values[2], values[3]);
-	        int m = 0;
-	        for (int i = 0; i < 3; ++i) {
-	            for (int k = 0; k < 4; ++k) {
-	                gambatte_p->setDmgPaletteColor(i, k, values[m]);
-	                m++;
-	            }
-	        }
-	    } else {
-	        printf("Error reading: %s:\n",filepath.c_str());
-	        printf("Bad file format.\n");
-	    }
-	    fclose(fpal);
+		if(fpal){
+		    int j = 0;
+		    for (int i = 0; i < 12; ++i) { // TODO: Find a better way of parsing the palette values.
+		        if(fscanf(fpal, "%x", &values[j]) == 1){
+		            j++;
+		        }
+		    }
+		    if (j == 12){ // all 12 palette values were successfully loaded
+		        set_menu_palette(values[0], values[1], values[2], values[3]);
+		        int m = 0;
+		        for (int i = 0; i < 3; ++i) {
+		            for (int k = 0; k < 4; ++k) {
+		                gambatte_p->setDmgPaletteColor(i, k, values[m]);
+		                m++;
+		            }
+		        }
+		    } else {
+		        printf("Error reading: %s:\n",filepath.c_str());
+		        printf("Bad file format.\n");
+		    }
+		    fclose(fpal);
+		}
+		return;
 	}
 }
 

@@ -28,6 +28,14 @@ static SDL_Surface *font_bitmap_surface = NULL;
 static SDL_Surface *fpsfont_bitmap_surface = NULL;
 static SDL_RWops *RWops;
 
+gambatte::GB *gambatte_p;
+BlitterWrapper *blitter_p;
+
+void init_globals(gambatte::GB *gambatte, BlitterWrapper *blitter){
+    blitter_p = blitter;
+    gambatte_p = gambatte;
+}
+
 int init_fps_font() {
 
     SDL_FreeSurface(fpsfont_bitmap_surface);
@@ -156,12 +164,7 @@ static void callback_gameshark(menu_t *caller_menu);
 
 std::string menu_main_title = ("GAMBATTE-GCWZERO");
 
-gambatte::GB *gambatte_p;
-BlitterWrapper *blitter_p;
-
-void main_menu(gambatte::GB *gambatte, BlitterWrapper *blitter) {
-    blitter_p = blitter;
-    gambatte_p = gambatte;
+void main_menu() {
 
     SDL_EnableKeyRepeat(250, 83);
 
@@ -242,6 +245,7 @@ static void callback_quit(menu_t *caller_menu) {
     SDL_Delay(500);
     gambatte_p->saveSavedata();
     caller_menu->quit = 1;
+    SDL_Quit();
     exit(0);
 }
 
