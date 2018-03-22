@@ -21,6 +21,7 @@
 #include "scalebuffer.h"
 #include "../menu.h"
 #include "../scaler.h"
+#include "../defaultborders.h"
 
 #include <string.h>
 #include <string>
@@ -31,6 +32,8 @@ SDL_Surface *lastframe;
 SDL_Surface *currframe;
 SDL_Surface *borderimg;
 SDL_Surface *cfilter;
+
+static SDL_RWops *RWops;
 
 struct SdlBlitter::SurfaceDeleter {
 	//static void del(SDL_Surface *s) { SDL_FreeSurface(s); }
@@ -79,9 +82,13 @@ void init_border_dmg(SDL_Surface *dst){ //load border on emulator start
     fullimgpath = (homedir + "/.gambatte/borders/");
 	fullimgpath += (dmgbordername);
 	if (dmgbordername == "DEFAULT"){
-		fullimgpath = "./DefaultDMG.png";
+		//fullimgpath = "./DefaultDMG.png";
+		RWops = SDL_RWFromMem(border_default_dmg, 5303);
+    	borderimg = IMG_LoadPNG_RW(RWops);
+    	SDL_FreeRW(RWops);
+	} else {
+		borderimg = IMG_Load(fullimgpath.c_str());
 	}
-	borderimg = IMG_Load(fullimgpath.c_str());
 	if((!borderimg) && (dmgbordername != "NONE")){
 	    printf("error loading %s\n", fullimgpath.c_str());
 	    return;
@@ -102,9 +109,13 @@ void init_border_gbc(SDL_Surface *dst){ //load border on emulator start
     fullimgpath = (homedir + "/.gambatte/borders/");
 	fullimgpath += (gbcbordername);
 	if (gbcbordername == "DEFAULT"){
-		fullimgpath = "./DefaultGBC.png";
+		//fullimgpath = "./DefaultGBC.png";
+		RWops = SDL_RWFromMem(border_default_gbc, 10285);
+    	borderimg = IMG_LoadPNG_RW(RWops);
+    	SDL_FreeRW(RWops);
+	} else {
+		borderimg = IMG_Load(fullimgpath.c_str());
 	}
-	borderimg = IMG_Load(fullimgpath.c_str());
 	if((!borderimg) && (gbcbordername != "NONE")){
 	    printf("error loading %s\n", fullimgpath.c_str());
 	    return;
