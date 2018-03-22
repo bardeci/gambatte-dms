@@ -627,6 +627,7 @@ int GambatteSdl::exec(int const argc, char const *const argv[]) {
 	mkdir(basicdirpath.c_str(), 0777);
 
 
+
 	std::set<Uint8> jdevnums;
 	BoolOption fsOption("\t\tStart in full screen mode\n", "full-screen", 'f');
 	LatencyOption latencyOption;
@@ -751,10 +752,14 @@ int GambatteSdl::exec(int const argc, char const *const argv[]) {
 	                       scaleOption.scale(), yuvOption.isSet(),
 	                       fsOption.isSet());
 
+	init_globals(&gambatte, &blitter); //init global pointers
+
 	blitter.setBufferDimensions(); //set appropiate resolution on startup
 
 	SDL_ShowCursor(SDL_DISABLE);
 	SDL_WM_SetCaption("Gambatte SDL", 0);
+
+	
 
 	init_fps_font(); // load fps font on startup
 	init_menu(); //load menu font on startup
@@ -764,43 +769,7 @@ int GambatteSdl::exec(int const argc, char const *const argv[]) {
 		gameiscgb = 1;
 	} else {
 		gameiscgb = 0;
-		
-		// load DMG palette on startup
-		Uint32 values[12];
-		std::string filepath = (homedir + "/.gambatte/palettes/");
-	    filepath.append(palname);
-	    if (palname == "DEFAULT"){
-			filepath = "./Default.pal";
-		}
-		FILE *fpal = NULL;
-		if (palname != "NONE"){
-			fpal = fopen(filepath.c_str(), "r");
-		    if (fpal == NULL) {
-				printf("Failed to open palette file %s\n", filepath.c_str());
-			}
-		}
-		if(fpal){
-			int j = 0;
-		    for (int i = 0; i < 12; ++i) { // TODO: Find a better way of parsing the palette values.
-		        if(fscanf(fpal, "%x", &values[j]) == 1){
-		            j++;
-		        }
-		    }
-		    if (j == 12){ // all 12 palette values were successfully loaded
-		        set_menu_palette(values[0], values[1], values[2], values[3]);
-		        int m = 0;
-		        for (int i = 0; i < 3; ++i) {
-		            for (int k = 0; k < 4; ++k) {
-		                gambatte.setDmgPaletteColor(i, k, values[m]);
-		                m++;
-		            }
-		        }
-		    } else {
-		        printf("Error reading: %s:\n",filepath.c_str());
-		        printf("Bad file format.\n");
-		    }
-		    fclose(fpal);
-		}    
+		loadPalette(palname); //load palette on startup
 	}
 
 	return run(rateOption.rate(), latencyOption.latency(), periodsOption.periods(),
@@ -868,7 +837,7 @@ bool GambatteSdl::handleEvents(BlitterWrapper &blitter) {
 					case SDLK_TAB:
 					case SDLK_HOME:
 						if(menuout == -1){
-							main_menu(&gambatte, &blitter);
+							main_menu();
 							inputGetter.is = 0;
 						}
 						break;

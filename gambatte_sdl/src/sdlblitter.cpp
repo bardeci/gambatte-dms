@@ -21,7 +21,6 @@
 #include "scalebuffer.h"
 #include "../menu.h"
 #include "../scaler.h"
-#include "../defaultborders.h"
 
 #include <string.h>
 #include <string>
@@ -32,8 +31,6 @@ SDL_Surface *lastframe;
 SDL_Surface *currframe;
 SDL_Surface *borderimg;
 SDL_Surface *cfilter;
-
-static SDL_RWops *RWops;
 
 struct SdlBlitter::SurfaceDeleter {
 	//static void del(SDL_Surface *s) { SDL_FreeSurface(s); }
@@ -72,57 +69,23 @@ void init_cfilter() {
 	cfilter = SDL_CreateRGBSurface(SDL_SWSURFACE, 160, 144, 16, 0, 0, 0, 0);
 }
 
-void init_border_dmg(SDL_Surface *dst){ //load border on emulator start
+void init_border(SDL_Surface *dst){
 	if (!dst){
 		printf("init_border: screen is not initialized");
 		return;
 	}
-	SDL_FreeSurface(borderimg);
-	std::string fullimgpath;
-    fullimgpath = (homedir + "/.gambatte/borders/");
-	fullimgpath += (dmgbordername);
-	if (dmgbordername == "DEFAULT"){
-		//fullimgpath = "./DefaultDMG.png";
-		RWops = SDL_RWFromMem(border_default_dmg, 5303);
-    	borderimg = IMG_LoadPNG_RW(RWops);
-    	SDL_FreeRW(RWops);
-	} else {
-		borderimg = IMG_Load(fullimgpath.c_str());
-	}
-	if((!borderimg) && (dmgbordername != "NONE")){
-	    printf("error loading %s\n", fullimgpath.c_str());
-	    return;
-	}
-	if(dmgbordername != "NONE") {
-		clear_surface(dst, convert_hexcolor(dst, menupalwhite));
-		paint_border(dst);
-	}
-}
-
-void init_border_gbc(SDL_Surface *dst){ //load border on emulator start
-	if (!dst){
-		printf("init_border: screen is not initialized");
-		return;
-	}
-	SDL_FreeSurface(borderimg);
-	std::string fullimgpath;
-    fullimgpath = (homedir + "/.gambatte/borders/");
-	fullimgpath += (gbcbordername);
-	if (gbcbordername == "DEFAULT"){
-		//fullimgpath = "./DefaultGBC.png";
-		RWops = SDL_RWFromMem(border_default_gbc, 10285);
-    	borderimg = IMG_LoadPNG_RW(RWops);
-    	SDL_FreeRW(RWops);
-	} else {
-		borderimg = IMG_Load(fullimgpath.c_str());
-	}
-	if((!borderimg) && (gbcbordername != "NONE")){
-	    printf("error loading %s\n", fullimgpath.c_str());
-	    return;
-	}
-	if(gbcbordername != "NONE") {
-		clear_surface(dst, 0x000000);
-		paint_border(dst);
+	if(gameiscgb == 0){
+		load_border(dmgbordername);
+		if((borderimg) && (dmgbordername != "NONE")) {
+			clear_surface(dst, convert_hexcolor(dst, menupalwhite));
+			paint_border(dst);
+		}
+	} else if(gameiscgb == 1){
+		load_border(gbcbordername);
+		if((borderimg) && (gbcbordername != "NONE")) {
+			clear_surface(dst, 0x000000);
+			paint_border(dst);
+		}
 	}
 }
 
@@ -419,10 +382,7 @@ void SdlBlitter::draw() {
 		return;
 
 	if((firstframe >= 0) && (firstframe <= 2)){ // paints border on frames 0,1 and 2 to avoid triple-buffer flickering
-		if(gameiscgb == 1)
-			init_border_gbc(screen);
-		else
-			init_border_dmg(screen);
+		init_border(screen);
 	}
 
 	if((firstframe == 0) && (is_using_bios == 0)){ //if game is booting without bios, allow the user to reset game at any point.
