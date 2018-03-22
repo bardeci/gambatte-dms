@@ -19,6 +19,7 @@
 
 #include "src/audiosink.h"
 #include "menusounds.h"
+#include "defaultborders.h"
 
 #include <fstream>
 
@@ -1037,12 +1038,19 @@ void load_border(std::string borderfilename){ //load border from menu
 	fullimgpath += (borderfilename);
 	if (borderfilename == "DEFAULT"){
 		if(gameiscgb == 0){
-			fullimgpath = "./DefaultDMG.png";
+			//fullimgpath = "./DefaultDMG.png";
+			RWops = SDL_RWFromMem(border_default_dmg, 5303);
+    		borderimg = IMG_LoadPNG_RW(RWops);
+    		SDL_FreeRW(RWops);
 		} else {
-			fullimgpath = "./DefaultGBC.png";
+			//fullimgpath = "./DefaultGBC.png";
+			RWops = SDL_RWFromMem(border_default_gbc, 10285);
+    		borderimg = IMG_LoadPNG_RW(RWops);
+    		SDL_FreeRW(RWops);
 		}
+	} else {
+		borderimg = IMG_Load(fullimgpath.c_str());
 	}
-    borderimg = IMG_Load(fullimgpath.c_str());
     if(!borderimg){
     	if(borderfilename != "NONE"){
     		printf("error loading %s\n", fullimgpath.c_str());
