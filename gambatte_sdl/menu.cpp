@@ -259,35 +259,37 @@ static void callback_return(menu_t *caller_menu) {
 static void callback_savestate(menu_t *caller_menu) {
     playMenuSound_ok();
     SDL_Delay(250);
-
-    //set palette to greyscale
-    Uint32 value;
-    for (int i = 0; i < 3; ++i) {
-        for (int k = 0; k < 4; ++k) {
-            if(k == 0)
-                value = 0xF8FCF8;
-            if(k == 1)
-                value = 0xA8A8A8;
-            if(k == 2)
-                value = 0x505450;
-            if(k == 3)
-                value = 0x000000;
-            gambatte_p->setDmgPaletteColor(i, k, value);
+    if(can_reset == 1){//boot logo already ended, can save state safely
+        //set palette to greyscale
+        Uint32 value;
+        for (int i = 0; i < 3; ++i) {
+            for (int k = 0; k < 4; ++k) {
+                if(k == 0)
+                    value = 0xF8FCF8;
+                if(k == 1)
+                    value = 0xA8A8A8;
+                if(k == 2)
+                    value = 0x505450;
+                if(k == 3)
+                    value = 0x000000;
+                gambatte_p->setDmgPaletteColor(i, k, value);
+            }
         }
+        //run the emulator for 1 frame, so the screen buffer is updated without color palettes
+        std::size_t fakesamples = 35112;
+        Array<Uint32> const fakeBuf(35112 + 2064);
+        gambatte_p->runFor(blitter_p->inBuf().pixels, blitter_p->inBuf().pitch, fakeBuf, fakesamples);
+        //save state. the snapshot will now be in greyscale
+        gambatte_p->saveState_NoOsd(blitter_p->inBuf().pixels, blitter_p->inBuf().pitch);
+        //restore the color palette
+        loadPalette(palname); //restore palette to actual colors
+
+        char overlaytext[14];
+        sprintf(overlaytext, "State %d saved", gambatte_p->currentState());
+        printOverlay(overlaytext);//print overlay text
+    } else if (can_reset == 0){//boot logo is still running, can't save state
+        printOverlay("Unable to save");//print overlay text
     }
-    //run the emulator for 1 frame, so the screen buffer is updated without color palettes
-    std::size_t fakesamples = 35112;
-    Array<Uint32> const fakeBuf(35112 + 2064);
-    gambatte_p->runFor(blitter_p->inBuf().pixels, blitter_p->inBuf().pitch, fakeBuf, fakesamples);
-    //save state. the snapshot will now be in greyscale
-    gambatte_p->saveState_NoOsd(blitter_p->inBuf().pixels, blitter_p->inBuf().pitch);
-    //restore the color palette
-    loadPalette(palname); //restore palette to actual colors
-
-    char overlaytext[14];
-    sprintf(overlaytext, "State %d saved", gambatte_p->currentState());
-    printOverlay(overlaytext);//print overlay text
-
     menuout = 0;
     caller_menu->quit = 1;
 }
@@ -310,10 +312,10 @@ static void callback_loadstate(menu_t *caller_menu) {
 static void callback_restart(menu_t *caller_menu) {
     playMenuSound_ok();
     SDL_Delay(250);
-    if(can_reset == 1){
+    if(can_reset == 1){//boot logo already ended, can reset game safely
         gambatte_p->reset();
         printOverlay("Reset ok");//print overlay text
-    } else if (can_reset == 0){
+    } else if (can_reset == 0){//boot logo is still running, can't reset game safely
         printOverlay("Unable to reset");//print overlay text
     }
     menuout = 0;
