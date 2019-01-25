@@ -299,6 +299,7 @@ static void callback_loadstate(menu_t *caller_menu) {
     SDL_Delay(250);
     char overlaytext[20];
 	if(gambatte_p->loadState_NoOsd()){
+        can_reset = 1;//allow user to reset or save state once a savestate is loaded
         sprintf(overlaytext, "State %d loaded", gambatte_p->currentState());
         printOverlay(overlaytext);//print overlay text
     } else {
