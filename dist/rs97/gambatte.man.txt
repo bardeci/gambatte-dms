@@ -1,5 +1,5 @@
 
-Gambatte Emulator for GCW-Zero
+Gambatte Emulator for RS-97
 ------------------------------------------------
 
 Gambatte is an accuracy-focused, open-source, 
@@ -32,10 +32,10 @@ Save States
 ------------------------------------------------
 
 There are 10 savestate slots available per game.
-There are options in the menu for Saving States, 
-Loading States, and Selecting a savestate slot.
+There are options in the menu for loading and 
+saving states.
 
-The default slot is always Slot 1.
+The default slot is always Slot 0.
 
 The default slot will always be selected when
 starting the emulator. Selected savestate slot 
@@ -210,10 +210,12 @@ Boston, MA  02111-1307, USA
 
 ------------------------------------------------
 
-GCW-Zero port by Surkow and Hi-Ban.
+OpenDingux port by Surkow and Hi-Ban.
 Additional menu rework by Hi-Ban.
+Special thanks to Senquack and Pingflood for 
+helping this noob.
 Source code available at:
-https://github.com/hi-ban/gambatte-opendingux
+-TBA-
 
 ------------------------------------------------
 
