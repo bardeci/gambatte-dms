@@ -148,7 +148,7 @@ LoadRes GB::load(std::string const &romfile, unsigned const flags) {
 		//p_->cpu.loadSavedata();
 		p_->full_init();
 
-		p_->stateNo = 1;
+		p_->stateNo = 0;
 		p_->cpu.setOsdElement(transfer_ptr<OsdElement>());
 	}
 

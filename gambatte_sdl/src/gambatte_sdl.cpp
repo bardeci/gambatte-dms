@@ -833,9 +833,10 @@ bool GambatteSdl::handleEvents(BlitterWrapper &blitter) {
 					}
 				} else {
 					switch (e.key.keysym.sym) {
-					case SDLK_BACKSPACE:
-					case SDLK_TAB:
-					case SDLK_HOME:
+					case SDLK_BACKSPACE: // L trigger
+					case SDLK_TAB: // R trigger
+					case SDLK_HOME: // "power flick" in GCW Zero
+					case SDLK_END: // power button in rs-97
 						if(menuout == -1){
 							main_menu();
 							inputGetter.is = 0;

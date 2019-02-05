@@ -140,9 +140,8 @@ static int parse_ext_png(const struct dirent *dir) {
 /* ============================ MAIN MENU =========================== */
 
 static void callback_return(menu_t *caller_menu);
-static void callback_savestate(menu_t *caller_menu);
-static void callback_loadstate(menu_t *caller_menu);
-static void callback_selectstate(menu_t *caller_menu);
+static void callback_selectstateload(menu_t *caller_menu);
+static void callback_selectstatesave(menu_t *caller_menu);
 static void callback_restart(menu_t *caller_menu);
 static void callback_options(menu_t *caller_menu);
 static void callback_cheats(menu_t *caller_menu);
@@ -161,12 +160,19 @@ static void callback_ghosting(menu_t *caller_menu);
 static void callback_gamegenie(menu_t *caller_menu);
 static void callback_gameshark(menu_t *caller_menu);
 
-
+#ifdef VERSION_GCW0
 std::string menu_main_title = ("GAMBATTE-GCWZERO");
+#elif VERSION_RS97
+std::string menu_main_title = ("GAMBATTE-RS97");
+#else
+std::string menu_main_title = ("GAMBATTE-OD");
+#endif
+
 
 void main_menu() {
 
     SDL_EnableKeyRepeat(250, 83);
+    forcemenuexit = 0;
 
     menu_t *menu;
 	menu_entry_t *menu_entry;
@@ -182,20 +188,15 @@ void main_menu() {
 	menu_add_entry(menu, menu_entry);
     menu_entry->callback = callback_return;
 
+    menu_entry = new_menu_entry(0);
+	menu_entry_set_text(menu_entry, "Load state");
+	menu_add_entry(menu, menu_entry);
+    menu_entry->callback = callback_selectstateload;
+
 	menu_entry = new_menu_entry(0);
 	menu_entry_set_text(menu_entry, "Save state");
 	menu_add_entry(menu, menu_entry);
-    menu_entry->callback = callback_savestate;
-    
-	menu_entry = new_menu_entry(0);
-	menu_entry_set_text(menu_entry, "Load state");
-	menu_add_entry(menu, menu_entry);
-    menu_entry->callback = callback_loadstate;
-	
-	menu_entry = new_menu_entry(0);
-	menu_entry_set_text(menu_entry, "Select state");
-	menu_add_entry(menu, menu_entry);
-    menu_entry->callback = callback_selectstate;
+    menu_entry->callback = callback_selectstatesave;
 
     menu_entry = new_menu_entry(0);
     menu_entry_set_text(menu_entry, "Reset game");
@@ -256,8 +257,120 @@ static void callback_return(menu_t *caller_menu) {
     caller_menu->quit = 1;
 }
 
-static void callback_savestate(menu_t *caller_menu) {
+static void callback_restart(menu_t *caller_menu) {
     playMenuSound_ok();
+    SDL_Delay(250);
+    if(can_reset == 1){//boot logo already ended, can reset game safely
+        gambatte_p->reset();
+        printOverlay("Reset ok");//print overlay text
+    } else if (can_reset == 0){//boot logo is still running, can't reset game safely
+        printOverlay("Unable to reset");//print overlay text
+    }
+    menuout = 0;
+    caller_menu->quit = 1;
+}
+
+/* ==================== SELECT STATE MENU (LOAD) =========================== */
+
+static void callback_selectedstateload(menu_t *caller_menu);
+static void callback_selectstateload_back(menu_t *caller_menu);
+
+static void callback_selectstateload(menu_t *caller_menu) {
+    #define N_STATES 10
+    menu_t *menu;
+	menu_entry_t *menu_entry;
+    int i;
+    char buffer[64];
+    (void) caller_menu;
+    menu = new_menu();
+
+    menu_set_header(menu, menu_main_title.c_str());
+    menu_set_title(menu, "Load State");
+	menu->back_callback = callback_selectstateload_back;
+	
+    for (i = 0; i < N_STATES; i++) {
+        menu_entry = new_menu_entry(0);
+        sprintf(buffer, "State %d", i);
+        menu_entry_set_text(menu_entry, buffer);
+        menu_add_entry(menu, menu_entry);
+        menu_entry->callback = callback_selectedstateload;
+    }
+    menu->selected_entry = gambatte_p->currentState();
+    
+    playMenuSound_in();
+	menu_main(menu);
+    
+    delete_menu(menu);
+
+    if(forcemenuexit > 0) {
+    	menuout = 0;
+    	caller_menu->quit = 1;
+    }
+}
+
+static void callback_selectedstateload(menu_t *caller_menu) {
+	gambatte_p->selectState_NoOsd(caller_menu->selected_entry);
+	playMenuSound_ok();
+    SDL_Delay(250);
+    char overlaytext[20];
+	if(gambatte_p->loadState_NoOsd()){
+        can_reset = 1;//allow user to reset or save state once a savestate is loaded
+        sprintf(overlaytext, "State %d loaded", gambatte_p->currentState());
+        printOverlay(overlaytext);//print overlay text
+    } else {
+        sprintf(overlaytext, "State %d empty", gambatte_p->currentState());
+        printOverlay(overlaytext);//print overlay text
+    }
+    forcemenuexit = 2;
+    caller_menu->quit = 1;
+}
+
+static void callback_selectstateload_back(menu_t *caller_menu) {
+    playMenuSound_back();
+    caller_menu->quit = 1;
+}
+
+/* ==================== SELECT STATE MENU (SAVE) =========================== */
+
+static void callback_selectedstatesave(menu_t *caller_menu);
+static void callback_selectstatesave_back(menu_t *caller_menu);
+
+static void callback_selectstatesave(menu_t *caller_menu) {
+    #define N_STATES 10
+    menu_t *menu;
+	menu_entry_t *menu_entry;
+    int i;
+    char buffer[64];
+    (void) caller_menu;
+    menu = new_menu();
+
+    menu_set_header(menu, menu_main_title.c_str());
+    menu_set_title(menu, "Save State");
+	menu->back_callback = callback_selectstatesave_back;
+	
+    for (i = 0; i < N_STATES; i++) {
+        menu_entry = new_menu_entry(0);
+        sprintf(buffer, "State %d", i);
+        menu_entry_set_text(menu_entry, buffer);
+        menu_add_entry(menu, menu_entry);
+        menu_entry->callback = callback_selectedstatesave;
+    }
+    menu->selected_entry = gambatte_p->currentState();
+    
+    playMenuSound_in();
+	menu_main(menu);
+    
+    delete_menu(menu);
+
+    if(forcemenuexit > 0) {
+    	menuout = 0;
+    	caller_menu->quit = 1;
+    }
+}
+
+static void callback_selectedstatesave(menu_t *caller_menu) {
+	gambatte_p->selectState_NoOsd(caller_menu->selected_entry);
+	playMenuSound_ok();
     SDL_Delay(250);
     if(can_reset == 1){//boot logo already ended, can save state safely
         //set palette to greyscale
@@ -290,79 +403,11 @@ static void callback_savestate(menu_t *caller_menu) {
     } else if (can_reset == 0){//boot logo is still running, can't save state
         printOverlay("Unable to save");//print overlay text
     }
-    menuout = 0;
+    forcemenuexit = 2;
     caller_menu->quit = 1;
 }
 
-static void callback_loadstate(menu_t *caller_menu) {
-    playMenuSound_ok();
-    SDL_Delay(250);
-    char overlaytext[20];
-	if(gambatte_p->loadState_NoOsd()){
-        can_reset = 1;//allow user to reset or save state once a savestate is loaded
-        sprintf(overlaytext, "State %d loaded", gambatte_p->currentState());
-        printOverlay(overlaytext);//print overlay text
-    } else {
-        sprintf(overlaytext, "State %d empty", gambatte_p->currentState());
-        printOverlay(overlaytext);//print overlay text
-    }
-    menuout = 0;
-    caller_menu->quit = 1;
-}
-
-static void callback_restart(menu_t *caller_menu) {
-    playMenuSound_ok();
-    SDL_Delay(250);
-    if(can_reset == 1){//boot logo already ended, can reset game safely
-        gambatte_p->reset();
-        printOverlay("Reset ok");//print overlay text
-    } else if (can_reset == 0){//boot logo is still running, can't reset game safely
-        printOverlay("Unable to reset");//print overlay text
-    }
-    menuout = 0;
-    caller_menu->quit = 1;
-}
-
-/* ==================== SELECT STATE MENU =========================== */
-
-static void callback_selectedstate(menu_t *caller_menu);
-static void callback_selectstate_back(menu_t *caller_menu);
-
-static void callback_selectstate(menu_t *caller_menu) {
-    #define N_STATES 10
-    menu_t *menu;
-	menu_entry_t *menu_entry;
-    int i;
-    char buffer[64];
-    (void) caller_menu;
-    menu = new_menu();
-
-    menu_set_header(menu, menu_main_title.c_str());
-    menu_set_title(menu, "Select State");
-	menu->back_callback = callback_selectstate_back;
-	
-    for (i = 0; i < N_STATES; i++) {
-        menu_entry = new_menu_entry(0);
-        sprintf(buffer, "State %d", i);
-        menu_entry_set_text(menu_entry, buffer);
-        menu_add_entry(menu, menu_entry);
-        menu_entry->callback = callback_selectedstate;
-    }
-    menu->selected_entry = gambatte_p->currentState();
-    
-    playMenuSound_in();
-	menu_main(menu);
-    
-    delete_menu(menu);
-}
-
-static void callback_selectedstate(menu_t *caller_menu) {
-    playMenuSound_ok();
-	gambatte_p->selectState_NoOsd(caller_menu->selected_entry);
-	caller_menu->quit = 1;
-}
-
-static void callback_selectstate_back(menu_t *caller_menu) {
+static void callback_selectstatesave_back(menu_t *caller_menu) {
     playMenuSound_back();
     caller_menu->quit = 1;
 }
@@ -441,6 +486,11 @@ static void callback_options(menu_t *caller_menu) {
     menu_main(menu);
     
     delete_menu(menu);
+
+    if(forcemenuexit > 0) {
+    	menuout = 0;
+    	caller_menu->quit = 1;
+    }
 }
 
 static void callback_saveconfig(menu_t *caller_menu) {
@@ -1055,7 +1105,7 @@ static void callback_about(menu_t *caller_menu) {
     menu_entry->callback = callback_about_back;
 
     menu_entry = new_menu_entry(0);
-    menu_entry_set_text(menu_entry, "GCW Zero port by");
+    menu_entry_set_text(menu_entry, "OpenDingux port by");
     menu_add_entry(menu, menu_entry);
     menu_entry->selectable = 0;
     menu_entry->callback = callback_about_back;
@@ -1080,6 +1130,12 @@ static void callback_about(menu_t *caller_menu) {
 
     menu_entry = new_menu_entry(0);
     menu_entry_set_text(menu_entry, "Senquack");
+    menu_add_entry(menu, menu_entry);
+    menu_entry->selectable = 0;
+    menu_entry->callback = callback_about_back;
+
+    menu_entry = new_menu_entry(0);
+    menu_entry_set_text(menu_entry, "and Pingflood");
     menu_add_entry(menu, menu_entry);
     menu_entry->selectable = 0;
     menu_entry->callback = callback_about_back;
@@ -1151,6 +1207,11 @@ static void callback_cheats(menu_t *caller_menu) {
     menu_main(menu);
     
     delete_menu(menu);
+
+    if(forcemenuexit > 0) {
+    	menuout = 0;
+    	caller_menu->quit = 1;
+    }
 }
 
 static void callback_cheats_back(menu_t *caller_menu) {
@@ -1288,6 +1349,8 @@ static void callback_gamegenie(menu_t *caller_menu) {
     menu_cheat(menu);
 
     delete_menu(menu);
+
+	forcemenuexit = 0;
 }
 
 static void callback_gamegenie_confirm(menu_t *caller_menu) {
@@ -1331,6 +1394,11 @@ static void callback_gamegenie_confirm(menu_t *caller_menu) {
             caller_menu->entries[9 + offset]->selected_entry = ggcheats[7 + offset2];
             caller_menu->entries[10 + offset]->selected_entry = ggcheats[8 + offset2]; 
         }
+
+        if(forcemenuexit > 0) {
+	    	menuout = 0;
+	    	caller_menu->quit = 1;
+	    }
 
     } else if (editmode == 1){ //user is in edit mode, he wants to exit edit mode
 
@@ -1378,6 +1446,7 @@ static void callback_gamegenie_apply(menu_t *caller_menu) {
         ggcheats[i] = 0;
     }
     
+    forcemenuexit = 2;
     caller_menu->quit = 1; 
 }
 

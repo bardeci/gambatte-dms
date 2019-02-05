@@ -33,7 +33,6 @@ static Uint32 get_pixel(SDL_Surface *surface, int x, int y);
 
 void load_border(std::string borderfilename);
 
-static int quit_menu;
 static SDL_Surface *screen = NULL;
 static SFont_Font* font = NULL;
 static SDL_RWops *RWops;
@@ -59,7 +58,7 @@ int numcodes_gg = NUM_GG_CODES, numcodes_gs = NUM_GS_CODES, selectedcode = 0, ed
 int ggcheats[NUM_GG_CODES *9] = {0};
 int gscheats[NUM_GS_CODES *8] = {0};
 int gscheatsenabled[NUM_GS_CODES] = {0};
-int menuin = -1, menuout = -1, showoverlay = -1, overlay_inout = 0, is_using_bios = 0, can_reset = 1;
+int menuin = -1, menuout = -1, showoverlay = -1, overlay_inout = 0, is_using_bios = 0, can_reset = 1, forcemenuexit = 0;
 
 
 std::string getSaveStateFilename(int statenum){
@@ -246,7 +245,6 @@ int menu_main(menu_t *menu) {
 		loop++;
 	}
     redraw(menu);
-	quit_menu = 0;
     while (menu->quit == 0){
         dirty = 0;
 		while (SDL_PollEvent(&event)) {
@@ -339,9 +337,15 @@ int menu_main(menu_t *menu) {
 		}
 		SDL_Delay(0);
 	}
-	SDL_BlitSurface(menuscreen, NULL, surface_menuinout, NULL);
-	quit_menu = 0;
-	clean_menu_screen(menu);
+	if(forcemenuexit == 2) {
+		forcemenuexit = 1;
+		SDL_BlitSurface(menuscreen, NULL, surface_menuinout, NULL);
+	} else if(forcemenuexit == 1) {
+		// do nothing
+	} else {
+		SDL_BlitSurface(menuscreen, NULL, surface_menuinout, NULL);
+		clean_menu_screen(menu);
+	}
 	
 	return menu->selected_entry;
 }
@@ -369,7 +373,6 @@ int menu_cheat(menu_t *menu) {
 		loop++;
 	}
     redraw_cheat(menu);
-	quit_menu = 0;
     while (menu->quit == 0) {
         dirty = 0;
 		while (SDL_PollEvent(&event)) {
@@ -514,7 +517,6 @@ int menu_cheat(menu_t *menu) {
 		}
 		SDL_Delay(0);
 	}
-	quit_menu = 0;
 	clean_menu_screen_cheat(menu);
 	
 	return menu->selected_entry;
@@ -611,7 +613,7 @@ static void display_menu(SDL_Surface *surface, menu_t *menu) {
 		} else {
 			text = menu->entries[i]->text;
 		}
-		if(strcmp(menu->title, "Select State") == 0){ // select state screen
+		if((strcmp(menu->title, "Load State") == 0) || (strcmp(menu->title, "Save State") == 0)) { // load/save state screen
 			SFont_Write(surface, font, 8, line * font_height, text);
 			if ((menu->selected_entry == i) && (menu->entries[i]->selectable == 1)){ // only highlight selected entry if it's selectable
 				width = SFont_TextWidth(font, text);
@@ -639,7 +641,7 @@ static void display_menu(SDL_Surface *surface, menu_t *menu) {
 	    SFont_WriteCenter(surface, font, line * font_height, "}"); // down arrow
 	}
 
-	if(strcmp(menu->title, "Select State") == 0){ // select state screen
+	if((strcmp(menu->title, "Load State") == 0) || (strcmp(menu->title, "Save State") == 0)) { // load/save state screen
 		getSaveStatePreview(menu->selected_entry);
 		printSaveStatePreview(surface, 71, 32);
 	}
@@ -1345,33 +1347,37 @@ static void invert_rect(SDL_Surface* surface, SDL_Rect *rect) {
 }
 
 static void redraw(menu_t *menu) {
-	clear_surface(menuscreen, 0xFFFFFF);
-	if((!gambatte_p->isCgb()) && (dmgbordername != "NONE")) { // if system is DMG
-		clear_surface(screen, convert_hexcolor(screen, menupalwhite));
-		paint_border(screen);
-	} else if((gambatte_p->isCgb()) && (gbcbordername != "NONE")) { // if system is GBC
-		clear_surface(screen, 0x000000);
-		paint_border(screen);
-	}
-		
-	display_menu(menuscreen, menu);
-	blitter_p->scaleMenu();
-	SDL_Flip(screen);
+	if(forcemenuexit == 0){
+		clear_surface(menuscreen, 0xFFFFFF);
+		if((!gambatte_p->isCgb()) && (dmgbordername != "NONE")) { // if system is DMG
+			clear_surface(screen, convert_hexcolor(screen, menupalwhite));
+			paint_border(screen);
+		} else if((gambatte_p->isCgb()) && (gbcbordername != "NONE")) { // if system is GBC
+			clear_surface(screen, 0x000000);
+			paint_border(screen);
+		}
+			
+		display_menu(menuscreen, menu);
+		blitter_p->scaleMenu();
+		SDL_Flip(screen);
+	}	
 }
 
 static void redraw_cheat(menu_t *menu) {
-	clear_surface(menuscreen, 0xFFFFFF);
-	if((!gambatte_p->isCgb()) && (dmgbordername != "NONE")) { // if system is DMG
-		clear_surface(screen, convert_hexcolor(screen, menupalwhite));
-		paint_border(screen);
-	} else if((gambatte_p->isCgb()) && (gbcbordername != "NONE")) { // if system is GBC
-		clear_surface(screen, 0x000000);
-		paint_border(screen);
+	if(forcemenuexit == 0){
+		clear_surface(menuscreen, 0xFFFFFF);
+		if((!gambatte_p->isCgb()) && (dmgbordername != "NONE")) { // if system is DMG
+			clear_surface(screen, convert_hexcolor(screen, menupalwhite));
+			paint_border(screen);
+		} else if((gambatte_p->isCgb()) && (gbcbordername != "NONE")) { // if system is GBC
+			clear_surface(screen, 0x000000);
+			paint_border(screen);
+		}
+			
+		display_menu_cheat(menuscreen, menu);
+		blitter_p->scaleMenu();
+		SDL_Flip(screen);
 	}
-		
-	display_menu_cheat(menuscreen, menu);
-	blitter_p->scaleMenu();
-	SDL_Flip(screen);
 }
 
 void clear_surface(SDL_Surface *surface, Uint32 color) {

@@ -96,45 +96,80 @@ void SdlBlitter::setBufferDimensions() {
 		case 0:		/* no scaler */
 		case 1:		/* Ayla's 1.5x scaler */
 		case 2:		/* Ayla's fullscreen scaler */
-			screen = SDL_SetVideoMode(320, 240, 16, SDL_HWSURFACE | SDL_TRIPLEBUF);
+			screen = SDL_SetVideoMode(320, 240, 16, SDL_HWSURFACE
+#ifdef VERSION_GCW0
+			 | SDL_TRIPLEBUF);
+#else
+			 | SDL_DOUBLEBUF);
+#endif
 			break;
 		case 3:		/* Hardware 1.25x */
-			screen = SDL_SetVideoMode(256, 192, 16, SDL_HWSURFACE | SDL_TRIPLEBUF);
+			screen = SDL_SetVideoMode(256, 192, 16, SDL_HWSURFACE
+#ifdef VERSION_GCW0
+			 | SDL_TRIPLEBUF);
+#else
+			 | SDL_DOUBLEBUF);
+#endif
 			if (aspect_ratio_file)
 			{ 
 				fwrite("1", 1, 1, aspect_ratio_file);
 			}
 			break;
 		case 4:		/* Hardware 1.36x */
-			screen = SDL_SetVideoMode(224, 176, 16, SDL_HWSURFACE | SDL_TRIPLEBUF);
+			screen = SDL_SetVideoMode(224, 176, 16, SDL_HWSURFACE
+#ifdef VERSION_GCW0
+			 | SDL_TRIPLEBUF);
+#else
+			 | SDL_DOUBLEBUF);
+#endif
 			if (aspect_ratio_file)
 			{ 
 				fwrite("1", 1, 1, aspect_ratio_file);
 			}
 			break;
 		case 5:		/* Hardware 1.5x */
-			screen = SDL_SetVideoMode(208, 160, 16, SDL_HWSURFACE | SDL_TRIPLEBUF);
+			screen = SDL_SetVideoMode(208, 160, 16, SDL_HWSURFACE
+#ifdef VERSION_GCW0
+			 | SDL_TRIPLEBUF);
+#else
+			 | SDL_DOUBLEBUF);
+#endif
 			if (aspect_ratio_file)
 			{ 
 				fwrite("1", 1, 1, aspect_ratio_file);
 			}
 			break;
 		case 6:		/* Hardware 1.66x */
-			screen = SDL_SetVideoMode(192, 144, 16, SDL_HWSURFACE | SDL_TRIPLEBUF);
+			screen = SDL_SetVideoMode(192, 144, 16, SDL_HWSURFACE
+#ifdef VERSION_GCW0
+			 | SDL_TRIPLEBUF);
+#else
+			 | SDL_DOUBLEBUF);
+#endif
 			if (aspect_ratio_file)
 			{ 
 				fwrite("1", 1, 1, aspect_ratio_file);
 			}
 			break;
 		case 7:		/* Hardware Fullscreen */
-			screen = SDL_SetVideoMode(160, 144, 16, SDL_HWSURFACE | SDL_TRIPLEBUF);
+			screen = SDL_SetVideoMode(160, 144, 16, SDL_HWSURFACE
+#ifdef VERSION_GCW0
+			 | SDL_TRIPLEBUF);
+#else
+			 | SDL_DOUBLEBUF);
+#endif
 			if (aspect_ratio_file)
 			{ 
 				fwrite("0", 1, 1, aspect_ratio_file);
 			}
 			break;
 		default:
-			screen = SDL_SetVideoMode(320, 240, 16, SDL_HWSURFACE | SDL_TRIPLEBUF);
+			screen = SDL_SetVideoMode(320, 240, 16, SDL_HWSURFACE
+#ifdef VERSION_GCW0
+			 | SDL_TRIPLEBUF);
+#else
+			 | SDL_DOUBLEBUF);
+#endif
 			break;
 	}
 	if(aspect_ratio_file){
@@ -155,11 +190,21 @@ void SdlBlitter::setScreenRes() {
 		case 1:		/* Ayla's 1.5x scaler */
 		case 2:		/* Ayla's fullscreen scaler */
 			if(screen->w != 320 || screen->h != 240)
-				screen = SDL_SetVideoMode(320, 240, 16, SDL_HWSURFACE | SDL_TRIPLEBUF);
+				screen = SDL_SetVideoMode(320, 240, 16, SDL_HWSURFACE
+#ifdef VERSION_GCW0
+				 | SDL_TRIPLEBUF);
+#else
+				 | SDL_DOUBLEBUF);
+#endif
 			break;
 		case 3:		/* Hardware 1.25x */
 			if(screen->w != 256 || screen->h != 192)
-				screen = SDL_SetVideoMode(256, 192, 16, SDL_HWSURFACE | SDL_TRIPLEBUF);
+				screen = SDL_SetVideoMode(256, 192, 16, SDL_HWSURFACE
+#ifdef VERSION_GCW0
+				 | SDL_TRIPLEBUF);
+#else
+				 | SDL_DOUBLEBUF);
+#endif
 			if (aspect_ratio_file)
 			{ 
 				fwrite("1", 1, 1, aspect_ratio_file);
@@ -167,7 +212,12 @@ void SdlBlitter::setScreenRes() {
 			break;
 		case 4:		/* Hardware 1.36x */
 			if(screen->w != 224 || screen->h != 176)
-				screen = SDL_SetVideoMode(224, 176, 16, SDL_HWSURFACE | SDL_TRIPLEBUF);
+				screen = SDL_SetVideoMode(224, 176, 16, SDL_HWSURFACE
+#ifdef VERSION_GCW0
+				 | SDL_TRIPLEBUF);
+#else
+				 | SDL_DOUBLEBUF);
+#endif
 			if (aspect_ratio_file)
 			{ 
 				fwrite("1", 1, 1, aspect_ratio_file);
@@ -175,7 +225,12 @@ void SdlBlitter::setScreenRes() {
 			break;
 		case 5:		/* Hardware 1.5x */
 			if(screen->w != 208 || screen->h != 160)
-				screen = SDL_SetVideoMode(208, 160, 16, SDL_HWSURFACE | SDL_TRIPLEBUF);
+				screen = SDL_SetVideoMode(208, 160, 16, SDL_HWSURFACE
+#ifdef VERSION_GCW0
+				 | SDL_TRIPLEBUF);
+#else
+				 | SDL_DOUBLEBUF);
+#endif
 			if (aspect_ratio_file)
 			{ 
 				fwrite("1", 1, 1, aspect_ratio_file);
@@ -183,7 +238,12 @@ void SdlBlitter::setScreenRes() {
 			break;
 		case 6:		/* Hardware 1.66x */
 			if(screen->w != 192 || screen->h != 144)
-				screen = SDL_SetVideoMode(192, 144, 16, SDL_HWSURFACE | SDL_TRIPLEBUF);
+				screen = SDL_SetVideoMode(192, 144, 16, SDL_HWSURFACE
+#ifdef VERSION_GCW0
+				 | SDL_TRIPLEBUF);
+#else
+				 | SDL_DOUBLEBUF);
+#endif
 			if (aspect_ratio_file)
 			{ 
 				fwrite("1", 1, 1, aspect_ratio_file);
@@ -191,7 +251,12 @@ void SdlBlitter::setScreenRes() {
 			break;
 		case 7:		/* Hardware Fullscreen */
 			if(screen->w != 160 || screen->h != 144)
-				screen = SDL_SetVideoMode(160, 144, 16, SDL_HWSURFACE | SDL_TRIPLEBUF);
+				screen = SDL_SetVideoMode(160, 144, 16, SDL_HWSURFACE
+#ifdef VERSION_GCW0
+				 | SDL_TRIPLEBUF);
+#else
+				 | SDL_DOUBLEBUF);
+#endif
 			if (aspect_ratio_file)
 			{ 
 				fwrite("0", 1, 1, aspect_ratio_file);
@@ -199,7 +264,12 @@ void SdlBlitter::setScreenRes() {
 			break;
 		default:
 			if(screen->w != 320 || screen->h != 240)
-				screen = SDL_SetVideoMode(320, 240, 16, SDL_HWSURFACE | SDL_TRIPLEBUF);
+				screen = SDL_SetVideoMode(320, 240, 16, SDL_HWSURFACE
+#ifdef VERSION_GCW0
+				 | SDL_TRIPLEBUF);
+#else
+				 | SDL_DOUBLEBUF);
+#endif
 			break;
 	}
 	if(aspect_ratio_file){
@@ -209,7 +279,12 @@ void SdlBlitter::setScreenRes() {
 
 void SdlBlitter::force320x240() {
 	printf("forcing 320x240...\n");
-	screen = SDL_SetVideoMode(320, 240, 16, SDL_HWSURFACE | SDL_TRIPLEBUF);
+	screen = SDL_SetVideoMode(320, 240, 16, SDL_HWSURFACE
+#ifdef VERSION_GCW0
+	 | SDL_TRIPLEBUF);
+#else
+	 | SDL_DOUBLEBUF);
+#endif
 }
 
 SdlBlitter::PixelBuffer SdlBlitter::inBuffer() const {
@@ -285,7 +360,7 @@ void store_lastframe2(SDL_Surface *surface) { // test function - currently not u
 void anim_menuin(SDL_Surface *surface) { 
 	
 	if(menuin >= 0){
-		menuin += 16;
+		menuin += 12; //16
 		SDL_Rect srcrect;
 		srcrect.x = 0;
 		srcrect.y = 0;
@@ -311,7 +386,7 @@ void anim_menuin(SDL_Surface *surface) {
 void anim_menuout(SDL_Surface *surface) { 
 
 	if(menuout >= 0){
-		menuout += 16;
+		menuout += 12; //16
 		SDL_Rect srcrect;
 		srcrect.x = 0;
 		srcrect.y = 0;
