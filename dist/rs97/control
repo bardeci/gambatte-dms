@@ -1,0 +1,10 @@
+Package: gambatte
+Version: 
+Description: RetroGame port of Gambatte
+Section: emus
+Priority: optional
+Maintainer: hi-ban
+Architecture: mipsel
+Homepage: 
+Depends:
+Source: 

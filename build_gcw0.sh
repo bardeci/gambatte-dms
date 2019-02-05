@@ -12,4 +12,4 @@ echo "cd gambatte_sdl && scons"
 
 rm -f gambatte-gcw0-r572u3-$BDAT.opk
 
-mksquashfs default.gcw0.desktop ./gambatte_sdl/gambatte_sdl gambatte.png manual.txt gambatte-gcw0-r572u3-$BDAT.opk -all-root -no-xattrs -noappend -no-exports
+mksquashfs ./dist/gcw0/default.gcw0.desktop ./gambatte_sdl/gambatte_sdl ./dist/gcw0/gambatte.png ./dist/gcw0/manual.txt gambatte-gcw0-r572u3-$BDAT.opk -all-root -no-xattrs -noappend -no-exports

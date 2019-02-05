@@ -1,0 +1,6 @@
+title=GBC
+description=Gambatte Emulator
+exec=/home/retrofw/emus/gambatte/gambatte.dge
+selectordir=/home/retrofw/roms/gbc
+selectorfilter=.zip,.gb,.gbc
+clock=600
