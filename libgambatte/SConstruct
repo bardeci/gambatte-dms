@@ -2,19 +2,27 @@ target = ARGUMENTS.get('target', 0)
 if target == 'gcw0':
     include_path = ' -I/opt/gcw0-toolchain/usr/mipsel-gcw0-linux-uclibc/sysroot/usr/include'
     bin_path = '/opt/gcw0-toolchain/usr/bin/mipsel-linux-'
+    version_defines = ' -DVERSION_GCW0'
     print "Building Gambatte library with GCW Zero toolchain..."
 elif target == 'od':
     include_path = ' -Iopt/opendingux-toolchain/usr/include'
     bin_path = '/opt/opendingux-toolchain/usr/bin/mipsel-linux-'
+    version_defines = ''
     print "Building Gambatte library with OpenDingux toolchain..."
+elif target == 'rs97':
+    include_path = ' -I/opt/rs97-toolchain/mipsel-buildroot-linux-uclibc/sysroot/usr/include'
+    bin_path = '/opt/rs97-toolchain/bin/mipsel-linux-'
+    version_defines = ' -DVERSION_RS97'
+    print "Building Gambatte SDL with RS-97 toolchain..."
 else:
     include_path = ''
     bin_path = ''
+    version_defines = ''
 
-global_cflags = ARGUMENTS.get('CFLAGS', '-Wall -Wextra -O2 -fomit-frame-pointer -ffunction-sections -ffast-math -fsingle-precision-constant -G0' + include_path)
+global_cflags = ARGUMENTS.get('CFLAGS', '-Wall -Wextra -O2 -fomit-frame-pointer -ffunction-sections -ffast-math -fsingle-precision-constant -g0' + include_path)
 global_cxxflags = ARGUMENTS.get('CXXFLAGS', global_cflags + ' -fno-exceptions -fno-rtti')
 global_linkflags = ARGUMENTS.get('LINKFLAGS', '-Wl,--gc-sections')
-global_defines = ' -DHAVE_STDINT_H'
+global_defines = ' -DHAVE_STDINT_H' + version_defines
 vars = Variables()
 vars.Add('CC')
 vars.Add('CXX')
