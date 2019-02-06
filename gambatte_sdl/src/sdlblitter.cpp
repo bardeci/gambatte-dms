@@ -96,80 +96,45 @@ void SdlBlitter::setBufferDimensions() {
 		case 0:		/* no scaler */
 		case 1:		/* Ayla's 1.5x scaler */
 		case 2:		/* Ayla's fullscreen scaler */
-			screen = SDL_SetVideoMode(320, 240, 16, SDL_HWSURFACE
-#ifdef VERSION_GCW0
-			 | SDL_TRIPLEBUF);
-#else
-			 | SDL_DOUBLEBUF);
-#endif
+			screen = SDL_SetVideoMode(320, 240, 16, SDL_HWSURFACE | SDL_TRIPLEBUF);
 			break;
 		case 3:		/* Hardware 1.25x */
-			screen = SDL_SetVideoMode(256, 192, 16, SDL_HWSURFACE
-#ifdef VERSION_GCW0
-			 | SDL_TRIPLEBUF);
-#else
-			 | SDL_DOUBLEBUF);
-#endif
+			screen = SDL_SetVideoMode(256, 192, 16, SDL_HWSURFACE | SDL_TRIPLEBUF);
 			if (aspect_ratio_file)
 			{ 
 				fwrite("1", 1, 1, aspect_ratio_file);
 			}
 			break;
 		case 4:		/* Hardware 1.36x */
-			screen = SDL_SetVideoMode(224, 176, 16, SDL_HWSURFACE
-#ifdef VERSION_GCW0
-			 | SDL_TRIPLEBUF);
-#else
-			 | SDL_DOUBLEBUF);
-#endif
+			screen = SDL_SetVideoMode(224, 176, 16, SDL_HWSURFACE | SDL_TRIPLEBUF);
 			if (aspect_ratio_file)
 			{ 
 				fwrite("1", 1, 1, aspect_ratio_file);
 			}
 			break;
 		case 5:		/* Hardware 1.5x */
-			screen = SDL_SetVideoMode(208, 160, 16, SDL_HWSURFACE
-#ifdef VERSION_GCW0
-			 | SDL_TRIPLEBUF);
-#else
-			 | SDL_DOUBLEBUF);
-#endif
+			screen = SDL_SetVideoMode(208, 160, 16, SDL_HWSURFACE | SDL_TRIPLEBUF);
 			if (aspect_ratio_file)
 			{ 
 				fwrite("1", 1, 1, aspect_ratio_file);
 			}
 			break;
 		case 6:		/* Hardware 1.66x */
-			screen = SDL_SetVideoMode(192, 144, 16, SDL_HWSURFACE
-#ifdef VERSION_GCW0
-			 | SDL_TRIPLEBUF);
-#else
-			 | SDL_DOUBLEBUF);
-#endif
+			screen = SDL_SetVideoMode(192, 144, 16, SDL_HWSURFACE | SDL_TRIPLEBUF);
 			if (aspect_ratio_file)
 			{ 
 				fwrite("1", 1, 1, aspect_ratio_file);
 			}
 			break;
 		case 7:		/* Hardware Fullscreen */
-			screen = SDL_SetVideoMode(160, 144, 16, SDL_HWSURFACE
-#ifdef VERSION_GCW0
-			 | SDL_TRIPLEBUF);
-#else
-			 | SDL_DOUBLEBUF);
-#endif
+			screen = SDL_SetVideoMode(160, 144, 16, SDL_HWSURFACE | SDL_TRIPLEBUF);
 			if (aspect_ratio_file)
 			{ 
 				fwrite("0", 1, 1, aspect_ratio_file);
 			}
 			break;
 		default:
-			screen = SDL_SetVideoMode(320, 240, 16, SDL_HWSURFACE
-#ifdef VERSION_GCW0
-			 | SDL_TRIPLEBUF);
-#else
-			 | SDL_DOUBLEBUF);
-#endif
+			screen = SDL_SetVideoMode(320, 240, 16, SDL_HWSURFACE | SDL_TRIPLEBUF);
 			break;
 	}
 	if(aspect_ratio_file){
@@ -190,21 +155,11 @@ void SdlBlitter::setScreenRes() {
 		case 1:		/* Ayla's 1.5x scaler */
 		case 2:		/* Ayla's fullscreen scaler */
 			if(screen->w != 320 || screen->h != 240)
-				screen = SDL_SetVideoMode(320, 240, 16, SDL_HWSURFACE
-#ifdef VERSION_GCW0
-				 | SDL_TRIPLEBUF);
-#else
-				 | SDL_DOUBLEBUF);
-#endif
+				screen = SDL_SetVideoMode(320, 240, 16, SDL_HWSURFACE | SDL_TRIPLEBUF);
 			break;
 		case 3:		/* Hardware 1.25x */
 			if(screen->w != 256 || screen->h != 192)
-				screen = SDL_SetVideoMode(256, 192, 16, SDL_HWSURFACE
-#ifdef VERSION_GCW0
-				 | SDL_TRIPLEBUF);
-#else
-				 | SDL_DOUBLEBUF);
-#endif
+				screen = SDL_SetVideoMode(256, 192, 16, SDL_HWSURFACE | SDL_TRIPLEBUF);
 			if (aspect_ratio_file)
 			{ 
 				fwrite("1", 1, 1, aspect_ratio_file);
@@ -212,12 +167,7 @@ void SdlBlitter::setScreenRes() {
 			break;
 		case 4:		/* Hardware 1.36x */
 			if(screen->w != 224 || screen->h != 176)
-				screen = SDL_SetVideoMode(224, 176, 16, SDL_HWSURFACE
-#ifdef VERSION_GCW0
-				 | SDL_TRIPLEBUF);
-#else
-				 | SDL_DOUBLEBUF);
-#endif
+				screen = SDL_SetVideoMode(224, 176, 16, SDL_HWSURFACE | SDL_TRIPLEBUF);
 			if (aspect_ratio_file)
 			{ 
 				fwrite("1", 1, 1, aspect_ratio_file);
@@ -225,12 +175,7 @@ void SdlBlitter::setScreenRes() {
 			break;
 		case 5:		/* Hardware 1.5x */
 			if(screen->w != 208 || screen->h != 160)
-				screen = SDL_SetVideoMode(208, 160, 16, SDL_HWSURFACE
-#ifdef VERSION_GCW0
-				 | SDL_TRIPLEBUF);
-#else
-				 | SDL_DOUBLEBUF);
-#endif
+				screen = SDL_SetVideoMode(208, 160, 16, SDL_HWSURFACE | SDL_TRIPLEBUF);
 			if (aspect_ratio_file)
 			{ 
 				fwrite("1", 1, 1, aspect_ratio_file);
@@ -238,12 +183,7 @@ void SdlBlitter::setScreenRes() {
 			break;
 		case 6:		/* Hardware 1.66x */
 			if(screen->w != 192 || screen->h != 144)
-				screen = SDL_SetVideoMode(192, 144, 16, SDL_HWSURFACE
-#ifdef VERSION_GCW0
-				 | SDL_TRIPLEBUF);
-#else
-				 | SDL_DOUBLEBUF);
-#endif
+				screen = SDL_SetVideoMode(192, 144, 16, SDL_HWSURFACE | SDL_TRIPLEBUF);
 			if (aspect_ratio_file)
 			{ 
 				fwrite("1", 1, 1, aspect_ratio_file);
@@ -251,12 +191,7 @@ void SdlBlitter::setScreenRes() {
 			break;
 		case 7:		/* Hardware Fullscreen */
 			if(screen->w != 160 || screen->h != 144)
-				screen = SDL_SetVideoMode(160, 144, 16, SDL_HWSURFACE
-#ifdef VERSION_GCW0
-				 | SDL_TRIPLEBUF);
-#else
-				 | SDL_DOUBLEBUF);
-#endif
+				screen = SDL_SetVideoMode(160, 144, 16, SDL_HWSURFACE | SDL_TRIPLEBUF);
 			if (aspect_ratio_file)
 			{ 
 				fwrite("0", 1, 1, aspect_ratio_file);
@@ -264,12 +199,7 @@ void SdlBlitter::setScreenRes() {
 			break;
 		default:
 			if(screen->w != 320 || screen->h != 240)
-				screen = SDL_SetVideoMode(320, 240, 16, SDL_HWSURFACE
-#ifdef VERSION_GCW0
-				 | SDL_TRIPLEBUF);
-#else
-				 | SDL_DOUBLEBUF);
-#endif
+				screen = SDL_SetVideoMode(320, 240, 16, SDL_HWSURFACE | SDL_TRIPLEBUF);
 			break;
 	}
 	if(aspect_ratio_file){
@@ -279,12 +209,7 @@ void SdlBlitter::setScreenRes() {
 
 void SdlBlitter::force320x240() {
 	printf("forcing 320x240...\n");
-	screen = SDL_SetVideoMode(320, 240, 16, SDL_HWSURFACE
-#ifdef VERSION_GCW0
-	 | SDL_TRIPLEBUF);
-#else
-	 | SDL_DOUBLEBUF);
-#endif
+	screen = SDL_SetVideoMode(320, 240, 16, SDL_HWSURFACE | SDL_TRIPLEBUF);
 }
 
 SdlBlitter::PixelBuffer SdlBlitter::inBuffer() const {
@@ -312,49 +237,44 @@ inline void SdlBlitter::swScale() {
 }
 
 void apply_cfilter(SDL_Surface *surface) {
-	SDL_Rect rect;
-	rect.x = 0;
-	rect.y = 0;
-	rect.w = 160;
-	rect.h = 144;
 	SDL_SetAlpha(cfilter, SDL_SRCALPHA, 96);
 	uint32_t filtcolor = SDL_MapRGB(cfilter->format, 0, 0, 0);
 	SDL_FillRect(cfilter, NULL, filtcolor);
-	SDL_BlitSurface(cfilter, NULL, surface, &rect);
+	SDL_BlitSurface(cfilter, NULL, surface, NULL);
 	SDL_SetAlpha(cfilter, SDL_SRCALPHA, 32);
 	filtcolor = SDL_MapRGB(cfilter->format, 255, 255, 255);
 	SDL_FillRect(cfilter, NULL, filtcolor);
-	SDL_BlitSurface(cfilter, NULL, surface, &rect);
+	SDL_BlitSurface(cfilter, NULL, surface, NULL);
 }
 
 void blend_frames(SDL_Surface *surface) {
-	SDL_Rect rect;
-	rect.x = 0;
-	rect.y = 0;
-	rect.w = 160;
-	rect.h = 144;
-	SDL_BlitSurface(surface, NULL, currframe, &rect);
-	SDL_BlitSurface(lastframe, NULL, currframe, &rect);
+	uint16_t *d = (uint16_t*)currframe->pixels;
+	uint16_t *s = (uint16_t*)surface->pixels;
+	for (int y = 0; y < surface->h; y++)
+	{
+	    memmove(d, s, surface->w * sizeof(uint16_t));
+	    s += surface->w;
+	    d += currframe->w;
+	}
+	/*SDL_BlitSurface(surface, NULL, currframe, &rect);*/
+	SDL_BlitSurface(lastframe, NULL, currframe, NULL);
 }
 
 void store_lastframe(SDL_Surface *surface) {
-	SDL_Rect rect;
+	/*SDL_Rect rect;
 	rect.x = 0;
 	rect.y = 0;
 	rect.w = 160;
 	rect.h = 144;
-	SDL_BlitSurface(surface, NULL, lastframe, &rect);
-}
-
-void store_lastframe2(SDL_Surface *surface) { // test function - currently not used - can delete
-	SDL_SetAlpha(surface, SDL_SRCALPHA, 224); // 0-255 opacity
-	SDL_Rect rect;
-	rect.x = 0;
-	rect.y = 0;
-	rect.w = 160;
-	rect.h = 144;
-	SDL_BlitSurface(surface, NULL, lastframe, &rect);
-	SDL_SetAlpha(surface, SDL_SRCALPHA, SDL_ALPHA_OPAQUE);
+	SDL_BlitSurface(surface, NULL, lastframe, &rect);*/
+	uint16_t *d = (uint16_t*)lastframe->pixels;
+	uint16_t *s = (uint16_t*)surface->pixels;
+	for (int y = 0; y < surface->h; y++)
+	{
+	    memmove(d, s, surface->w * sizeof(uint16_t));
+	    s += surface->w;
+	    d += lastframe->w;
+	}
 }
 
 void anim_menuin(SDL_Surface *surface) { 
@@ -518,12 +438,20 @@ void SdlBlitter::draw() {
 			case 6:		/* Hardware 1.66x */
 			case 7:		/* Hardware Fullscreen */
 			default:
-				SDL_Rect dst2;
+				/*SDL_Rect dst2;
 				dst2.x = (screen->w - surface->w) / 2;
 				dst2.y = (screen->h - surface->h) / 2;
 				dst2.w = surface->w;
 				dst2.h = surface->h;
-				SDL_BlitSurface(surface, NULL, screen, &dst2);
+				SDL_BlitSurface(surface, NULL, screen, &dst2);*/
+				uint16_t *d = (uint16_t*)screen->pixels + (screen->w - surface->w) / 2 + (screen->h - surface->h) * screen->pitch / 4;
+	            uint16_t *s = (uint16_t*)surface->pixels;
+	            for (int y = 0; y < surface->h; y++)
+	            {
+	                memmove(d, s, surface->w * sizeof(uint16_t));
+	                s += surface->w;
+	                d += screen->w;
+	            }
 				break;
 		}
 	} else if(ghosting == 1){
@@ -568,12 +496,20 @@ void SdlBlitter::draw() {
 			case 6:		/* Hardware 1.66x */
 			case 7:		/* Hardware Fullscreen */
 			default:
-				SDL_Rect dst2;
+				/*SDL_Rect dst2;
 				dst2.x = (screen->w - currframe->w) / 2;
 				dst2.y = (screen->h - currframe->h) / 2;
 				dst2.w = currframe->w;
 				dst2.h = currframe->h;
-				SDL_BlitSurface(currframe, NULL, screen, &dst2);
+				SDL_BlitSurface(currframe, NULL, screen, &dst2);*/
+				uint16_t *d = (uint16_t*)screen->pixels + (screen->w - currframe->w) / 2 + (screen->h - currframe->h) * screen->pitch / 4;
+	            uint16_t *s = (uint16_t*)currframe->pixels;
+	            for (int y = 0; y < currframe->h; y++)
+	            {
+	                memmove(d, s, currframe->w * sizeof(uint16_t));
+	                s += currframe->w;
+	                d += screen->w;
+	            }
 				break;
 		}
 	}
@@ -636,12 +572,20 @@ void SdlBlitter::scaleMenu() {
 		case 6:		/* Hardware 1.66x */
 		case 7:		/* Hardware Fullscreen */
 		default:
-			SDL_Rect dst2;
+			/*SDL_Rect dst2;
 			dst2.x = (screen->w - menuscreen->w) / 2;
 			dst2.y = (screen->h - menuscreen->h) / 2;
 			dst2.w = menuscreen->w;
 			dst2.h = menuscreen->h;
-			SDL_BlitSurface(menuscreen, NULL, screen, &dst2);
+			SDL_BlitSurface(menuscreen, NULL, screen, &dst2);*/
+			uint16_t *d = (uint16_t*)screen->pixels + (screen->w - menuscreen->w) / 2 + (screen->h - menuscreen->h) * screen->pitch / 4;
+	        uint16_t *s = (uint16_t*)menuscreen->pixels;
+	        for (int y = 0; y < menuscreen->h; y++)
+	        {
+	            memmove(d, s, menuscreen->w * sizeof(uint16_t));
+	            s += menuscreen->w;
+	            d += screen->w;
+	        }
 			break;
 	}
 }
