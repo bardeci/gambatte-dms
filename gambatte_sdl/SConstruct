@@ -65,11 +65,6 @@ sourceFiles = Split('''
 			../common/skipsched.cpp
 			../common/videolink/rgb32conv.cpp
 			../common/videolink/vfilterinfo.cpp
-			../common/videolink/vfilters/catrom2x.cpp
-			../common/videolink/vfilters/catrom3x.cpp
-			../common/videolink/vfilters/kreed2xsai.cpp
-			../common/videolink/vfilters/maxsthq2x.cpp
-			../common/videolink/vfilters/maxsthq3x.cpp
 			../libgambatte/libgambatte.a
 		   ''')
 

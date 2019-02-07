@@ -26,11 +26,11 @@
 #include <string>
 #include <SDL/SDL.h>
 #include <SDL/SDL_image.h>
+#include <cmath>
 
 SDL_Surface *lastframe;
 SDL_Surface *currframe;
 SDL_Surface *borderimg;
-SDL_Surface *cfilter;
 
 struct SdlBlitter::SurfaceDeleter {
 	//static void del(SDL_Surface *s) { SDL_FreeSurface(s); }
@@ -63,10 +63,6 @@ void init_ghostframes() {
 	lastframe = SDL_CreateRGBSurface(SDL_SWSURFACE, 160, 144, 16, 0, 0, 0, 0);
 	currframe = SDL_CreateRGBSurface(SDL_SWSURFACE, 160, 144, 16, 0, 0, 0, 0);
 	SDL_SetAlpha(lastframe, SDL_SRCALPHA, 128);
-}
-
-void init_cfilter() {
-	cfilter = SDL_CreateRGBSurface(SDL_SWSURFACE, 160, 144, 16, 0, 0, 0, 0);
 }
 
 void init_border(SDL_Surface *dst){
@@ -144,7 +140,6 @@ void SdlBlitter::setBufferDimensions() {
 	menu_set_screen(screen);
 
 	init_ghostframes();
-	init_cfilter();
 }
 
 void SdlBlitter::setScreenRes() {
@@ -237,44 +232,39 @@ inline void SdlBlitter::swScale() {
 }
 
 void apply_cfilter(SDL_Surface *surface) {
-	SDL_SetAlpha(cfilter, SDL_SRCALPHA, 96);
-	uint32_t filtcolor = SDL_MapRGB(cfilter->format, 0, 0, 0);
-	SDL_FillRect(cfilter, NULL, filtcolor);
-	SDL_BlitSurface(cfilter, NULL, surface, NULL);
-	SDL_SetAlpha(cfilter, SDL_SRCALPHA, 32);
-	filtcolor = SDL_MapRGB(cfilter->format, 255, 255, 255);
-	SDL_FillRect(cfilter, NULL, filtcolor);
-	SDL_BlitSurface(cfilter, NULL, surface, NULL);
+	uint8_t r1, g1, b1, r2, g2, b2, r3, g3, b3;
+	uint16_t *src = (uint16_t*)surface->pixels;
+	r2 = 0;
+	g2 = 0;
+	b2 = 24;
+	r3 = 255;
+	g3 = 255;
+	b3 = 232;
+	for (int y = 0; y < (surface->h * surface->w); y++)
+	{
+		r1 = (*src & 0xf800) >> 8;
+		g1 = (*src & 0x7e0) >> 3;
+		b1 = (*src & 0x1f) << 3;
+		/*
+		*src = ((((r1 * 5) + (r2 * 2) + r3) / 8 ) & 0xf8) << 8 | 
+			   ((((g1 * 5) + (g2 * 2) + g3) / 8 ) & 0xfc) << 3 | 
+			   ((((b1 * 5) + (b2 * 2) + b3) / 8 ) & 0xf8) >> 3;
+		*/
+		*src = (((r1 + r1 + r1 + r1 + r2 + r2 + r2 + r3) / 8 ) & 0xf8) << 8 | 
+			   (((g1 + g1 + g1 + g1 + g2 + g2 + g2 + g3) / 8 ) & 0xfc) << 3 | 
+			   (((b1 + b1 + b1 + b1 + b2 + b2 + b2 + b3) / 8 ) & 0xf8) >> 3;
+	    src++;
+	}
+	
 }
 
 void blend_frames(SDL_Surface *surface) {
-	uint16_t *d = (uint16_t*)currframe->pixels;
-	uint16_t *s = (uint16_t*)surface->pixels;
-	for (int y = 0; y < surface->h; y++)
-	{
-	    memmove(d, s, surface->w * sizeof(uint16_t));
-	    s += surface->w;
-	    d += currframe->w;
-	}
-	/*SDL_BlitSurface(surface, NULL, currframe, &rect);*/
+	SDL_BlitSurface(surface, NULL, currframe, NULL);
 	SDL_BlitSurface(lastframe, NULL, currframe, NULL);
 }
 
 void store_lastframe(SDL_Surface *surface) {
-	/*SDL_Rect rect;
-	rect.x = 0;
-	rect.y = 0;
-	rect.w = 160;
-	rect.h = 144;
-	SDL_BlitSurface(surface, NULL, lastframe, &rect);*/
-	uint16_t *d = (uint16_t*)lastframe->pixels;
-	uint16_t *s = (uint16_t*)surface->pixels;
-	for (int y = 0; y < surface->h; y++)
-	{
-	    memmove(d, s, surface->w * sizeof(uint16_t));
-	    s += surface->w;
-	    d += lastframe->w;
-	}
+	SDL_BlitSurface(surface, NULL, lastframe, NULL);
 }
 
 void anim_menuin(SDL_Surface *surface) { 
