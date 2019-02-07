@@ -15,7 +15,7 @@ cp dist/rs97/gambatte.man.txt dist/rs97/gambatte.png /tmp/.gambatte-ipk/root/hom
 cp gambatte_sdl/gambatte_sdl /tmp/.gambatte-ipk/root/home/retrofw/emus/gambatte/gambatte.dge
 cp dist/rs97/gambatte.lnk /tmp/.gambatte-ipk/root/home/retrofw/apps/gmenu2x/sections/emulators
 cp dist/rs97/gb.gambatte.lnk dist/rs97/gbc.gambatte.lnk /tmp/.gambatte-ipk/root/home/retrofw/apps/gmenu2x/sections/systems
-sed "s/^Version:.*/Version: $$(date +%Y%m%d)/" dist/rs97/control > /tmp/.gambatte-ipk/control
+sed "s/^Version:.*/Version: `date +%Y%m%d`/" dist/rs97/control > /tmp/.gambatte-ipk/control
 tar --owner=0 --group=0 -czvf /tmp/.gambatte-ipk/control.tar.gz -C /tmp/.gambatte-ipk/ control
 tar --owner=0 --group=0 -czvf /tmp/.gambatte-ipk/data.tar.gz -C /tmp/.gambatte-ipk/root/ .
 echo 2.0 > /tmp/.gambatte-ipk/debian-binary
