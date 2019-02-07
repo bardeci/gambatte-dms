@@ -17,11 +17,6 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 #include "vfilterinfo.h"
-#include "vfilters/catrom2x.h"
-#include "vfilters/catrom3x.h"
-#include "vfilters/kreed2xsai.h"
-#include "vfilters/maxsthq2x.h"
-#include "vfilters/maxsthq3x.h"
 
 static VideoLink * createNone() { return 0; }
 
@@ -32,11 +27,6 @@ static VideoLink * createT() { return new T; }
 
 static VfilterInfo const vfinfos[] = {
 	{ "None", VfilterInfo::in_width, VfilterInfo::in_height, createNone },
-	VFINFO("Bicubic Catmull-Rom spline 2x", Catrom2x),
-	VFINFO("Bicubic Catmull-Rom spline 3x", Catrom3x),
-	VFINFO("Kreed's 2xSaI", Kreed2xSaI),
-	VFINFO("MaxSt's hq2x", MaxStHq2x),
-	VFINFO("MaxSt's hq3x", MaxStHq3x),
 };
 
 std::size_t VfilterInfo::numVfilters() {
