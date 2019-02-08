@@ -53,8 +53,8 @@ Mix_Chunk *menusound_ok = NULL;
 // Default config values
 int selectedscaler = 0, showfps = 0, ghosting = 1, biosenabled = 0, colorfilter = 0, gameiscgb = 0;
 uint32_t menupalblack = 0x000000, menupaldark = 0x505450, menupallight = 0xA8A8A8, menupalwhite = 0xF8FCF8;
-int filtervalue[12] = {95, 25, 0, 35, 25, 170, 25, 35, 25, 60, 125, 40};
-std::string dmgbordername = "DEFAULT", gbcbordername = "DEFAULT", palname = "DEFAULT", filtername = "DEFAULT";
+int filtervalue[12] = {135, 20, 0, 25, 0, 125, 20, 25, 0, 20, 105, 30};
+std::string dmgbordername = "DEFAULT", gbcbordername = "DEFAULT", palname = "DEFAULT", filtername = "NONE";
 std::string homedir = getenv("HOME");
 int numcodes_gg = NUM_GG_CODES, numcodes_gs = NUM_GS_CODES, selectedcode = 0, editmode = 0, blink = 0, footer_alt = 0;
 int ggcheats[NUM_GG_CODES *9] = {0};
@@ -69,15 +69,13 @@ std::string getSaveStateFilename(int statenum){
 }
 
 void getSaveStatePreview(int statenum){
-
 	uint32_t pixels[80 * 72];
 	std::ifstream file(getSaveStateFilename(statenum).c_str(), std::ios_base::binary);
 	if (file) {
 		file.ignore(5);
 		file.read(reinterpret_cast<char*>(pixels), sizeof pixels);
 		SDL_FillRect(statepreview, NULL, 0xA0A0A0);
-		memcpy((uint32_t*)statepreview->pixels, pixels, statepreview->h * statepreview->pitch );
-		
+		memcpy((uint32_t*)statepreview->pixels, pixels, statepreview->h * statepreview->pitch );	
 	} else {
 		uint32_t hlcolor;
 		if(gameiscgb == 1){
@@ -137,16 +135,12 @@ void closeMenuAudio(){
 void loadMenuSounds() {
     RWops = SDL_RWFromMem(ogg_menu_intro, 8591);
     menusound_intro = Mix_LoadWAV_RW(RWops, 1);
-
     RWops = SDL_RWFromMem(ogg_menu_in, 6456);
     menusound_in = Mix_LoadWAV_RW(RWops, 1);
-
     RWops = SDL_RWFromMem(ogg_menu_back, 6177);
     menusound_back = Mix_LoadWAV_RW(RWops, 1);
-
     RWops = SDL_RWFromMem(ogg_menu_move, 4725);
     menusound_move = Mix_LoadWAV_RW(RWops, 1);
-
     RWops = SDL_RWFromMem(ogg_menu_ok, 10826);
     menusound_ok = Mix_LoadWAV_RW(RWops, 1);  
 }
@@ -344,7 +338,6 @@ int menu_main(menu_t *menu) {
 								}
 							}
 							break;
-						//case SDLK_RETURN: 	/* start button */
 						case SDLK_LCTRL:	/* A button */
 							if(menuin == -1){
 								if (menu->entries[menu->selected_entry]->callback != NULL) {
@@ -386,7 +379,6 @@ int menu_main(menu_t *menu) {
 		SDL_BlitSurface(menuscreen, NULL, surface_menuinout, NULL);
 		clean_menu_screen(menu);
 	}
-	
 	return menu->selected_entry;
 }
 
@@ -394,7 +386,6 @@ int menu_cheat(menu_t *menu) {
     SDL_Event event;
 	int dirty, loop;
 	int i, collimit;
-
     if (menu->entries[0]->selectable == 2){
     	collimit = 11; //gamegenie codes
     } else if (menu->entries[0]->selectable == 1){
@@ -402,7 +393,6 @@ int menu_cheat(menu_t *menu) {
     } else {
     	collimit = 1; // this should never happen
     }
-
 	loop = 0;
 	while((menu->entries[menu->selected_entry]->selectable == 0) && (loop < menu->n_entries)) { //ensure we select a selectable entry, if there is any.
 		if (menu->selected_entry < menu->n_entries - 1) {
@@ -528,10 +518,11 @@ int menu_cheat(menu_t *menu) {
 							break;
 						case SDLK_LALT: /* B button, being used as 'back' */
 							if (menu->back_callback != NULL) {
-								menu->back_callback(menu);
 								if (editmode == 1){
 									footer_alt = 0;
 								}
+								menu->back_callback(menu);
+								
 							}
 							dirty = 1;
 							break;
@@ -542,7 +533,6 @@ int menu_cheat(menu_t *menu) {
 									redraw_cheat(menu);
 								}
 							}
-							
 							break;
 						default:
 							break;
@@ -564,11 +554,9 @@ int menu_cheat(menu_t *menu) {
 		if ((dirty) || ((editmode == 1) && ((blink == 0) || (blink == floor(BLINK_SPEED * 3 / 4)))) || ((collimit == 11) && ((footer_alt == 0) || (footer_alt == FOOTER_ALT_SPEED)))) {
 			redraw_cheat(menu);
 		}
-		
 		SDL_Delay(0);
 	}
 	clean_menu_screen_cheat(menu);
-	
 	return menu->selected_entry;
 }
 
@@ -580,14 +568,12 @@ static void display_menu(SDL_Surface *surface, menu_t *menu) {
     char *text;
     char buffer[64];
     int width;
-
     int linelimit = 13;
     int posbegin = 0;
     int posend = menu->n_entries;
     int uparrow = 0;
     int downarrow = 0;
     int num_selectable = 0;
-
     if((menu->n_entries > linelimit) && (linelimit % 2 != 0)){ // menu scrolling, line limit is not multiple of 2
     	if(menu->selected_entry <= floor(linelimit / 2)){
     		posbegin = 0;
@@ -636,13 +622,11 @@ static void display_menu(SDL_Surface *surface, menu_t *menu) {
     	uparrow = 0;
     	downarrow = 0;
     }
-
     const int highlight_margin = 0;
     paint_titlebar(surface);
     SFont_WriteCenter(surface, font, (line * font_height), menu->header);
     line ++;
     SFont_WriteCenter(surface, font, (line * font_height), menu->title);
-
     if(uparrow == 1){
     	line ++;
     	SFont_WriteCenter(surface, font, line * font_height, "{"); // up arrow
@@ -650,12 +634,10 @@ static void display_menu(SDL_Surface *surface, menu_t *menu) {
     } else {
     	line += 2;
     }
-
     if(menu->n_entries < linelimit){ // few menu items, require centering
 		int posoffset = floor((linelimit - menu->n_entries) / 2);
 		line += posoffset;
 	}
-
 	for (i = posbegin; i < posend; i++) {
 		if (menu->entries[i]->is_shiftable) {
 			sprintf(buffer, "%s <%s>", menu->entries[i]->text, menu->entries[i]->entries[menu->entries[i]->selected_entry]);
@@ -686,17 +668,13 @@ static void display_menu(SDL_Surface *surface, menu_t *menu) {
 		}
 		line++;
 	}
-
 	if(downarrow == 1){
 	    SFont_WriteCenter(surface, font, line * font_height, "}"); // down arrow
 	}
-
 	if((strcmp(menu->title, "Load State") == 0) || (strcmp(menu->title, "Save State") == 0)) { // load/save state screen
 		getSaveStatePreview(menu->selected_entry);
 		printSaveStatePreview(surface, 71, 32);
 	}
-	
-
 	for (i = 0; i < menu->n_entries; i++) {
 		if(menu->entries[i]->selectable == 1){
 			num_selectable++; // count num of selectable entries
@@ -730,7 +708,6 @@ static void display_menu_cheat(SDL_Surface *surface, menu_t *menu) {
     int uparrow = 0;
     int downarrow = 0;
     uint32_t hlcolor;
-
     if (menu->entries[0]->selectable == 2){
     	collimit = 11; //gamegenie codes
     } else if (menu->entries[0]->selectable == 1){
@@ -738,10 +715,8 @@ static void display_menu_cheat(SDL_Surface *surface, menu_t *menu) {
     } else {
     	collimit = 1; // this should never happen
     }
-
     numcodes = floor(menu->n_entries / collimit);
     currcode = floor(menu->selected_entry / collimit);
-
     if((numcodes > linelimit) && (linelimit % 2 != 0)){ // menu scrolling, line limit is not multiple of 2
     	if(currcode <= floor(linelimit / 2)){
     		posbegin = 0;
@@ -792,7 +767,6 @@ static void display_menu_cheat(SDL_Surface *surface, menu_t *menu) {
     	uparrow = 0;
     	downarrow = 0;
     }
-
     const int highlight_margin = 0;
     paint_titlebar(surface);
     SFont_WriteCenter(surface, font, (line * font_height), menu->header);
@@ -802,8 +776,6 @@ static void display_menu_cheat(SDL_Surface *surface, menu_t *menu) {
     } else {
     	SFont_WriteCenter(surface, font, (line * font_height), menu->title);
     }
-    
-
     if(uparrow == 1){
     	line ++;
     	SFont_WriteCenter(surface, font, line * font_height, "{"); // up arrow
@@ -811,20 +783,15 @@ static void display_menu_cheat(SDL_Surface *surface, menu_t *menu) {
     } else {
     	line += 2;
     }
-
     if(numcodes < linelimit){ // few menu items, require centering
 		int posoffset = floor((linelimit - numcodes) / 2);
 		line += posoffset;
 	}
-
 	column = 0;
-
 	for (i = (posbegin * collimit); i < (posend * collimit); i += collimit) {
-
 		j = i;
 		column = 0;
 		totaltext = "";
-
 		for (j = 0; j < collimit; j++){
 			if (menu->entries[i + j]->is_shiftable) {
 				sprintf(buffer, "%s", menu->entries[i + j]->entries[menu->entries[i + j]->selected_entry]);
@@ -835,7 +802,6 @@ static void display_menu_cheat(SDL_Surface *surface, menu_t *menu) {
 			totaltext += std::string(text);
 		}
 		h_offset = (surface->w - (font_width * totaltext.length())) / 2;
-
 		for (j = 0; j < collimit; j++){
 			if (menu->entries[i + j]->is_shiftable) {
 				sprintf(buffer, "%s", menu->entries[i + j]->entries[menu->entries[i + j]->selected_entry]);
@@ -844,7 +810,6 @@ static void display_menu_cheat(SDL_Surface *surface, menu_t *menu) {
 				text = menu->entries[i + j]->text;
 			}
 			totaltext = std::string(text);
-			
 			if ((menu->selected_entry == i + j) && (menu->entries[i + j]->selectable != 0)){ // only highlight selected entry if it's selectable
 				width = SFont_TextWidth(font, text);
 				highlight.x = (column * font_width) + h_offset - highlight_margin;
@@ -860,7 +825,6 @@ static void display_menu_cheat(SDL_Surface *surface, menu_t *menu) {
 				}
 				highlight.h = font_height;
 			}
-			
 			SFont_Write(surface, font, (column * font_width) + h_offset, line * font_height, text);
 			column += totaltext.length();
 		}
@@ -868,7 +832,6 @@ static void display_menu_cheat(SDL_Surface *surface, menu_t *menu) {
 		if ((editmode == 1) && (collimit == 10) && (blink >= floor(BLINK_SPEED * 3 / 4))) { // blink the whole code while in edit mode. - gameshark
 			for (j = 0; j < collimit; j++){
 				if ((menu->selected_entry == (i + j)) && (menu->entries[i + j]->selectable == 2)){
-
 					column = 0;
 					hlcolor = SDL_MapRGB(surface->format, 255, 255, 255);
 					linehighlight.x = ((column + 4) * font_width) + h_offset - highlight_margin;
@@ -876,14 +839,12 @@ static void display_menu_cheat(SDL_Surface *surface, menu_t *menu) {
 					linehighlight.w = (font_width * 8) + (highlight_margin * 2);
 					linehighlight.h = font_height;
 					SDL_FillRect(surface, &linehighlight, hlcolor);
-
 					break;
 				}
 			}
 		} else if ((editmode == 1) && (collimit == 11) && (blink >= floor(BLINK_SPEED * 3 / 4))) { // blink the whole code while in edit mode. - gamegenie
 			for (j = 0; j < collimit; j++){
 				if ((menu->selected_entry == (i + j)) && (menu->entries[i + j]->selectable == 2)){
-
 					column = 0;
 					hlcolor = SDL_MapRGB(surface->format, 255, 255, 255);
 					linehighlight.x = (column * font_width) + h_offset - highlight_margin;
@@ -891,12 +852,10 @@ static void display_menu_cheat(SDL_Surface *surface, menu_t *menu) {
 					linehighlight.w = (font_width * 11) + (highlight_margin * 2);
 					linehighlight.h = font_height;
 					SDL_FillRect(surface, &linehighlight, hlcolor);
-
 					break;
 				}
 			}
 		}
-
 		line++;
 	}
 	if((editmode == 1) && (blink < floor(BLINK_SPEED * 3 / 4))){
@@ -904,11 +863,9 @@ static void display_menu_cheat(SDL_Surface *surface, menu_t *menu) {
 	} else if (editmode == 0){
 		invert_rect(surface, &highlight); //draw invert rect on top of selected code/digit.
 	}
-
 	if(downarrow == 1){
 	    SFont_WriteCenter(surface, font, line * font_height, "}"); // down arrow
 	}
-
 	if(editmode == 1){
 		SFont_WriteCenter(surface, font, 17 * font_height, "B-Cancel    Accept-A"); // footer while in edit mode
 	} else if ((collimit == 10) && (menu->selected_entry % 10 == 0)){
@@ -1190,30 +1147,25 @@ uint32_t getpixel(SDL_Surface *surface, int x, int y)
     int bpp = surface->format->BytesPerPixel;
     /* Here p is the address to the pixel we want to retrieve */
     uint8_t *p = (uint8_t *)surface->pixels + y * surface->pitch + x * bpp;
- 
     switch (bpp)
     {
         case 1:
             return *p;
             break;
- 
         case 2:
             return *(uint16_t *)p;
             break;
- 
         case 3:
             if (SDL_BYTEORDER == SDL_BIG_ENDIAN)
                 return p[0] << 16 | p[1] << 8 | p[2];
             else
                 return p[0] | p[1] << 8 | p[2] << 16;
             break;
- 
         case 4:
             return *(uint32_t *)p;
             break;
- 
         default:
-            return 0;       /* shouldn't happen, but avoids warnings */
+            return 0;
     }
 }
  
@@ -1222,17 +1174,14 @@ void putpixel(SDL_Surface *surface, int x, int y, uint32_t pixel)
     int bpp = surface->format->BytesPerPixel;
     /* Here p is the address to the pixel we want to set */
     uint8_t *p = (uint8_t *)surface->pixels + y * surface->pitch + x * bpp;
- 
     switch (bpp)
     {
         case 1:
             *p = pixel;
             break;
- 
         case 2:
             *(uint16_t *)p = pixel;
             break;
- 
         case 3:
             if (SDL_BYTEORDER == SDL_BIG_ENDIAN) {
                 p[0] = (pixel >> 16) & 0xff;
@@ -1244,7 +1193,6 @@ void putpixel(SDL_Surface *surface, int x, int y, uint32_t pixel)
                 p[2] = (pixel >> 16) & 0xff;
             }
             break;
- 
         case 4:
             *(uint32_t *)p = pixel;
             break;
@@ -1292,10 +1240,8 @@ void convert_bw_surface_colors(SDL_Surface *surface, SDL_Surface *surface2, cons
 	    uint32_t col_dark = SDL_MapRGB(surface->format, 127, 127, 127);
 	    uint32_t col_light = SDL_MapRGB(surface->format, 191, 191, 191);
 	    uint32_t col_white = SDL_MapRGB(surface->format, 255, 255, 255);
-	 
 	    SDL_LockSurface(surface);
 	    SDL_LockSurface(surface2);
-	 
 	    int x,y;
 	    for (y=0; y < surface->h; ++y)
 	    {
@@ -1316,7 +1262,6 @@ void convert_bw_surface_colors(SDL_Surface *surface, SDL_Surface *surface2, cons
 	            putpixel(surface2, x, y, new_pix);
 	        }
 	    }
-	 
 	    SDL_UnlockSurface(surface);
 	    SDL_UnlockSurface(surface2);
 	} else if(mode == 1){
@@ -1327,10 +1272,8 @@ void convert_bw_surface_colors(SDL_Surface *surface, SDL_Surface *surface2, cons
 	    uint32_t col_5 = SDL_MapRGB(surface->format, 182, 182, 182);
 	    uint32_t col_6 = SDL_MapRGB(surface->format, 218, 218, 218);
 	    uint32_t col_7 = SDL_MapRGB(surface->format, 255, 255, 255);
-	 
 	    SDL_LockSurface(surface);
 	    SDL_LockSurface(surface2);
-	 
 	    int x,y;
 	    for (y=0; y < surface->h; ++y)
 	    {
@@ -1338,7 +1281,6 @@ void convert_bw_surface_colors(SDL_Surface *surface, SDL_Surface *surface2, cons
 	        {
 	            const uint32_t pix = getpixel(surface, x, y);
 	            uint32_t new_pix = pix;
-	 
 	            if (pix <= col_1)
 	                new_pix = fixcolor(surface2, repl_col_black);
 	            else if (pix <= col_2)
@@ -1353,11 +1295,9 @@ void convert_bw_surface_colors(SDL_Surface *surface, SDL_Surface *surface2, cons
 	                new_pix = mixfixcolor(surface2, repl_col_light, repl_col_white);
 	            else if (pix <= col_7)
 	                new_pix = fixcolor(surface2, repl_col_white);
-	 
 	            putpixel(surface2, x, y, new_pix);
 	        }
 	    }
-	 
 	    SDL_UnlockSurface(surface);
 	    SDL_UnlockSurface(surface2);
 	}
@@ -1375,23 +1315,15 @@ static void invert_rect(SDL_Surface* surface, SDL_Rect *rect) {
 			fprintf(stderr, "could not lock surface\n");
 			return;
 		}
-	}
-	
+	}	
 	max_y = rect->y + rect->h;
-	max_x = rect->x + rect->w;
-	
+	max_x = rect->x + rect->w;	
 	if (max_x > surface->w)
 		max_x = surface->w;
 	if (max_y > surface->h)
-		max_y = surface->h;
-		
+		max_y = surface->h;		
 	for (y = rect->y; y < max_y; y++) {
 		for (x = rect->x; x < max_x; x++) {
-			/* smooth corners */
-			//if ((y == rect->y) || (y == max_y - 1)) {
-			//	if ((x == rect->x) || (x == max_x - 1))
-			//		continue;
-			//}
 			pixel = get_pixel(surface, x, y);
 			pixel = ~pixel;
 			put_pixel(surface, x, y, pixel);
@@ -1411,8 +1343,7 @@ static void redraw(menu_t *menu) {
 		} else if((gambatte_p->isCgb()) && (gbcbordername != "NONE")) { // if system is GBC
 			clear_surface(screen, 0x000000);
 			paint_border(screen);
-		}
-			
+		}	
 		display_menu(menuscreen, menu);
 		blitter_p->scaleMenu();
 		SDL_Flip(screen);
@@ -1452,8 +1383,7 @@ static void redraw_cheat(menu_t *menu) {
 		} else if((gambatte_p->isCgb()) && (gbcbordername != "NONE")) { // if system is GBC
 			clear_surface(screen, 0x000000);
 			paint_border(screen);
-		}
-			
+		}	
 		display_menu_cheat(menuscreen, menu);
 		blitter_p->scaleMenu();
 		SDL_Flip(screen);
@@ -1568,18 +1498,18 @@ void loadFilter(std::string filterfile){
     	colorfilter = 0;
     	return;
     } else if(filterfile == "DEFAULT"){
-		filtervalue[0] = 95;
-		filtervalue[1] = 25;
+		filtervalue[0] = 135;
+		filtervalue[1] = 20;
 		filtervalue[2] = 0;
-		filtervalue[3] = 35;
-		filtervalue[4] = 25;
-		filtervalue[5] = 170;
-		filtervalue[6] = 25;
-		filtervalue[7] = 35;
-		filtervalue[8] = 25;
-		filtervalue[9] = 60;
-		filtervalue[10] = 125;
-		filtervalue[11] = 40;
+		filtervalue[3] = 25;
+		filtervalue[4] = 0;
+		filtervalue[5] = 125;
+		filtervalue[6] = 20;
+		filtervalue[7] = 25;
+		filtervalue[8] = 0;
+		filtervalue[9] = 20;
+		filtervalue[10] = 105;
+		filtervalue[11] = 30;
 		colorfilter = 1;
 		return;
 	} else {
@@ -1656,14 +1586,11 @@ void loadConfig(){
 		int value;
 		char charvalue[32];
 		std::string stringvalue;
-
 		if (!arg) {
 			continue;
 		}
-
 		*arg = '\0';
 		arg++;
-
 		if (!strcmp(line, "SHOWFPS")) {
 			sscanf(arg, "%d", &value);
 			showfps = value;
@@ -1671,7 +1598,7 @@ void loadConfig(){
 			sscanf(arg, "%d", &value);
 			selectedscaler = value;
 		} else if (!strcmp(line, "PALNAME")) {
-			int len = strlen(arg);
+			unsigned int len = strlen(arg);
 			if (len == 0 || len > sizeof(charvalue) - 1) {
 				continue;
 			}
@@ -1681,7 +1608,7 @@ void loadConfig(){
 			strcpy(charvalue, arg);
 			palname = std::string(charvalue);
 		} else if (!strcmp(line, "FILTERNAME")) {
-			int len = strlen(arg);
+			unsigned int len = strlen(arg);
 			if (len == 0 || len > sizeof(charvalue) - 1) {
 				continue;
 			}
@@ -1691,7 +1618,7 @@ void loadConfig(){
 			strcpy(charvalue, arg);
 			filtername = std::string(charvalue);
 		} else if (!strcmp(line, "DMGBORDERNAME")) {
-			int len = strlen(arg);
+			unsigned int len = strlen(arg);
 			if (len == 0 || len > sizeof(charvalue) - 1) {
 				continue;
 			}
@@ -1701,7 +1628,7 @@ void loadConfig(){
 			strcpy(charvalue, arg);
 			dmgbordername = std::string(charvalue);
 		} else if (!strcmp(line, "GBCBORDERNAME")) {
-			int len = strlen(arg);
+			unsigned int len = strlen(arg);
 			if (len == 0 || len > sizeof(charvalue) - 1) {
 				continue;
 			}

@@ -1580,12 +1580,6 @@ static void callback_gamegenie_back(menu_t *caller_menu) {
 
         playMenuSound_back();
         selectedcode = 0;
-        /*int i;
-
-        //clear all codes on exit
-        for (i = 0; i < (numcodes_gg * 9); i++) {
-            ggcheats[i] = 0;
-        }*/
 
         caller_menu->quit = 1;
 
@@ -1836,7 +1830,6 @@ static void callback_gameshark_back(menu_t *caller_menu) {
             caller_menu->entries[8 + offset]->selected_entry = gscheats[6 + offset2];
             caller_menu->entries[9 + offset]->selected_entry = gscheats[7 + offset2]; 
         }
-
         caller_menu->quit = 0;
     }
 }

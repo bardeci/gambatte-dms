@@ -279,7 +279,7 @@ void store_lastframe(SDL_Surface *surface) {
 void anim_menuin(SDL_Surface *surface) { 
 	
 	if(menuin >= 0){
-		menuin += 12; //16
+		menuin += 16; //16
 		SDL_Rect srcrect;
 		srcrect.x = 0;
 		srcrect.y = 0;
@@ -305,7 +305,7 @@ void anim_menuin(SDL_Surface *surface) {
 void anim_menuout(SDL_Surface *surface) { 
 
 	if(menuout >= 0){
-		menuout += 12; //16
+		menuout += 16; //16
 		SDL_Rect srcrect;
 		srcrect.x = 0;
 		srcrect.y = 0;
