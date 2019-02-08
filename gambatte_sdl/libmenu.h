@@ -14,6 +14,7 @@ extern "C" {
 #define NUM_GG_CODES 20
 #define NUM_GS_CODES 20
 #define BLINK_SPEED 48
+#define FOOTER_ALT_SPEED 500
 
 
 #include <SDL/SDL.h>
@@ -50,7 +51,8 @@ extern SDL_Surface *textoverlay;
 extern SDL_Surface *textoverlaycolored;
 extern int selectedscaler, showfps, ghosting, biosenabled, colorfilter, gameiscgb;
 extern uint32_t menupalblack, menupaldark, menupallight, menupalwhite;
-extern std::string dmgbordername, gbcbordername, palname, homedir;
+extern int filtervalue[12];
+extern std::string dmgbordername, gbcbordername, palname, filtername, homedir;
 extern int numcodes_gg, numcodes_gs, selectedcode, editmode;
 extern int ggcheats[NUM_GG_CODES*9];
 extern int gscheats[NUM_GS_CODES*8];
@@ -62,6 +64,7 @@ extern int menuin, menuout, showoverlay, overlay_inout, is_using_bios, can_reset
 void libmenu_set_screen(SDL_Surface *set_screen);
 void libmenu_set_font(SFont_Font *set_font);
 int menu_main(menu_t *menu);
+void menu_message(menu_t *menu);
 int menu_cheat(menu_t *menu);
 int menu_cheattest(menu_t *menu);
 void set_active_menu(menu_t *menu);
@@ -89,6 +92,7 @@ uint32_t convert_hexcolor(SDL_Surface *surface, const uint32_t color);
 int currentEntryInList(menu_t *menu, std::string text);
 void clear_surface(SDL_Surface *surface, Uint32 color);
 void loadPalette(std::string palettefile);
+void loadFilter(std::string filterfile);
 void saveConfig();
 void loadConfig();
 

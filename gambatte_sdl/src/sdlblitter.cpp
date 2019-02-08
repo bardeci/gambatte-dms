@@ -231,7 +231,7 @@ inline void SdlBlitter::swScale() {
 	            screen->pitch / screen->format->BytesPerPixel, screen->h / surface->h);
 }
 
-void apply_cfilter(SDL_Surface *surface) {
+void apply_cfilter_old(SDL_Surface *surface) {
 	uint8_t r1, g1, b1, r2, g2, b2, r3, g3, b3;
 	uint16_t *src = (uint16_t*)surface->pixels;
 	r2 = 0;
@@ -245,17 +245,26 @@ void apply_cfilter(SDL_Surface *surface) {
 		r1 = (*src & 0xf800) >> 8;
 		g1 = (*src & 0x7e0) >> 3;
 		b1 = (*src & 0x1f) << 3;
-		/*
-		*src = ((((r1 * 5) + (r2 * 2) + r3) / 8 ) & 0xf8) << 8 | 
-			   ((((g1 * 5) + (g2 * 2) + g3) / 8 ) & 0xfc) << 3 | 
-			   ((((b1 * 5) + (b2 * 2) + b3) / 8 ) & 0xf8) >> 3;
-		*/
 		*src = (((r1 + r1 + r1 + r1 + r2 + r2 + r2 + r3) / 8 ) & 0xf8) << 8 | 
 			   (((g1 + g1 + g1 + g1 + g2 + g2 + g2 + g3) / 8 ) & 0xfc) << 3 | 
 			   (((b1 + b1 + b1 + b1 + b2 + b2 + b2 + b3) / 8 ) & 0xf8) >> 3;
 	    src++;
 	}
-	
+}
+
+void apply_cfilter(SDL_Surface *surface) { // WIP EXPERIMENTAL FILTER
+	uint8_t r_initial, g_initial, b_initial;
+	uint16_t *src = (uint16_t*)surface->pixels;
+	for (int y = 0; y < (surface->h * surface->w); y++)
+	{
+		r_initial = (*src & 0xf800) >> 8;
+		g_initial = (*src & 0x7e0) >> 3;
+		b_initial = (*src & 0x1f) << 3;
+		*src = ((((r_initial * filtervalue[0] + g_initial * filtervalue[1] + b_initial * filtervalue[2]) >> 8) + filtervalue[3]) & 0xf8) << 8 | 
+			   ((((r_initial * filtervalue[4] + g_initial * filtervalue[5] + b_initial * filtervalue[6]) >> 8) + filtervalue[7]) & 0xfc) << 3 | 
+			   ((((r_initial * filtervalue[8] + g_initial * filtervalue[9] + b_initial * filtervalue[10]) >> 8) + filtervalue[11]) & 0xf8) >> 3;
+	    src++;
+	}
 }
 
 void blend_frames(SDL_Surface *surface) {

@@ -617,6 +617,9 @@ int GambatteSdl::exec(int const argc, char const *const argv[]) {
 	basicdirpath = (homedir + "/.gambatte/palettes/");
 	mkdir(basicdirpath.c_str(), 0777);
 
+	basicdirpath = (homedir + "/.gambatte/filters/");
+	mkdir(basicdirpath.c_str(), 0777);
+
 	basicdirpath = (homedir + "/.gambatte/borders/");
 	mkdir(basicdirpath.c_str(), 0777);
 
@@ -767,6 +770,7 @@ int GambatteSdl::exec(int const argc, char const *const argv[]) {
 
 	if(gambatte.isCgb()){
 		gameiscgb = 1;
+		loadFilter(filtername); //load filter on startup
 	} else {
 		gameiscgb = 0;
 		loadPalette(palname); //load palette on startup

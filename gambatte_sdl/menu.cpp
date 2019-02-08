@@ -119,6 +119,24 @@ static int parse_ext_pal(const struct dirent *dir) {
     return 0;
 }
 
+static int parse_ext_fil(const struct dirent *dir) {
+    if(!dir){
+        return 0;
+    }
+
+    if(dir->d_type == DT_REG) {
+        const char *ext = strrchr(dir->d_name,'.');
+        if((!ext) || (ext == dir->d_name)) {
+            return 0;
+        } else {
+            if(strcmp(ext, ".fil") == 0){
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
 static int parse_ext_png(const struct dirent *dir) {
     if(!dir){
         return 0;
@@ -182,11 +200,6 @@ void main_menu() {
     menu_set_header(menu, menu_main_title.c_str());
 	menu_set_title(menu, "Main Menu");
 	menu->back_callback = callback_return;
-	
-	menu_entry = new_menu_entry(0);
-	menu_entry_set_text(menu_entry, "Back to game");
-	menu_add_entry(menu, menu_entry);
-    menu_entry->callback = callback_return;
 
     menu_entry = new_menu_entry(0);
 	menu_entry_set_text(menu_entry, "Load state");
@@ -476,11 +489,6 @@ static void callback_options(menu_t *caller_menu) {
     menu_entry_set_text(menu_entry, "Save settings");
     menu_add_entry(menu, menu_entry);
     menu_entry->callback = callback_saveconfig;
-
-    menu_entry = new_menu_entry(0);
-    menu_entry_set_text(menu_entry, "Back");
-    menu_add_entry(menu, menu_entry);
-    menu_entry->callback = callback_options_back;
     
 	playMenuSound_in();
     menu_main(menu);
@@ -737,6 +745,11 @@ static void callback_dmgpalette_back(menu_t *caller_menu) {
 
 /* ==================== COLOR FILTER MENU =========================== */
 
+struct dirent **filterlist = NULL;
+int numfilters;
+
+static void callback_nofilter(menu_t *caller_menu);
+static void callback_defaultfilter(menu_t *caller_menu);
 static void callback_selectedfilter(menu_t *caller_menu);
 static void callback_colorfilter_back(menu_t *caller_menu);
 
@@ -752,26 +765,67 @@ static void callback_colorfilter(menu_t *caller_menu) {
     menu->back_callback = callback_colorfilter_back;
 
     menu_entry = new_menu_entry(0);
-    menu_entry_set_text(menu_entry, "OFF");
+    menu_entry_set_text(menu_entry, "No filter");
     menu_add_entry(menu, menu_entry);
-    menu_entry->callback = callback_selectedfilter;
+    menu_entry->callback = callback_nofilter;
 
     menu_entry = new_menu_entry(0);
-    menu_entry_set_text(menu_entry, "ON");
+    menu_entry_set_text(menu_entry, "Default");
     menu_add_entry(menu, menu_entry);
-    menu_entry->callback = callback_selectedfilter;
+    menu_entry->callback = callback_defaultfilter;
 
-    menu->selected_entry = colorfilter; 
+    std::string filterdir = (homedir + "/.gambatte/filters");
+    numfilters = scandir(filterdir.c_str(), &filterlist, parse_ext_fil, alphasort);
+    if (numfilters <= 0) {
+        printf("scandir for ./gambatte/filters/ failed.");
+    } else {
+        for (int i = 0; i < numfilters; ++i){
+            menu_entry = new_menu_entry(0);
+            menu_entry_set_text_no_ext(menu_entry, filterlist[i]->d_name);
+            menu_add_entry(menu, menu_entry);
+            menu_entry->callback = callback_selectedfilter;
+        }
+    }
+
+    menu->selected_entry = currentEntryInList(menu, filtername); 
     
     playMenuSound_in();
     menu_main(menu);
 
     delete_menu(menu);
+
+    for (int i = 0; i < numfilters; ++i){
+        free(filterlist[i]);
+    }
+    free(filterlist);
+}
+
+static void callback_nofilter(menu_t *caller_menu) {
+    playMenuSound_ok();
+    filtername = "NONE";
+    colorfilter = 0;
+    if(gameiscgb == 1){
+        caller_menu->quit = 0;
+    } else {
+        caller_menu->quit = 1;
+    }
+}
+
+static void callback_defaultfilter(menu_t *caller_menu) {
+    playMenuSound_ok();
+    filtername = "DEFAULT";
+    loadFilter(filtername);
+    if(gameiscgb == 1){
+        caller_menu->quit = 0;
+    } else {
+        caller_menu->quit = 1;
+    }
 }
 
 static void callback_selectedfilter(menu_t *caller_menu) {
     playMenuSound_ok();
-    colorfilter = caller_menu->selected_entry;
+    filtername = filterlist[caller_menu->selected_entry - 2]->d_name; // we added 2 extra entries before the list, so we do (-2).
+    loadFilter(filtername);
     if(gameiscgb == 1){
         caller_menu->quit = 0;
     } else {
@@ -1192,16 +1246,6 @@ static void callback_cheats(menu_t *caller_menu) {
     menu_entry_set_text(menu_entry, "Game Shark");
     menu_add_entry(menu, menu_entry);
     menu_entry->callback = callback_gameshark;
-
-    menu_entry = new_menu_entry(0);
-    menu_entry_set_text(menu_entry, "");
-    menu_add_entry(menu, menu_entry);
-    menu_entry->selectable = 0;
-
-    menu_entry = new_menu_entry(0);
-    menu_entry_set_text(menu_entry, "Back");
-    menu_add_entry(menu, menu_entry);
-    menu_entry->callback = callback_cheats_back;
     
     playMenuSound_in();
     menu_main(menu);
@@ -1223,6 +1267,7 @@ static void callback_cheats_back(menu_t *caller_menu) {
 
 static void callback_gamegenie_confirm(menu_t *caller_menu);
 static void callback_gamegenie_apply(menu_t *caller_menu);
+static void callback_gamegenie_apply_back(menu_t *caller_menu);
 static void callback_gamegenie_edit(menu_t *caller_menu);
 static void callback_gamegenie_back(menu_t *caller_menu);
 
@@ -1349,8 +1394,6 @@ static void callback_gamegenie(menu_t *caller_menu) {
     menu_cheat(menu);
 
     delete_menu(menu);
-
-	forcemenuexit = 0;
 }
 
 static void callback_gamegenie_confirm(menu_t *caller_menu) {
@@ -1367,7 +1410,7 @@ static void callback_gamegenie_confirm(menu_t *caller_menu) {
         menu->back_callback = callback_gamegenie_back;
 
         menu_entry = new_menu_entry(0);
-        menu_entry_set_text(menu_entry, "Apply Cheats?");
+        menu_entry_set_text(menu_entry, "Apply Codes?");
         menu_add_entry(menu, menu_entry);
         menu_entry->selectable = 0;
         menu_entry->callback = callback_gamegenie_apply;
@@ -1396,14 +1439,13 @@ static void callback_gamegenie_confirm(menu_t *caller_menu) {
         }
 
         if(forcemenuexit > 0) {
-	    	menuout = 0;
-	    	caller_menu->quit = 1;
+	    	forcemenuexit = 0;
+        	caller_menu->selected_entry = 0;
 	    }
 
     } else if (editmode == 1){ //user is in edit mode, he wants to exit edit mode
 
         callback_gamegenie_edit(caller_menu);
-
     }
 }
 
@@ -1445,9 +1487,47 @@ static void callback_gamegenie_apply(menu_t *caller_menu) {
     for (i = 0; i < (numcodes_gg * 9); i++) {
         ggcheats[i] = 0;
     }
+
+    menu_t *menu;
+    menu_entry_t *menu_entry;
+    (void) caller_menu;
+    menu = new_menu();
+        
+    menu_set_header(menu, menu_main_title.c_str());
+    menu_set_title(menu, "Game Genie");
+    menu->back_callback = callback_gamegenie_apply_back;
+
+    menu_entry = new_menu_entry(0);
+    menu_entry_set_text(menu_entry, " ");
+    menu_add_entry(menu, menu_entry);
+    menu_entry->selectable = 0;
+    menu_entry->callback = callback_gamegenie_apply_back;
+
+    menu_entry = new_menu_entry(0);
+    menu_entry_set_text(menu_entry, "Codes Applied!");
+    menu_add_entry(menu, menu_entry);
+    menu_entry->selectable = 0;
+    menu_entry->callback = callback_gamegenie_apply_back;
+
+    menu_entry = new_menu_entry(0);
+    menu_entry_set_text(menu_entry, " ");
+    menu_add_entry(menu, menu_entry);
+    menu_entry->selectable = 0;
+    menu_entry->callback = callback_gamegenie_apply_back;
     
-    forcemenuexit = 2;
-    caller_menu->quit = 1; 
+    menu_message(menu);
+
+    delete_menu(menu);
+
+    if(forcemenuexit > 0) {
+    	menuout = 0;
+    	caller_menu->quit = 1;
+    }
+}
+
+static void callback_gamegenie_apply_back(menu_t *caller_menu) {
+	forcemenuexit = 2;
+    caller_menu->quit = 1;
 }
 
 static void callback_gamegenie_edit(menu_t *caller_menu) {

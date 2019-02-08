@@ -26,6 +26,7 @@
 static void display_menu(SDL_Surface *surface, menu_t *menu);
 static void display_menu_cheat(SDL_Surface *surface, menu_t *menu);
 static void redraw(menu_t *menu);
+static void redraw_blank(menu_t *menu);
 static void redraw_cheat(menu_t *menu);
 static void invert_rect(SDL_Surface* surface, SDL_Rect *rect);
 static void put_pixel(SDL_Surface *surface, int x, int y, Uint32 pixel);
@@ -52,9 +53,10 @@ Mix_Chunk *menusound_ok = NULL;
 // Default config values
 int selectedscaler = 0, showfps = 0, ghosting = 1, biosenabled = 0, colorfilter = 0, gameiscgb = 0;
 uint32_t menupalblack = 0x000000, menupaldark = 0x505450, menupallight = 0xA8A8A8, menupalwhite = 0xF8FCF8;
-std::string dmgbordername = "DEFAULT", gbcbordername = "DEFAULT", palname = "DEFAULT";
+int filtervalue[12] = {95, 25, 0, 35, 25, 170, 25, 35, 25, 60, 125, 40};
+std::string dmgbordername = "DEFAULT", gbcbordername = "DEFAULT", palname = "DEFAULT", filtername = "DEFAULT";
 std::string homedir = getenv("HOME");
-int numcodes_gg = NUM_GG_CODES, numcodes_gs = NUM_GS_CODES, selectedcode = 0, editmode = 0, blink = 0;
+int numcodes_gg = NUM_GG_CODES, numcodes_gs = NUM_GS_CODES, selectedcode = 0, editmode = 0, blink = 0, footer_alt = 0;
 int ggcheats[NUM_GG_CODES *9] = {0};
 int gscheats[NUM_GS_CODES *8] = {0};
 int gscheatsenabled[NUM_GS_CODES] = {0};
@@ -226,6 +228,42 @@ void clean_menu_screen_cheat(menu_t *menu){
 	//SDL_Flip(screen);
 }
 
+void menu_message(menu_t *menu) {
+	SDL_Event event;
+	for (int i = 0; i < 5; ++i)
+	{
+		redraw(menu);
+    	SDL_Delay(100);
+    	redraw_blank(menu);
+    	SDL_Delay(100);
+	}
+    while (menu->quit == 0){
+    	while (SDL_PollEvent(&event)) {
+			switch (event.type) {
+				case SDL_QUIT:
+					break;
+				case SDL_KEYDOWN:
+					switch(event.key.keysym.sym) {
+						default:
+							break;
+					}
+				default:
+					break;
+			}
+		}
+		menu->back_callback(menu);
+	}
+	if(forcemenuexit == 2) {
+		forcemenuexit = 1;
+		SDL_BlitSurface(menuscreen, NULL, surface_menuinout, NULL);
+	} else if(forcemenuexit == 1) {
+		// do nothing
+	} else {
+		SDL_BlitSurface(menuscreen, NULL, surface_menuinout, NULL);
+		clean_menu_screen(menu);
+	}
+}
+
 int menu_main(menu_t *menu) {
     SDL_Event event;
 	int dirty, loop, i;
@@ -306,10 +344,11 @@ int menu_main(menu_t *menu) {
 								}
 							}
 							break;
-						case SDLK_RETURN: 	/* start button */
+						//case SDLK_RETURN: 	/* start button */
 						case SDLK_LCTRL:	/* A button */
 							if(menuin == -1){
 								if (menu->entries[menu->selected_entry]->callback != NULL) {
+									footer_alt = 0;
 									menu->entries[menu->selected_entry]->callback(menu);
 									redraw(menu);
 								}
@@ -318,6 +357,7 @@ int menu_main(menu_t *menu) {
 						case SDLK_LALT: /* B button, being used as 'back' */
 							if(menuin == -1){
 								if (menu->back_callback != NULL) {
+									footer_alt = 0;
 									menu->back_callback(menu);
 								}
 							}
@@ -372,6 +412,7 @@ int menu_cheat(menu_t *menu) {
 		}
 		loop++;
 	}
+	footer_alt = 0;
     redraw_cheat(menu);
     while (menu->quit == 0) {
         dirty = 0;
@@ -480,6 +521,7 @@ int menu_cheat(menu_t *menu) {
 							break;
 						case SDLK_LCTRL: /* A button */
 							if (menu->entries[menu->selected_entry]->callback != NULL) {
+								footer_alt = 0;
 								menu->entries[menu->selected_entry]->callback(menu);
 								redraw_cheat(menu);
 							}
@@ -487,6 +529,9 @@ int menu_cheat(menu_t *menu) {
 						case SDLK_LALT: /* B button, being used as 'back' */
 							if (menu->back_callback != NULL) {
 								menu->back_callback(menu);
+								if (editmode == 1){
+									footer_alt = 0;
+								}
 							}
 							dirty = 1;
 							break;
@@ -508,13 +553,18 @@ int menu_cheat(menu_t *menu) {
 		}
 		if(blink < BLINK_SPEED){ // for blinking animation
 			blink++;
-		}else if (blink == BLINK_SPEED){
+		} else if (blink == BLINK_SPEED){
 			blink = 0;
 		}
-
-		if ((dirty) || ((editmode == 1) && ((blink == 0) || (blink == floor(BLINK_SPEED * 3 / 4))))) {
+		if((collimit == 11) && (footer_alt < FOOTER_ALT_SPEED * 2)){ // for footer alternating animation on gamegenie menu
+			footer_alt++;
+		} else if ((collimit == 11) && (footer_alt == FOOTER_ALT_SPEED * 2)){
+			footer_alt = 0;
+		}
+		if ((dirty) || ((editmode == 1) && ((blink == 0) || (blink == floor(BLINK_SPEED * 3 / 4)))) || ((collimit == 11) && ((footer_alt == 0) || (footer_alt == FOOTER_ALT_SPEED)))) {
 			redraw_cheat(menu);
 		}
+		
 		SDL_Delay(0);
 	}
 	clean_menu_screen_cheat(menu);
@@ -654,6 +704,8 @@ static void display_menu(SDL_Surface *surface, menu_t *menu) {
 	}
 	if((num_selectable == 0) && (menu->n_entries == 1)){
 		SFont_WriteCenter(surface, font, 17 * font_height, "B-Cancel     Apply-A"); // footer while in confirmation screen
+	} else if((num_selectable == 0) && (menu->n_entries == 3)){
+		SFont_WriteCenter(surface, font, 17 * font_height, "                    "); // footer while displaying a message
 	} else if (num_selectable == 0){
 		SFont_WriteCenter(surface, font, 17 * font_height, "B-Back        Back-A"); // footer while in "About" screen
 	} else {
@@ -858,11 +910,15 @@ static void display_menu_cheat(SDL_Surface *surface, menu_t *menu) {
 	}
 
 	if(editmode == 1){
-		SFont_WriteCenter(surface, font, 17 * font_height, "B-Cancel     Apply-A"); // footer while in edit mode
+		SFont_WriteCenter(surface, font, 17 * font_height, "B-Cancel    Accept-A"); // footer while in edit mode
 	} else if ((collimit == 10) && (menu->selected_entry % 10 == 0)){
 		SFont_WriteCenter(surface, font, 17 * font_height, "B-Back      Toggle-A"); // footer while highlighting a toggle option in gameshark menu
 	} else {
-		SFont_WriteCenter(surface, font, 17 * font_height, "B-Back        Edit-A"); // footer while highlighting a cheat code
+		if(footer_alt < FOOTER_ALT_SPEED){
+			SFont_WriteCenter(surface, font, 17 * font_height, "B-Back        Edit-A"); // footer while highlighting a cheat code
+		} else {
+			SFont_WriteCenter(surface, font, 17 * font_height, "Press Start to Apply"); // alternating footer for gamegenie
+		}
 	}
 }
 
@@ -1363,6 +1419,30 @@ static void redraw(menu_t *menu) {
 	}	
 }
 
+static void redraw_blank(menu_t *menu) {
+	if(forcemenuexit == 0){
+		SDL_Rect rect;
+		rect.x = 0;
+		rect.y = 16;
+		rect.w = 160;
+		rect.h = 120;
+		clear_surface(menuscreen, 0xFFFFFF);
+		if((!gambatte_p->isCgb()) && (dmgbordername != "NONE")) { // if system is DMG
+			clear_surface(screen, convert_hexcolor(screen, menupalwhite));
+			paint_border(screen);
+			display_menu(menuscreen, menu);
+			SDL_FillRect(menuscreen, &rect, convert_hexcolor(screen, 0xFFFFFF));
+		} else if((gambatte_p->isCgb()) && (gbcbordername != "NONE")) { // if system is GBC
+			clear_surface(screen, 0x000000);
+			paint_border(screen);
+			display_menu(menuscreen, menu);
+			SDL_FillRect(menuscreen, &rect, convert_hexcolor(screen, 0xFFFFFF));
+		}	
+		blitter_p->scaleMenu();
+		SDL_Flip(screen);
+	}	
+}
+
 static void redraw_cheat(menu_t *menu) {
 	if(forcemenuexit == 0){
 		clear_surface(menuscreen, 0xFFFFFF);
@@ -1483,6 +1563,57 @@ void loadPalette(std::string palettefile){
 	}
 }
 
+void loadFilter(std::string filterfile){
+    if(filterfile == "NONE"){
+    	colorfilter = 0;
+    	return;
+    } else if(filterfile == "DEFAULT"){
+		filtervalue[0] = 95;
+		filtervalue[1] = 25;
+		filtervalue[2] = 0;
+		filtervalue[3] = 35;
+		filtervalue[4] = 25;
+		filtervalue[5] = 170;
+		filtervalue[6] = 25;
+		filtervalue[7] = 35;
+		filtervalue[8] = 25;
+		filtervalue[9] = 60;
+		filtervalue[10] = 125;
+		filtervalue[11] = 40;
+		colorfilter = 1;
+		return;
+	} else {
+		Uint32 values[12];
+		std::string filepath = (homedir + "/.gambatte/filters/");
+    	filepath.append(filterfile);
+		FILE *ffil = NULL;
+		ffil = fopen(filepath.c_str(), "r");
+		if (ffil == NULL) {
+			printf("Failed to open filter file %s\n", filepath.c_str());
+			return;
+		}
+		if(ffil){
+		    int j = 0;
+		    for (int i = 0; i < 12; ++i) { // TODO: Find a better way of parsing the filter values.
+		        if(fscanf(ffil, "%d", &values[j]) == 1){
+		            j++;
+		        }
+		    }
+		    if (j == 12){ // all 12 filter values were successfully loaded
+		        for (int i = 0; i < 12; ++i) {
+		            filtervalue[i] = values[i];
+		        }
+		        colorfilter = 1;
+		    } else {
+		        printf("Error reading: %s:\n",filepath.c_str());
+		        printf("Bad file format.\n");
+		    }
+		    fclose(ffil);
+		}
+		return;
+	}
+}
+
 void saveConfig(){
 	std::string configfile = (homedir + "/.gambatte/config.cfg");
 	FILE * cfile;
@@ -1495,7 +1626,7 @@ void saveConfig(){
 		"SHOWFPS %d\n"
 		"SELECTEDSCALER %d\n"
 		"PALNAME %s\n"
-		"COLORFILTER %d\n"
+		"FILTERNAME %s\n"
 		"DMGBORDERNAME %s\n"
 		"GBCBORDERNAME %s\n"
 		"BIOSENABLED %d\n"
@@ -1503,7 +1634,7 @@ void saveConfig(){
 		showfps,
 		selectedscaler,
 		palname.c_str(),
-		colorfilter,
+		filtername.c_str(),
 		dmgbordername.c_str(),
 		gbcbordername.c_str(),
 		biosenabled,
@@ -1549,9 +1680,16 @@ void loadConfig(){
 			}
 			strcpy(charvalue, arg);
 			palname = std::string(charvalue);
-		} else if (!strcmp(line, "COLORFILTER")) {
-			sscanf(arg, "%d", &value);
-			colorfilter = value;
+		} else if (!strcmp(line, "FILTERNAME")) {
+			int len = strlen(arg);
+			if (len == 0 || len > sizeof(charvalue) - 1) {
+				continue;
+			}
+			if (arg[len-1] == '\n') {
+				arg[len-1] = '\0';
+			}
+			strcpy(charvalue, arg);
+			filtername = std::string(charvalue);
 		} else if (!strcmp(line, "DMGBORDERNAME")) {
 			int len = strlen(arg);
 			if (len == 0 || len > sizeof(charvalue) - 1) {
