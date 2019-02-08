@@ -60,9 +60,8 @@ Here is a list of the available config options:
     use with monochrome GB games in DMG mode.
 
 - Color Filter:
-    Allows to filter the colors in GBC mode, to
-    make the colors look less vibrant, more like 
-    in the real GBC screen.
+    Allows to load external filter files for 
+    use with color games in GBC mode.
 
 - DMG border:
     Allows to load external PNG border images
@@ -97,6 +96,30 @@ for each sprite layer, and the color order is:
 "white" "light-grey" "dark-grey" "black".
 
 
+Filter files
+------------------------------------------------
+
+Filter files are text files with the extension 
+".fil" and its format must be:
+
+a1 a2 a3 a4
+b1 b2 b3 b4
+c1 c2 c3 c4
+
+Where each value is a decimal number, ranging
+from -255 to 255 which gets applied to the 
+GBC colors using the following algorithm:
+
+Rfinal = ((( R*a1 + G*a2 + B*a3 ) >> 8 ) + a4)
+Gfinal = ((( R*b1 + G*b2 + B*b3 ) >> 8 ) + b4)
+Bfinal = ((( R*c1 + G*c2 + B*c3 ) >> 8 ) + c4)
+
+A general rule to avoid the resulting colors
+exceeding the valid RGB range of 0-255 is that
+the sum of the 4 values in a row should always
+be between 0-255.
+
+
 File Paths
 ------------------------------------------------
 
@@ -108,6 +131,9 @@ File Paths
 
 - Palette files must be stored in:
     $HOME/.gambatte/palettes/
+
+- Filter files must be stored in:
+    $HOME/.gambatte/filters/
 
 - Border images must be stored in:
     $HOME/.gambatte/borders/
