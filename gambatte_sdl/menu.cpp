@@ -161,7 +161,7 @@ static void callback_return(menu_t *caller_menu);
 static void callback_selectstateload(menu_t *caller_menu);
 static void callback_selectstatesave(menu_t *caller_menu);
 static void callback_restart(menu_t *caller_menu);
-static void callback_options(menu_t *caller_menu);
+static void callback_settings(menu_t *caller_menu);
 static void callback_cheats(menu_t *caller_menu);
 static void callback_about(menu_t *caller_menu);
 static void callback_quit(menu_t *caller_menu);
@@ -194,7 +194,6 @@ void main_menu() {
 
     menu_t *menu;
 	menu_entry_t *menu_entry;
-    enum {RETURN = 0, SAVE_STATE = 1, LOAD_STATE = 2, SELECT_STATE = 3, OPTIONS = 4, RESTART = 5, QUIT = 6};
     
     menu = new_menu();
     menu_set_header(menu, menu_main_title.c_str());
@@ -222,9 +221,9 @@ void main_menu() {
     menu_entry->selectable = 0;
     
 	menu_entry = new_menu_entry(0);
-	menu_entry_set_text(menu_entry, "Options");
+	menu_entry_set_text(menu_entry, "Settings");
 	menu_add_entry(menu, menu_entry);
-    menu_entry->callback = callback_options;
+    menu_entry->callback = callback_settings;
 
     menu_entry = new_menu_entry(0);
     menu_entry_set_text(menu_entry, "Cheats");
@@ -425,20 +424,23 @@ static void callback_selectstatesave_back(menu_t *caller_menu) {
     caller_menu->quit = 1;
 }
 
-/* ==================== OPTIONS MENU ================================ */
+/* ==================== SETTINGS MENU ================================ */
 
-static void callback_saveconfig(menu_t *caller_menu);
-static void callback_options_back(menu_t *caller_menu);
+static void callback_saveconfig_confirm(menu_t *caller_menu);
+static void callback_saveconfig_apply(menu_t *caller_menu);
+static void callback_saveconfig_apply_back(menu_t *caller_menu);
+static void callback_saveconfig_back(menu_t *caller_menu);
+static void callback_settings_back(menu_t *caller_menu);
 
-static void callback_options(menu_t *caller_menu) {
+static void callback_settings(menu_t *caller_menu) {
     menu_t *menu;
 	menu_entry_t *menu_entry;
     (void) caller_menu;
     menu = new_menu();
         
     menu_set_header(menu, menu_main_title.c_str());
-    menu_set_title(menu, "Options");
-	menu->back_callback = callback_options_back;
+    menu_set_title(menu, "Settings");
+	menu->back_callback = callback_settings_back;
 
     menu_entry = new_menu_entry(0);
     menu_entry_set_text(menu_entry, "Show FPS");
@@ -488,7 +490,7 @@ static void callback_options(menu_t *caller_menu) {
     menu_entry = new_menu_entry(0);
     menu_entry_set_text(menu_entry, "Save settings");
     menu_add_entry(menu, menu_entry);
-    menu_entry->callback = callback_saveconfig;
+    menu_entry->callback = callback_saveconfig_confirm;
     
 	playMenuSound_in();
     menu_main(menu);
@@ -501,13 +503,87 @@ static void callback_options(menu_t *caller_menu) {
     }
 }
 
-static void callback_saveconfig(menu_t *caller_menu) {
+static void callback_saveconfig_confirm(menu_t *caller_menu) {
+
+	menu_t *menu;
+    menu_entry_t *menu_entry;
+    (void) caller_menu;
+    menu = new_menu();
+
+    menu_set_header(menu, menu_main_title.c_str());
+    menu_set_title(menu, "Settings");
+    menu->back_callback = callback_saveconfig_back;
+
+    menu_entry = new_menu_entry(0);
+    menu_entry_set_text(menu_entry, "Save settings?");
+    menu_add_entry(menu, menu_entry);
+    menu_entry->selectable = 0;
+    menu_entry->callback = callback_saveconfig_apply;
+    
+    playMenuSound_in();
+    menu_main(menu);
+
+    delete_menu(menu);
+
+    if(forcemenuexit > 0) {
+    	forcemenuexit = 0;
+    	caller_menu->selected_entry = 0;
+    }
+}
+
+static void callback_saveconfig_apply(menu_t *caller_menu) {
+
     playMenuSound_ok();
     saveConfig();
+
+    menu_t *menu;
+    menu_entry_t *menu_entry;
+    (void) caller_menu;
+    menu = new_menu();
+        
+    menu_set_header(menu, menu_main_title.c_str());
+    menu_set_title(menu, "Settings");
+    menu->back_callback = callback_saveconfig_apply_back;
+
+    menu_entry = new_menu_entry(0);
+    menu_entry_set_text(menu_entry, " ");
+    menu_add_entry(menu, menu_entry);
+    menu_entry->selectable = 0;
+    menu_entry->callback = callback_saveconfig_apply_back;
+
+    menu_entry = new_menu_entry(0);
+    menu_entry_set_text(menu_entry, "Settings saved!");
+    menu_add_entry(menu, menu_entry);
+    menu_entry->selectable = 0;
+    menu_entry->callback = callback_saveconfig_apply_back;
+
+    menu_entry = new_menu_entry(0);
+    menu_entry_set_text(menu_entry, " ");
+    menu_add_entry(menu, menu_entry);
+    menu_entry->selectable = 0;
+    menu_entry->callback = callback_saveconfig_apply_back;
+    
+    menu_message(menu);
+
+    delete_menu(menu);
+
+    if(forcemenuexit > 0) {
+    	menuout = 0;
+    	caller_menu->quit = 1;
+    }
+}
+
+static void callback_saveconfig_apply_back(menu_t *caller_menu) {
+	forcemenuexit = 2;
     caller_menu->quit = 1;
 }
 
-static void callback_options_back(menu_t *caller_menu) {
+static void callback_saveconfig_back(menu_t *caller_menu) {
+    playMenuSound_back();
+    caller_menu->quit = 1;
+}
+
+static void callback_settings_back(menu_t *caller_menu) {
     playMenuSound_back();
     caller_menu->quit = 1;
 }

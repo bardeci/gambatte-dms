@@ -680,10 +680,10 @@ static void display_menu(SDL_Surface *surface, menu_t *menu) {
 			num_selectable++; // count num of selectable entries
 		}
 	}
-	if((num_selectable == 0) && (menu->n_entries == 1)){
-		SFont_WriteCenter(surface, font, 17 * font_height, "B-Cancel     Apply-A"); // footer while in confirmation screen
-	} else if((num_selectable == 0) && (menu->n_entries == 3)){
-		SFont_WriteCenter(surface, font, 17 * font_height, "                    "); // footer while displaying a message
+	if((num_selectable == 0) && (menu->n_entries < 4) && (strcmp(menu->title, "Game Genie") == 0)){
+		SFont_WriteCenter(surface, font, 17 * font_height, "B-Cancel     Apply-A"); // footer while in "Apply Cheats" confirmation screen
+	} else if((num_selectable == 0) && (menu->n_entries < 4) && (strcmp(menu->title, "Settings") == 0)){
+		SFont_WriteCenter(surface, font, 17 * font_height, "B-Cancel      Save-A"); // footer while in "Save Settings" confirmation screen
 	} else if (num_selectable == 0){
 		SFont_WriteCenter(surface, font, 17 * font_height, "B-Back        Back-A"); // footer while in "About" screen
 	} else {

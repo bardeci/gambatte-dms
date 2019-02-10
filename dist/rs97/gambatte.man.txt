@@ -241,7 +241,7 @@ Additional menu rework by Hi-Ban.
 Special thanks to Senquack and Pingflood for 
 helping this noob.
 Source code available at:
--TBA-
+https://github.com/bardeci/dot-matrix-simulator
 
 ------------------------------------------------
 
