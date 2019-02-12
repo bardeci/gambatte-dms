@@ -13,14 +13,16 @@ extern "C" {
 
 #define NUM_GG_CODES 20
 #define NUM_GS_CODES 20
-#define BLINK_SPEED 48
 
 #ifdef VERSION_GCW0
-	#define FOOTER_ALT_SPEED 500
+	#define BLINK_SPEED 12
+	#define FOOTER_ALT_SPEED 100
 #elif VERSION_RS97
-	#define FOOTER_ALT_SPEED 200
-#else	
-	#define FOOTER_ALT_SPEED 500
+	#define BLINK_SPEED 12
+	#define FOOTER_ALT_SPEED 100
+#else
+	#define BLINK_SPEED 12
+	#define FOOTER_ALT_SPEED 100
 #endif
 
 #include <SDL/SDL.h>
