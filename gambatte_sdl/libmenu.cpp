@@ -368,7 +368,12 @@ int menu_main(menu_t *menu) {
 		if (dirty) {
 			redraw(menu);
 		}
-		SDL_Delay(0);
+		if(menuin == -1){
+			SDL_Delay(10);
+		} else {
+			SDL_Delay(0);
+		}
+		
 	}
 	if(forcemenuexit == 2) {
 		forcemenuexit = 1;
@@ -554,7 +559,11 @@ int menu_cheat(menu_t *menu) {
 		if ((dirty) || ((editmode == 1) && ((blink == 0) || (blink == floor(BLINK_SPEED * 3 / 4)))) || ((collimit == 11) && ((footer_alt == 0) || (footer_alt == FOOTER_ALT_SPEED)))) {
 			redraw_cheat(menu);
 		}
-		SDL_Delay(0);
+		if(menuin == -1){
+			SDL_Delay(10);
+		} else {
+			SDL_Delay(0);
+		}
 	}
 	clean_menu_screen_cheat(menu);
 	return menu->selected_entry;
