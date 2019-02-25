@@ -397,7 +397,7 @@ void SdlBlitter::draw() {
 		firstframe = -1;
 	}
 	
-	if(ghosting == 0){
+	if((ghosting == 0) || ((ghosting == 1) && (gameiscgb == 1)) || ((ghosting == 2) && (gameiscgb == 0))){ //Ghosting disabled for current system
 		if(showoverlay >= 0){
 			anim_textoverlay(surface);
 		}
@@ -453,7 +453,7 @@ void SdlBlitter::draw() {
 	            }
 				break;
 		}
-	} else if(ghosting == 1){
+	} else if((ghosting == 3) || ((ghosting == 1) && (gameiscgb == 0)) || ((ghosting == 2) && (gameiscgb == 1))){ //Ghosting enabled for current system
 		if(showoverlay >= 0){
 			anim_textoverlay(surface);
 		}

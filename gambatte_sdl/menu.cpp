@@ -1177,7 +1177,17 @@ static void callback_ghosting(menu_t *caller_menu) {
     menu_entry->callback = callback_selectedghosting;
 
     menu_entry = new_menu_entry(0);
-    menu_entry_set_text(menu_entry, "ON");
+    menu_entry_set_text(menu_entry, "DMG");
+    menu_add_entry(menu, menu_entry);
+    menu_entry->callback = callback_selectedghosting;
+
+    menu_entry = new_menu_entry(0);
+    menu_entry_set_text(menu_entry, "GBC");
+    menu_add_entry(menu, menu_entry);
+    menu_entry->callback = callback_selectedghosting;
+
+    menu_entry = new_menu_entry(0);
+    menu_entry_set_text(menu_entry, "ALL");
     menu_add_entry(menu, menu_entry);
     menu_entry->callback = callback_selectedghosting;
 

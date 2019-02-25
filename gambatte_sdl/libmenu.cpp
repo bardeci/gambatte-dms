@@ -124,7 +124,13 @@ void printOverlay(const char *text){
 }
 
 void openMenuAudio(){
+#ifdef VERSION_GCW0
 	Mix_OpenAudio(44100, AUDIO_S16SYS, 2, 1792);
+#elif VERSION_RS97
+	Mix_OpenAudio(44100, AUDIO_S16SYS, 2, 1024);
+#else
+	Mix_OpenAudio(44100, AUDIO_S16SYS, 2, 1792);
+#endif
 	Mix_AllocateChannels(2);
 }
 
