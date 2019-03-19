@@ -14,6 +14,7 @@ int init_fps_font();
 void init_globals(gambatte::GB *gambatte, BlitterWrapper *blitter);
 int init_menu();
 void main_menu();
+void main_menu_with_anim();
 void show_fps(SDL_Surface *surface, int fps);
 
 

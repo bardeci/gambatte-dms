@@ -783,6 +783,7 @@ int GambatteSdl::exec(int const argc, char const *const argv[]) {
 bool GambatteSdl::handleEvents(BlitterWrapper &blitter) {
 	JoyData jd;
 	SDL_Event e;
+	
 	while (SDL_PollEvent(&e)) {
 		switch (e.type) {	
 			case SDL_JOYAXISMOTION:
@@ -841,14 +842,16 @@ bool GambatteSdl::handleEvents(BlitterWrapper &blitter) {
 					case SDLK_TAB: // R trigger
 					case SDLK_HOME: // "power flick" in GCW Zero
 					case SDLK_END: // power button in rs-97
-						if(menuout == -1){
-							main_menu();
+						if((menuout == -1) && (menuin == -1)){
+							//main_menu();
+							main_menu_with_anim();
 							inputGetter.is = 0;
 						}
 						break;
 					case SDLK_F5:
 						gambatte.saveState(blitter.inBuf().pixels, blitter.inBuf().pitch);
 						break;
+					/*
 					case SDLK_F6: gambatte.selectState(gambatte.currentState() - 1); break;
 					case SDLK_F7: gambatte.selectState(gambatte.currentState() + 1); break;
 					case SDLK_F8: gambatte.loadState(); break;
@@ -862,6 +865,7 @@ bool GambatteSdl::handleEvents(BlitterWrapper &blitter) {
 					case SDLK_7: gambatte.selectState(7); break;
 					case SDLK_8: gambatte.selectState(8); break;
 					case SDLK_9: gambatte.selectState(9); break;
+					*/
 					default: break;
 					}
 				}
@@ -904,6 +908,7 @@ int GambatteSdl::run(long const sampleRate, int const latency, int const periods
 	SDL_PauseAudio(0);
 
 	for (;;) {
+
 		if (handleEvents(blitter))
 			return 0;
 
@@ -938,6 +943,10 @@ int GambatteSdl::run(long const sampleRate, int const latency, int const periods
 		}
 
 		std::memmove(audioBuf, audioBuf + outsamples, bufsamples * sizeof *audioBuf);
+		if(menuin == -2){
+			menuin = -1;
+			main_menu();
+		}
 	}
 
 	return 0;

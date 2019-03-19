@@ -37,6 +37,10 @@ void load_border(std::string borderfilename);
 static SDL_Surface *screen = NULL;
 static SFont_Font* font = NULL;
 static SDL_RWops *RWops;
+static SDL_RWops *RWops1;
+static SDL_RWops *RWops2;
+static SDL_RWops *RWops3;
+static SDL_RWops *RWops4;
 
 SDL_Surface *menuscreen;
 SDL_Surface *surface_menuinout;
@@ -44,7 +48,6 @@ SDL_Surface *statepreview;
 SDL_Surface *textoverlay;
 SDL_Surface *textoverlaycolored;
 
-Mix_Chunk *menusound_intro = NULL;
 Mix_Chunk *menusound_in = NULL;
 Mix_Chunk *menusound_back = NULL;
 Mix_Chunk *menusound_move = NULL;
@@ -139,28 +142,34 @@ void closeMenuAudio(){
 }
 
 void loadMenuSounds() {
-    RWops = SDL_RWFromMem(ogg_menu_intro, 8591);
-    menusound_intro = Mix_LoadWAV_RW(RWops, 1);
-    RWops = SDL_RWFromMem(ogg_menu_in, 6456);
-    menusound_in = Mix_LoadWAV_RW(RWops, 1);
-    RWops = SDL_RWFromMem(ogg_menu_back, 6177);
-    menusound_back = Mix_LoadWAV_RW(RWops, 1);
-    RWops = SDL_RWFromMem(ogg_menu_move, 4725);
-    menusound_move = Mix_LoadWAV_RW(RWops, 1);
-    RWops = SDL_RWFromMem(ogg_menu_ok, 10826);
-    menusound_ok = Mix_LoadWAV_RW(RWops, 1);  
+    RWops1 = SDL_RWFromMem(wav_menu_in, sizeof(wav_menu_in));
+    menusound_in = Mix_LoadWAV_RW(RWops1, 1);
+    RWops2 = SDL_RWFromMem(wav_menu_back, sizeof(wav_menu_back));
+    menusound_back = Mix_LoadWAV_RW(RWops2, 1);
+    RWops3 = SDL_RWFromMem(wav_menu_move, sizeof(wav_menu_move));
+    menusound_move = Mix_LoadWAV_RW(RWops3, 1);
+    RWops4 = SDL_RWFromMem(wav_menu_ok, sizeof(wav_menu_ok));
+    menusound_ok = Mix_LoadWAV_RW(RWops4, 1);
+    
+    if(menusound_in == NULL){
+    	printf("Error loading sound menusound_in: %s\n", Mix_GetError());
+    }
+    if(menusound_back == NULL){
+    	printf("Error loading sound menusound_back: %s\n", Mix_GetError());
+    }
+    if(menusound_move == NULL){
+    	printf("Error loading sound menusound_move: %s\n", Mix_GetError());
+    }
+    if(menusound_ok == NULL){
+    	printf("Error loading sound menusound_ok: %s\n", Mix_GetError());
+    }
 }
 
 void freeMenuSounds(){
-	Mix_FreeChunk(menusound_intro);
 	Mix_FreeChunk(menusound_in);
 	Mix_FreeChunk(menusound_back);
 	Mix_FreeChunk(menusound_move);
 	Mix_FreeChunk(menusound_ok);
-}
-
-void playMenuSound_intro(){
-	Mix_PlayChannel(-1, menusound_intro, 0);
 }
 
 void playMenuSound_in(){
@@ -179,11 +188,12 @@ void playMenuSound_ok(){
 	Mix_PlayChannel(-1, menusound_ok, 0);
 }
 
-void switchToMenuAudio(){
+int switchToMenuAudio(){
 	SDL_PauseAudio(1);
     SDL_CloseAudio(); //disable emulator audio, otherwise menu audio wont work
     openMenuAudio(); //enable menu audio
     loadMenuSounds();
+    return 0;
 }
 
 void switchToEmulatorAudio(){
@@ -262,6 +272,28 @@ void menu_message(menu_t *menu) {
 		SDL_BlitSurface(menuscreen, NULL, surface_menuinout, NULL);
 		clean_menu_screen(menu);
 	}
+}
+
+int menu_drawmenuframe(menu_t *menu) {
+	int loop, i;
+	loop = 0;
+	int num_selectable = 0;
+	for (i = 0; i < menu->n_entries; i++) {
+		if(menu->entries[i]->selectable == 1){
+			num_selectable++; // count num of selectable entries
+		}
+	}
+	while((menu->entries[menu->selected_entry]->selectable == 0) && (loop < menu->n_entries)) { //ensure we select a selectable entry, if there is any.
+		if (menu->selected_entry < menu->n_entries - 1) {
+			++menu->selected_entry;
+		} else {
+			menu->selected_entry = 0;
+		}
+		loop++;
+	}
+	clear_surface(surface_menuinout, 0xFFFFFF);
+    display_menu(surface_menuinout, menu);
+	return menu->selected_entry;
 }
 
 int menu_main(menu_t *menu) {
@@ -1043,7 +1075,7 @@ int currentEntryInList(menu_t *menu, std::string fname){
 
 void paint_titlebar(SDL_Surface *surface){
 	uint32_t hlcolor = SDL_MapRGB(surface->format, 255, 255, 255);
-	SDL_FillRect(menuscreen, NULL, hlcolor);
+	SDL_FillRect(surface, NULL, hlcolor);
 	if(gameiscgb == 1){
 		hlcolor = SDL_MapRGB(surface->format, 64, 128, 255);
 	} else {
@@ -1054,12 +1086,12 @@ void paint_titlebar(SDL_Surface *surface){
     rect.y = 0;
     rect.w = 160;
     rect.h = 16;
-    SDL_FillRect(menuscreen, &rect, hlcolor);
+    SDL_FillRect(surface, &rect, hlcolor);
     rect.x = 0;
     rect.y = 136;
     rect.w = 160;
     rect.h = 8;
-    SDL_FillRect(menuscreen, &rect, hlcolor);
+    SDL_FillRect(surface, &rect, hlcolor);
 }
 
 void load_border(std::string borderfilename){ //load border from menu
@@ -1358,7 +1390,9 @@ static void redraw(menu_t *menu) {
 		} else if((gambatte_p->isCgb()) && (gbcbordername != "NONE")) { // if system is GBC
 			clear_surface(screen, 0x000000);
 			paint_border(screen);
-		}	
+		} else { //if border image is disabled
+			clear_surface(screen, 0x000000);
+		}
 		display_menu(menuscreen, menu);
 		blitter_p->scaleMenu();
 		SDL_Flip(screen);
@@ -1383,7 +1417,11 @@ static void redraw_blank(menu_t *menu) {
 			paint_border(screen);
 			display_menu(menuscreen, menu);
 			SDL_FillRect(menuscreen, &rect, convert_hexcolor(screen, 0xFFFFFF));
-		}	
+		} else { //if border image is disabled
+			clear_surface(screen, 0x000000);
+			display_menu(menuscreen, menu);
+			SDL_FillRect(menuscreen, &rect, convert_hexcolor(screen, 0xFFFFFF));
+		}
 		blitter_p->scaleMenu();
 		SDL_Flip(screen);
 	}	
@@ -1398,7 +1436,9 @@ static void redraw_cheat(menu_t *menu) {
 		} else if((gambatte_p->isCgb()) && (gbcbordername != "NONE")) { // if system is GBC
 			clear_surface(screen, 0x000000);
 			paint_border(screen);
-		}	
+		} else { //if border image is disabled
+			clear_surface(screen, 0x000000);
+		}
 		display_menu_cheat(menuscreen, menu);
 		blitter_p->scaleMenu();
 		SDL_Flip(screen);

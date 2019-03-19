@@ -278,6 +278,15 @@ void store_lastframe(SDL_Surface *surface) {
 
 void anim_menuin(SDL_Surface *surface) { 
 	
+	if(menuin == 0){
+		if(gambatte_p->isCgb()){
+			if((colorfilter == 1) && (gameiscgb == 1)){
+				apply_cfilter(surface_menuinout);
+			}
+		} else {
+			convert_bw_surface_colors(surface_menuinout, surface_menuinout, menupalblack, menupaldark, menupallight, menupalwhite, 1); //if game is DMG, then menu matches DMG palette
+		}
+	}
 	if(menuin >= 0){
 		menuin += 16; //16
 		SDL_Rect srcrect;
@@ -289,16 +298,13 @@ void anim_menuin(SDL_Surface *surface) {
 		dstrect.x = 0;
 		dstrect.y = (144 - menuin); // --
 		dstrect.w = 160;
-		dstrect.h = 0;
-		SDL_BlitSurface(surface, NULL, surface_menuinout, NULL);
-		if((colorfilter == 1) && (gameiscgb == 1)){
-			apply_cfilter(surface_menuinout);
+		dstrect.h = (0 + menuin);
+		if(menuin > 0){
+			SDL_BlitSurface(surface_menuinout, &srcrect, surface, &dstrect);
 		}
-		SDL_BlitSurface(menuscreen, &srcrect, surface_menuinout, &dstrect);
-		SDL_BlitSurface(surface_menuinout, NULL, menuscreen, NULL);
 	}
 	if(menuin >= 144){
-		menuin = -1;
+		menuin = -2;
 	}
 }
 
@@ -315,11 +321,10 @@ void anim_menuout(SDL_Surface *surface) {
 		dstrect.x = 0;
 		dstrect.y = (0 + menuout); // --
 		dstrect.w = 160;
-		dstrect.h = 0;
+		dstrect.h = (144 - menuout);
 		if(menuout < 144){
 			SDL_BlitSurface(surface_menuinout, &srcrect, surface, &dstrect);
-		}
-		
+		}	
 	}
 	if(menuout >= 144){
 		menuout = -1;
@@ -361,6 +366,11 @@ static int fps = 0;
 static int firstframe = 0;
 
 void SdlBlitter::draw() {
+
+	/*if(menuin == -2){
+		menuin = -1;
+		main_menu();
+	}*/
 
 	clock_t cur_time;
 	size_t offset;
@@ -406,6 +416,8 @@ void SdlBlitter::draw() {
 		}
 		if(menuout >= 0){
 			anim_menuout(surface);
+		}else if(menuin >= 0){
+			anim_menuin(surface);
 		}
 		switch(selectedscaler) {
 			case 0:		/* no scaler */
@@ -464,6 +476,8 @@ void SdlBlitter::draw() {
 		}
 		if(menuout >= 0){
 			anim_menuout(currframe);
+		}else if(menuin >= 0){
+			anim_menuin(currframe);
 		}
 		switch(selectedscaler) {
 			case 0:		/* no scaler */
@@ -537,9 +551,9 @@ void SdlBlitter::scaleMenu() {
 		convert_bw_surface_colors(menuscreen, menuscreen, menupalblack, menupaldark, menupallight, menupalwhite, 1); //if game is DMG, then menu matches DMG palette
 	}
 
-	if(menuin >= 0){
+	/*if(menuin >= 0){
 		anim_menuin(surface);
-	}
+	}*/
 
 	switch(selectedscaler) {
 		case 0:		/* no scaler */

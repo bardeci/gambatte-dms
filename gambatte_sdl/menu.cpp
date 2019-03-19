@@ -186,28 +186,76 @@ std::string menu_main_title = ("GAMBATTE-RS97");
 std::string menu_main_title = ("GAMBATTE-OD");
 #endif
 
+void main_menu_with_anim() {//create a single menu frame to make the entry animation
+
+    menu_t *menu;
+    menu_entry_t *menu_entry;
+    
+    menu = new_menu();
+    menu_set_header(menu, menu_main_title.c_str());
+    menu_set_title(menu, "Main Menu");
+
+    menu_entry = new_menu_entry(0);
+    menu_entry_set_text(menu_entry, "Load state");
+    menu_add_entry(menu, menu_entry);
+
+    menu_entry = new_menu_entry(0);
+    menu_entry_set_text(menu_entry, "Save state");
+    menu_add_entry(menu, menu_entry);
+
+    menu_entry = new_menu_entry(0);
+    menu_entry_set_text(menu_entry, "Reset game");
+    menu_add_entry(menu, menu_entry);
+
+    menu_entry = new_menu_entry(0);
+    menu_entry_set_text(menu_entry, "");
+    menu_add_entry(menu, menu_entry);
+    menu_entry->selectable = 0;
+    
+    menu_entry = new_menu_entry(0);
+    menu_entry_set_text(menu_entry, "Settings");
+    menu_add_entry(menu, menu_entry);
+
+    menu_entry = new_menu_entry(0);
+    menu_entry_set_text(menu_entry, "Cheats");
+    menu_add_entry(menu, menu_entry);
+
+    menu_entry = new_menu_entry(0);
+    menu_entry_set_text(menu_entry, "About");
+    menu_add_entry(menu, menu_entry);
+    
+    menu_entry = new_menu_entry(0);
+    menu_entry_set_text(menu_entry, "Quit");
+    menu_add_entry(menu, menu_entry);
+
+    menuin = 0;
+    menu_drawmenuframe(menu);
+    delete_menu(menu);
+}
 
 void main_menu() {
+
+    switchToMenuAudio();
 
     SDL_EnableKeyRepeat(250, 83);
     forcemenuexit = 0;
 
     menu_t *menu;
-	menu_entry_t *menu_entry;
+    menu_entry_t *menu_entry;
     
     menu = new_menu();
     menu_set_header(menu, menu_main_title.c_str());
-	menu_set_title(menu, "Main Menu");
-	menu->back_callback = callback_return;
+    menu_set_title(menu, "Main Menu");
+    menu->back_callback = callback_return;
 
     menu_entry = new_menu_entry(0);
-	menu_entry_set_text(menu_entry, "Load state");
-	menu_add_entry(menu, menu_entry);
+    menu_entry_set_text(menu_entry, "Load state");
+    menu_add_entry(menu, menu_entry);
     menu_entry->callback = callback_selectstateload;
 
-	menu_entry = new_menu_entry(0);
-	menu_entry_set_text(menu_entry, "Save state");
-	menu_add_entry(menu, menu_entry);
+    menu_entry = new_menu_entry(0);
+    menu_entry_set_text(menu_entry, "Save state");
+    menu_add_entry(menu, menu_entry);
     menu_entry->callback = callback_selectstatesave;
 
     menu_entry = new_menu_entry(0);
@@ -220,9 +268,9 @@ void main_menu() {
     menu_add_entry(menu, menu_entry);
     menu_entry->selectable = 0;
     
-	menu_entry = new_menu_entry(0);
-	menu_entry_set_text(menu_entry, "Settings");
-	menu_add_entry(menu, menu_entry);
+    menu_entry = new_menu_entry(0);
+    menu_entry_set_text(menu_entry, "Settings");
+    menu_add_entry(menu, menu_entry);
     menu_entry->callback = callback_settings;
 
     menu_entry = new_menu_entry(0);
@@ -235,27 +283,21 @@ void main_menu() {
     menu_add_entry(menu, menu_entry);
     menu_entry->callback = callback_about;
     
-	menu_entry = new_menu_entry(0);
-	menu_entry_set_text(menu_entry, "Quit");
-	menu_add_entry(menu, menu_entry);
+    menu_entry = new_menu_entry(0);
+    menu_entry_set_text(menu_entry, "Quit");
+    menu_add_entry(menu, menu_entry);
     menu_entry->callback = callback_quit;
     
-    switchToMenuAudio();
-
-    menuin = 0;
-    playMenuSound_intro();
     menu_main(menu);
-    
     switchToEmulatorAudio();
-
     delete_menu(menu);
-
     SDL_EnableKeyRepeat(0, 100);
 }
 
 static void callback_quit(menu_t *caller_menu) {
     playMenuSound_ok();
     SDL_Delay(500);
+    forcemenuexit = 0;
     gambatte_p->saveSavedata();
     caller_menu->quit = 1;
     SDL_Quit();
@@ -263,8 +305,9 @@ static void callback_quit(menu_t *caller_menu) {
 }
 
 static void callback_return(menu_t *caller_menu) {
-    playMenuSound_back();
-    SDL_Delay(208);
+    //playMenuSound_back();
+    //SDL_Delay(208);
+    forcemenuexit = 0;
     menuout = 0;
     caller_menu->quit = 1;
 }

@@ -18,8 +18,8 @@ extern "C" {
 	#define BLINK_SPEED 12
 	#define FOOTER_ALT_SPEED 100
 #elif VERSION_RS97
-	#define BLINK_SPEED 12
-	#define FOOTER_ALT_SPEED 100
+	#define BLINK_SPEED 8
+	#define FOOTER_ALT_SPEED 80
 #else
 	#define BLINK_SPEED 12
 	#define FOOTER_ALT_SPEED 100
@@ -71,6 +71,7 @@ extern int menuin, menuout, showoverlay, overlay_inout, is_using_bios, can_reset
 
 void libmenu_set_screen(SDL_Surface *set_screen);
 void libmenu_set_font(SFont_Font *set_font);
+int menu_drawmenuframe(menu_t *menu);
 int menu_main(menu_t *menu);
 void menu_message(menu_t *menu);
 int menu_cheat(menu_t *menu);
@@ -109,15 +110,13 @@ void closeMenuAudio();
 void loadMenuSounds();
 void freeMenuSounds();
 
-void switchToMenuAudio();
+int switchToMenuAudio();
 void switchToEmulatorAudio();
 
-void playMenuSound_intro();
 void playMenuSound_in();
 void playMenuSound_back();
 void playMenuSound_move();
 void playMenuSound_ok();
-void playMenuSound_cancel();
 
 std::string getSaveStateFilename(int statenum);
 void getSaveStatePreview(int statenum);
