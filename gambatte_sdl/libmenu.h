@@ -17,12 +17,23 @@ extern "C" {
 #ifdef VERSION_GCW0
 	#define BLINK_SPEED 12
 	#define FOOTER_ALT_SPEED 100
+	#define TEXTANIM_DELAY 46
+	#define TEXTANIM_SPEED 10
 #elif VERSION_RS97
 	#define BLINK_SPEED 8
 	#define FOOTER_ALT_SPEED 80
+	#define TEXTANIM_DELAY 36
+	#define TEXTANIM_SPEED 6
+#elif VERSION_BITTBOY
+	#define BLINK_SPEED 16
+	#define FOOTER_ALT_SPEED 156
+	#define TEXTANIM_DELAY 66
+	#define TEXTANIM_SPEED 13
 #else
 	#define BLINK_SPEED 12
 	#define FOOTER_ALT_SPEED 100
+	#define TEXTANIM_DELAY 50
+	#define TEXTANIM_SPEED 10
 #endif
 
 #include <SDL/SDL.h>
@@ -57,7 +68,7 @@ extern SDL_Surface *menuscreen;
 extern SDL_Surface *surface_menuinout;
 extern SDL_Surface *textoverlay;
 extern SDL_Surface *textoverlaycolored;
-extern int selectedscaler, showfps, ghosting, biosenabled, colorfilter, gameiscgb;
+extern int selectedscaler, showfps, ghosting, biosenabled, colorfilter, gameiscgb, buttonlayout;
 extern uint32_t menupalblack, menupaldark, menupallight, menupalwhite;
 extern int filtervalue[12];
 extern std::string dmgbordername, gbcbordername, palname, filtername, homedir;
@@ -65,7 +76,12 @@ extern int numcodes_gg, numcodes_gs, selectedcode, editmode;
 extern int ggcheats[NUM_GG_CODES*9];
 extern int gscheats[NUM_GS_CODES*8];
 extern int gscheatsenabled[NUM_GS_CODES];
-extern int menuin, menuout, showoverlay, overlay_inout, is_using_bios, can_reset, forcemenuexit;
+extern int menuin, menuout, showoverlay, overlay_inout, is_using_bios, can_reset, forcemenuexit, refreshkeys;
+extern int firstframe;
+
+#ifdef ROM_BROWSER
+extern std::string gamename;
+#endif
 
 
 
@@ -121,7 +137,9 @@ void playMenuSound_ok();
 std::string getSaveStateFilename(int statenum);
 void getSaveStatePreview(int statenum);
 void printSaveStatePreview(SDL_Surface *surface);
+void apply_cfilter(SDL_Surface *surface);
 void printOverlay(const char *text);
+void clearAllCheats();
 
 
 #ifdef __cplusplus

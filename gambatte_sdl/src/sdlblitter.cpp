@@ -75,14 +75,30 @@ void init_border(SDL_Surface *dst){
 		if((borderimg) && (dmgbordername != "NONE")) {
 			clear_surface(dst, convert_hexcolor(dst, menupalwhite));
 			paint_border(dst);
+		} else { //if border image is disabled
+			clear_surface(dst, 0x000000);
 		}
 	} else if(gameiscgb == 1){
 		load_border(gbcbordername);
 		if((borderimg) && (gbcbordername != "NONE")) {
 			clear_surface(dst, 0x000000);
 			paint_border(dst);
+		} else { //if border image is disabled
+			clear_surface(dst, 0x000000);
 		}
 	}
+}
+
+void SdlBlitter::SetVid(int w, int h, int bpp){	
+#ifdef VERSION_GCW0
+	screen = SDL_SetVideoMode(w, h, bpp, SDL_HWSURFACE | SDL_TRIPLEBUF);
+#elif VERSION_RS97
+	screen = SDL_SetVideoMode(w, h, bpp, SDL_HWSURFACE | SDL_TRIPLEBUF);
+#elif VERSION_BITTBOY
+	screen = SDL_SetVideoMode(w, h, bpp, SDL_SWSURFACE);
+#else
+	screen = SDL_SetVideoMode(w, h, bpp, SDL_HWSURFACE | SDL_DOUBLEBUF);
+#endif
 }
 
 void SdlBlitter::setBufferDimensions() {
@@ -91,46 +107,52 @@ void SdlBlitter::setBufferDimensions() {
 	switch(selectedscaler) {
 		case 0:		/* no scaler */
 		case 1:		/* Ayla's 1.5x scaler */
-		case 2:		/* Ayla's fullscreen scaler */
-			screen = SDL_SetVideoMode(320, 240, 16, SDL_HWSURFACE | SDL_TRIPLEBUF);
+		case 2:		/* Bilinear 1.5x scaler */
+		case 3:		/* Fast 1.66x scaler */
+		case 4:		/* Bilinear 1.66x scaler */
+		case 5:		/* Ayla's fullscreen scaler */
+		case 6:		/* Bilinear fullscreen scaler */
+			SetVid(320, 240, 16);
 			break;
-		case 3:		/* Hardware 1.25x */
-			screen = SDL_SetVideoMode(256, 192, 16, SDL_HWSURFACE | SDL_TRIPLEBUF);
+#ifdef HW_SCALING
+		case 7:		/* Hardware 1.25x */
+			SetVid(256, 192, 16);
 			if (aspect_ratio_file)
 			{ 
 				fwrite("1", 1, 1, aspect_ratio_file);
 			}
 			break;
-		case 4:		/* Hardware 1.36x */
-			screen = SDL_SetVideoMode(224, 176, 16, SDL_HWSURFACE | SDL_TRIPLEBUF);
+		case 8:		/* Hardware 1.36x */
+			SetVid(224, 176, 16);
 			if (aspect_ratio_file)
 			{ 
 				fwrite("1", 1, 1, aspect_ratio_file);
 			}
 			break;
-		case 5:		/* Hardware 1.5x */
-			screen = SDL_SetVideoMode(208, 160, 16, SDL_HWSURFACE | SDL_TRIPLEBUF);
+		case 9:		/* Hardware 1.5x */
+			SetVid(208, 160, 16);
 			if (aspect_ratio_file)
 			{ 
 				fwrite("1", 1, 1, aspect_ratio_file);
 			}
 			break;
-		case 6:		/* Hardware 1.66x */
-			screen = SDL_SetVideoMode(192, 144, 16, SDL_HWSURFACE | SDL_TRIPLEBUF);
+		case 10:		/* Hardware 1.66x */
+			SetVid(192, 144, 16);
 			if (aspect_ratio_file)
 			{ 
 				fwrite("1", 1, 1, aspect_ratio_file);
 			}
 			break;
-		case 7:		/* Hardware Fullscreen */
-			screen = SDL_SetVideoMode(160, 144, 16, SDL_HWSURFACE | SDL_TRIPLEBUF);
+		case 11:		/* Hardware Fullscreen */
+			SetVid(160, 144, 16);
 			if (aspect_ratio_file)
 			{ 
 				fwrite("0", 1, 1, aspect_ratio_file);
 			}
 			break;
+#endif
 		default:
-			screen = SDL_SetVideoMode(320, 240, 16, SDL_HWSURFACE | SDL_TRIPLEBUF);
+			SetVid(320, 240, 16);
 			break;
 	}
 	if(aspect_ratio_file){
@@ -148,53 +170,59 @@ void SdlBlitter::setScreenRes() {
 	switch(selectedscaler) {
 		case 0:		/* no scaler */
 		case 1:		/* Ayla's 1.5x scaler */
-		case 2:		/* Ayla's fullscreen scaler */
+		case 2:		/* Bilinear 1.5x scaler */
+		case 3:		/* Fast 1.66x scaler */
+		case 4:		/* Bilinear 1.66x scaler */
+		case 5:		/* Ayla's fullscreen scaler */
+		case 6:		/* Bilinear fullscreen scaler */
 			if(screen->w != 320 || screen->h != 240)
-				screen = SDL_SetVideoMode(320, 240, 16, SDL_HWSURFACE | SDL_TRIPLEBUF);
+				SetVid(320, 240, 16);
 			break;
-		case 3:		/* Hardware 1.25x */
+#ifdef HW_SCALING
+		case 7:		/* Hardware 1.25x */
 			if(screen->w != 256 || screen->h != 192)
-				screen = SDL_SetVideoMode(256, 192, 16, SDL_HWSURFACE | SDL_TRIPLEBUF);
+				SetVid(256, 192, 16);
 			if (aspect_ratio_file)
 			{ 
 				fwrite("1", 1, 1, aspect_ratio_file);
 			}
 			break;
-		case 4:		/* Hardware 1.36x */
+		case 8:		/* Hardware 1.36x */
 			if(screen->w != 224 || screen->h != 176)
-				screen = SDL_SetVideoMode(224, 176, 16, SDL_HWSURFACE | SDL_TRIPLEBUF);
+				SetVid(224, 176, 16);
 			if (aspect_ratio_file)
 			{ 
 				fwrite("1", 1, 1, aspect_ratio_file);
 			}
 			break;
-		case 5:		/* Hardware 1.5x */
+		case 9:		/* Hardware 1.5x */
 			if(screen->w != 208 || screen->h != 160)
-				screen = SDL_SetVideoMode(208, 160, 16, SDL_HWSURFACE | SDL_TRIPLEBUF);
+				SetVid(208, 160, 16);
 			if (aspect_ratio_file)
 			{ 
 				fwrite("1", 1, 1, aspect_ratio_file);
 			}
 			break;
-		case 6:		/* Hardware 1.66x */
+		case 10:		/* Hardware 1.66x */
 			if(screen->w != 192 || screen->h != 144)
-				screen = SDL_SetVideoMode(192, 144, 16, SDL_HWSURFACE | SDL_TRIPLEBUF);
+				SetVid(192, 144, 16);
 			if (aspect_ratio_file)
 			{ 
 				fwrite("1", 1, 1, aspect_ratio_file);
 			}
 			break;
-		case 7:		/* Hardware Fullscreen */
+		case 11:		/* Hardware Fullscreen */
 			if(screen->w != 160 || screen->h != 144)
-				screen = SDL_SetVideoMode(160, 144, 16, SDL_HWSURFACE | SDL_TRIPLEBUF);
+				SetVid(160, 144, 16);
 			if (aspect_ratio_file)
 			{ 
 				fwrite("0", 1, 1, aspect_ratio_file);
 			}
 			break;
+#endif
 		default:
 			if(screen->w != 320 || screen->h != 240)
-				screen = SDL_SetVideoMode(320, 240, 16, SDL_HWSURFACE | SDL_TRIPLEBUF);
+				SetVid(320, 240, 16);
 			break;
 	}
 	if(aspect_ratio_file){
@@ -204,7 +232,7 @@ void SdlBlitter::setScreenRes() {
 
 void SdlBlitter::force320x240() {
 	printf("forcing 320x240...\n");
-	screen = SDL_SetVideoMode(320, 240, 16, SDL_HWSURFACE | SDL_TRIPLEBUF);
+	SetVid(320, 240, 16);
 }
 
 SdlBlitter::PixelBuffer SdlBlitter::inBuffer() const {
@@ -231,42 +259,6 @@ inline void SdlBlitter::swScale() {
 	            screen->pitch / screen->format->BytesPerPixel, screen->h / surface->h);
 }
 
-void apply_cfilter_old(SDL_Surface *surface) {
-	uint8_t r1, g1, b1, r2, g2, b2, r3, g3, b3;
-	uint16_t *src = (uint16_t*)surface->pixels;
-	r2 = 0;
-	g2 = 0;
-	b2 = 24;
-	r3 = 255;
-	g3 = 255;
-	b3 = 232;
-	for (int y = 0; y < (surface->h * surface->w); y++)
-	{
-		r1 = (*src & 0xf800) >> 8;
-		g1 = (*src & 0x7e0) >> 3;
-		b1 = (*src & 0x1f) << 3;
-		*src = (((r1 + r1 + r1 + r1 + r2 + r2 + r2 + r3) / 8 ) & 0xf8) << 8 | 
-			   (((g1 + g1 + g1 + g1 + g2 + g2 + g2 + g3) / 8 ) & 0xfc) << 3 | 
-			   (((b1 + b1 + b1 + b1 + b2 + b2 + b2 + b3) / 8 ) & 0xf8) >> 3;
-	    src++;
-	}
-}
-
-void apply_cfilter(SDL_Surface *surface) { // WIP EXPERIMENTAL FILTER
-	uint8_t r_initial, g_initial, b_initial;
-	uint16_t *src = (uint16_t*)surface->pixels;
-	for (int y = 0; y < (surface->h * surface->w); y++)
-	{
-		r_initial = (*src & 0xf800) >> 8;
-		g_initial = (*src & 0x7e0) >> 3;
-		b_initial = (*src & 0x1f) << 3;
-		*src = ((((r_initial * filtervalue[0] + g_initial * filtervalue[1] + b_initial * filtervalue[2]) >> 8) + filtervalue[3]) & 0xf8) << 8 | 
-			   ((((r_initial * filtervalue[4] + g_initial * filtervalue[5] + b_initial * filtervalue[6]) >> 8) + filtervalue[7]) & 0xfc) << 3 | 
-			   ((((r_initial * filtervalue[8] + g_initial * filtervalue[9] + b_initial * filtervalue[10]) >> 8) + filtervalue[11]) & 0xf8) >> 3;
-	    src++;
-	}
-}
-
 void blend_frames(SDL_Surface *surface) {
 	SDL_BlitSurface(surface, NULL, currframe, NULL);
 	SDL_BlitSurface(lastframe, NULL, currframe, NULL);
@@ -280,7 +272,7 @@ void anim_menuin(SDL_Surface *surface) {
 	
 	if(menuin == 0){
 		if(gambatte_p->isCgb()){
-			if((colorfilter == 1) && (gameiscgb == 1)){
+			if(colorfilter == 1){
 				apply_cfilter(surface_menuinout);
 			}
 		} else {
@@ -311,7 +303,11 @@ void anim_menuin(SDL_Surface *surface) {
 void anim_menuout(SDL_Surface *surface) { 
 
 	if(menuout >= 0){
-		menuout += 16; //16
+		if((firstframe >= 0) && (firstframe <= 15)){ // when new game has just been loaded, delay for 15 frames
+			// do nothing
+		} else {
+			menuout += 16;
+		}
 		SDL_Rect srcrect;
 		srcrect.x = 0;
 		srcrect.y = 0;
@@ -333,44 +329,42 @@ void anim_menuout(SDL_Surface *surface) {
 
 void anim_textoverlay(SDL_Surface *surface) { 
 
-	if(showoverlay >= 0){
-		SDL_Rect dstrect;
-		dstrect.x = 0;
-		if(showoverlay - 8 > 0){
-			dstrect.y = 0;
-		} else {
-			dstrect.y = showoverlay - 8;
+	if((firstframe >= 0) && (firstframe <= 15)){ // when new game has just been loaded, delay for 15 frames
+		// do nothing
+	} else {
+		if(showoverlay >= 0){
+			SDL_Rect dstrect;
+			dstrect.x = 0;
+			if(showoverlay - 8 > 0){
+				dstrect.y = 0;
+			} else {
+				dstrect.y = showoverlay - 8;
+			}
+			dstrect.w = 160;
+			dstrect.h = 8;
+			if(showoverlay > 0){
+				SDL_BlitSurface(textoverlaycolored, NULL, surface, &dstrect);
+			}
 		}
-		dstrect.w = 160;
-		dstrect.h = 8;
-		if(showoverlay > 0){
-			SDL_BlitSurface(textoverlaycolored, NULL, surface, &dstrect);
+		if(showoverlay >= 64){
+			overlay_inout = 1;
 		}
-	}
-	if(showoverlay >= 64){
-		overlay_inout = 1;
-	}
-	if(overlay_inout == 0){
-		showoverlay += 1;
-	} else if (overlay_inout == 1){
-		showoverlay -= 1;
-		if(showoverlay == -1){ //animation ended
-			overlay_inout = 0;
+		if(overlay_inout == 0){
+			showoverlay += 1;
+		} else if (overlay_inout == 1){
+			showoverlay -= 1;
+			if(showoverlay == -1){ //animation ended
+				overlay_inout = 0;
+			}
 		}
-	}
+	}	
 }
 
 static int frames = 0;
 static clock_t old_time = 0;
 static int fps = 0;
-static int firstframe = 0;
 
 void SdlBlitter::draw() {
-
-	/*if(menuin == -2){
-		menuin = -1;
-		main_menu();
-	}*/
 
 	clock_t cur_time;
 	size_t offset;
@@ -411,9 +405,6 @@ void SdlBlitter::draw() {
 		if(showoverlay >= 0){
 			anim_textoverlay(surface);
 		}
-		if((colorfilter == 1) && (gameiscgb == 1)){
-			apply_cfilter(surface);
-		}
 		if(menuout >= 0){
 			anim_menuout(surface);
 		}else if(menuin >= 0){
@@ -423,31 +414,40 @@ void SdlBlitter::draw() {
 			case 0:		/* no scaler */
 				SDL_Rect dst;
 				dst.x = (screen->w - surface->w) / 2;
-				dst.y = ((screen->h - surface->h) / 2)-1;
+				dst.y = (screen->h - surface->h) / 2;
 				dst.w = surface->w;
 				dst.h = surface->h;
 				SDL_BlitSurface(surface, NULL, screen, &dst);
 				break;
 			case 1:		/* Ayla's 1.5x scaler */
-				SDL_LockSurface(screen);
-				SDL_LockSurface(surface);
 				offset = (2 * (320 - 240) / 2) + ((240 - 216) / 2) * screen->pitch;
 				scale15x((uint32_t*)((uint8_t *)screen->pixels + offset), (uint32_t*)surface->pixels);
-				SDL_UnlockSurface(surface);
-				SDL_UnlockSurface(screen);
 				break;
-			case 2:		/* Ayla's fullscreen scaler */
-				SDL_LockSurface(screen);
-				SDL_LockSurface(surface);
+			case 2:		/* Bilinear 1.5x scaler */
+				offset = (2 * (320 - 240) / 2) + ((240 - 216) / 2) * screen->pitch;
+				scale15x_pseudobilinear((uint32_t*)((uint8_t *)screen->pixels + offset), (uint32_t*)surface->pixels);
+				break;
+			case 3:		/* Fast 1.66x scaler */
+				offset = (2 * (320 - 266) / 2) + ((240 - 240) / 2) * screen->pitch;
+				scale166x_fast((uint32_t*)((uint8_t *)screen->pixels + offset), (uint32_t*)surface->pixels);
+				break;
+			case 4:		/* Bilinear 1.66x scaler */
+				offset = (2 * (320 - 266) / 2) + ((240 - 240) / 2) * screen->pitch;
+				scale166x_pseudobilinear((uint32_t*)((uint8_t *)screen->pixels + offset), (uint32_t*)surface->pixels);
+				break;
+			case 5:		/* Ayla's fullscreen scaler */
 				fullscreen_upscale((uint32_t*)screen->pixels, (uint32_t*)surface->pixels);
-				SDL_UnlockSurface(surface);
-				SDL_UnlockSurface(screen);
 				break;
-			case 3:		/* Hardware 1.25x */
-			case 4:		/* Hardware 1.36x */
-			case 5:		/* Hardware 1.5x */
-			case 6:		/* Hardware 1.66x */
-			case 7:		/* Hardware Fullscreen */
+			case 6:		/* Bilinear fullscreen scaler */
+				fullscreen_upscale_pseudobilinear((uint32_t*)screen->pixels, (uint32_t*)surface->pixels);
+				break;
+#ifdef HW_SCALING
+			case 7:		/* Hardware 1.25x */
+			case 8:		/* Hardware 1.36x */
+			case 9:		/* Hardware 1.5x */
+			case 10:		/* Hardware 1.66x */
+			case 11:		/* Hardware Fullscreen */
+#endif
 			default:
 				/*SDL_Rect dst2;
 				dst2.x = (screen->w - surface->w) / 2;
@@ -471,9 +471,6 @@ void SdlBlitter::draw() {
 		}
 		blend_frames(surface);
 		store_lastframe(surface);
-		if((colorfilter == 1) && (gameiscgb == 1)){
-			apply_cfilter(currframe);
-		}
 		if(menuout >= 0){
 			anim_menuout(currframe);
 		}else if(menuin >= 0){
@@ -483,31 +480,40 @@ void SdlBlitter::draw() {
 			case 0:		/* no scaler */
 				SDL_Rect dst;
 				dst.x = (screen->w - currframe->w) / 2;
-				dst.y = ((screen->h - currframe->h) / 2)-1;
+				dst.y = (screen->h - currframe->h) / 2;
 				dst.w = currframe->w;
 				dst.h = currframe->h;
 				SDL_BlitSurface(currframe, NULL, screen, &dst);
 				break;
 			case 1:		/* Ayla's 1.5x scaler */
-				SDL_LockSurface(screen);
-				SDL_LockSurface(currframe);
 				offset = (2 * (320 - 240) / 2) + ((240 - 216) / 2) * screen->pitch;
 				scale15x((uint32_t*)((uint8_t *)screen->pixels + offset), (uint32_t*)currframe->pixels);
-				SDL_UnlockSurface(currframe);
-				SDL_UnlockSurface(screen);
 				break;
-			case 2:		/* Ayla's fullscreen scaler */
-				SDL_LockSurface(screen);
-				SDL_LockSurface(currframe);
+			case 2:		/* Bilinear 1.5x scaler */
+				offset = (2 * (320 - 240) / 2) + ((240 - 216) / 2) * screen->pitch;
+				scale15x_pseudobilinear((uint32_t*)((uint8_t *)screen->pixels + offset), (uint32_t*)currframe->pixels);
+				break;
+			case 3:		/* Fast 1.66x scaler */
+				offset = (2 * (320 - 266) / 2) + ((240 - 240) / 2) * screen->pitch;
+				scale166x_fast((uint32_t*)((uint8_t *)screen->pixels + offset), (uint32_t*)currframe->pixels);
+				break;
+			case 4:		/* Bilinear 1.66x scaler */
+				offset = (2 * (320 - 266) / 2) + ((240 - 240) / 2) * screen->pitch;
+				scale166x_pseudobilinear((uint32_t*)((uint8_t *)screen->pixels + offset), (uint32_t*)currframe->pixels);
+				break;
+			case 5:		/* Ayla's fullscreen scaler */
 				fullscreen_upscale((uint32_t*)screen->pixels, (uint32_t*)currframe->pixels);
-				SDL_UnlockSurface(currframe);
-				SDL_UnlockSurface(screen);
 				break;
-			case 3:		/* Hardware 1.25x */
-			case 4:		/* Hardware 1.36x */
-			case 5:		/* Hardware 1.5x */
-			case 6:		/* Hardware 1.66x */
-			case 7:		/* Hardware Fullscreen */
+			case 6:		/* Bilinear fullscreen scaler */
+				fullscreen_upscale_pseudobilinear((uint32_t*)screen->pixels, (uint32_t*)currframe->pixels);
+				break;
+#ifdef HW_SCALING
+			case 7:		/* Hardware 1.25x */
+			case 8:		/* Hardware 1.36x */
+			case 9:		/* Hardware 1.5x */
+			case 10:		/* Hardware 1.66x */
+			case 11:		/* Hardware Fullscreen */
+#endif
 			default:
 				/*SDL_Rect dst2;
 				dst2.x = (screen->w - currframe->w) / 2;
@@ -551,39 +557,44 @@ void SdlBlitter::scaleMenu() {
 		convert_bw_surface_colors(menuscreen, menuscreen, menupalblack, menupaldark, menupallight, menupalwhite, 1); //if game is DMG, then menu matches DMG palette
 	}
 
-	/*if(menuin >= 0){
-		anim_menuin(surface);
-	}*/
-
 	switch(selectedscaler) {
 		case 0:		/* no scaler */
 			SDL_Rect dst;
 			dst.x = (screen->w - menuscreen->w) / 2;
-			dst.y = ((screen->h - menuscreen->h) / 2)-1;
+			dst.y = (screen->h - menuscreen->h) / 2;
 			dst.w = menuscreen->w;
 			dst.h = menuscreen->h;
 			SDL_BlitSurface(menuscreen, NULL, screen, &dst);
 			break;
 		case 1:		/* Ayla's 1.5x scaler */
-			SDL_LockSurface(screen);
-			SDL_LockSurface(menuscreen);
 			offset = (2 * (320 - 240) / 2) + ((240 - 216) / 2) * screen->pitch;
 			scale15x((uint32_t*)((uint8_t *)screen->pixels + offset), (uint32_t*)menuscreen->pixels);
-			SDL_UnlockSurface(menuscreen);
-			SDL_UnlockSurface(screen);
 			break;
-		case 2:		/* Ayla's fullscreen scaler */
-			SDL_LockSurface(screen);
-			SDL_LockSurface(menuscreen);
+		case 2:		/* Bilinear 1.5x scaler */
+			offset = (2 * (320 - 240) / 2) + ((240 - 216) / 2) * screen->pitch;
+			scale15x_pseudobilinear((uint32_t*)((uint8_t *)screen->pixels + offset), (uint32_t*)menuscreen->pixels);
+			break;
+		case 3:		/* Fast 1.66x scaler */
+			offset = (2 * (320 - 266) / 2) + ((240 - 240) / 2) * screen->pitch;
+			scale166x_fast((uint32_t*)((uint8_t *)screen->pixels + offset), (uint32_t*)menuscreen->pixels);
+			break;
+		case 4:		/* Bilinear 1.66x scaler */
+			offset = (2 * (320 - 266) / 2) + ((240 - 240) / 2) * screen->pitch;
+			scale166x_pseudobilinear((uint32_t*)((uint8_t *)screen->pixels + offset), (uint32_t*)menuscreen->pixels);
+			break;
+		case 5:		/* Ayla's fullscreen scaler */
 			fullscreen_upscale((uint32_t*)screen->pixels, (uint32_t*)menuscreen->pixels);
-			SDL_UnlockSurface(menuscreen);
-			SDL_UnlockSurface(screen);
 			break;
-		case 3:		/* Hardware 1.25x */
-		case 4:		/* Hardware 1.36x */
-		case 5:		/* Hardware 1.5x */
-		case 6:		/* Hardware 1.66x */
-		case 7:		/* Hardware Fullscreen */
+		case 6:		/* Bilinear fullscreen scaler */
+			fullscreen_upscale_pseudobilinear((uint32_t*)screen->pixels, (uint32_t*)menuscreen->pixels);
+			break;
+#ifdef HW_SCALING
+		case 7:		/* Hardware 1.25x */
+		case 8:		/* Hardware 1.36x */
+		case 9:		/* Hardware 1.5x */
+		case 10:		/* Hardware 1.66x */
+		case 11:		/* Hardware Fullscreen */
+#endif
 		default:
 			/*SDL_Rect dst2;
 			dst2.x = (screen->w - menuscreen->w) / 2;

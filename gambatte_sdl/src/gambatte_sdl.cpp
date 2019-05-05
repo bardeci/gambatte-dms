@@ -121,7 +121,11 @@ class RateOption : public DescOption {
 public:
 	RateOption()
 	: DescOption("sample-rate", 'r', 1)
+#ifdef SOUND_MONO
+	, rate_(24000)//SOUND_MONO this will be played at 2x samplerate (48000Hz)
+#else
 	, rate_(44100)
+#endif
 	{
 	}
 
@@ -130,7 +134,11 @@ public:
 		if (r < 4000 || r > 192000)
 			return;
 
+#ifdef SOUND_MONO
+		rate_ = (r / 2);//SOUND_MONO this will be played at 2x samplerate
+#else
 		rate_ = r;
+#endif
 	}
 
 	virtual std::string const desc() const {
@@ -148,7 +156,11 @@ class LatencyOption : public DescOption {
 public:
 	LatencyOption()
 	: DescOption("latency", 'l', 1)
+#ifdef SOUND_MONO
+	, latency_(128)//SOUND_MONO double latency
+#else
 	, latency_(64)
+#endif
 	{
 	}
 
@@ -157,7 +169,11 @@ public:
 		if (l < 16 || l > 5000)
 			return;
 
+#ifdef SOUND_MONO
+		latency_ = (l * 2);//SOUND_MONO double latency
+#else
 		latency_ = l;
+#endif
 	}
 
 	virtual std::string const desc() const {
@@ -326,7 +342,8 @@ struct InputId {
 class InputOption : public DescOption {
 public:
 	InputOption()
-	: DescOption("input", 'i', 8)
+	: DescOption("input", 'i', 10)
+#if defined VERSION_GCW0 || defined VERSION_RS97
 	{
 		ids_[0].keydata = SDLK_RETURN;
 		ids_[1].keydata = SDLK_ESCAPE;
@@ -336,30 +353,82 @@ public:
 		ids_[5].keydata = SDLK_DOWN;
 		ids_[6].keydata = SDLK_LEFT;
 		ids_[7].keydata = SDLK_RIGHT;
+		ids_[8].keydata = SDLK_SPACE;
+		ids_[9].keydata = SDLK_LSHIFT;
 	}
+#elif defined VERSION_BITTBOY
+	{
+		ids_[0].keydata = SDLK_RETURN;
+		ids_[1].keydata = SDLK_ESCAPE;
+		ids_[2].keydata = SDLK_LCTRL;
+		ids_[3].keydata = SDLK_SPACE;
+		ids_[4].keydata = SDLK_UP;
+		ids_[5].keydata = SDLK_DOWN;
+		ids_[6].keydata = SDLK_LEFT;
+		ids_[7].keydata = SDLK_RIGHT;
+		ids_[8].keydata = SDLK_LALT;
+		ids_[9].keydata = SDLK_LSHIFT;
+	}
+#else
+	{
+		ids_[0].keydata = SDLK_RETURN;
+		ids_[1].keydata = SDLK_ESCAPE;
+		ids_[2].keydata = SDLK_LCTRL;
+		ids_[3].keydata = SDLK_LALT;
+		ids_[4].keydata = SDLK_UP;
+		ids_[5].keydata = SDLK_DOWN;
+		ids_[6].keydata = SDLK_LEFT;
+		ids_[7].keydata = SDLK_RIGHT;
+		ids_[8].keydata = SDLK_SPACE;
+		ids_[9].keydata = SDLK_LSHIFT;
+	}
+#endif
 
 	virtual void exec(char const *const *argv, int index);
 
 	virtual std::string const desc() const {
-		return " KEYS\t\tUse the 8 given input KEYS for respectively\n"
-		       "\t\t\t\t    START SELECT A B UP DOWN LEFT RIGHT\n";
+		return " KEYS\t\tUse the 10 given input KEYS for respectively\n"
+		       "\t\t\t\t    START SELECT A B UP DOWN LEFT RIGHT B A\n";
 	}
 
 	std::pair<InputId, InputGetter::Button> mapping(std::size_t i) const {
 		static InputGetter::Button const gbbuts[] = {
-			InputGetter::START, InputGetter::SELECT,
-			InputGetter::A,     InputGetter::B,
-			InputGetter::UP,    InputGetter::DOWN,
-			InputGetter::LEFT,  InputGetter::RIGHT,
+			InputGetter::START,
+			InputGetter::SELECT,
+			InputGetter::A,
+			InputGetter::B,
+			InputGetter::UP,
+			InputGetter::DOWN,
+			InputGetter::LEFT,
+			InputGetter::RIGHT,
+			InputGetter::B,
+			InputGetter::A,
 		};
 
 		return std::make_pair(ids_[i], gbbuts[i]);
 	}
 
+	std::pair<InputId, InputGetter::Button> mapping_alt(std::size_t i) const {
+		static InputGetter::Button const gbbuts_alt[] = {
+			InputGetter::START,
+			InputGetter::SELECT,
+			InputGetter::B,
+			InputGetter::A,
+			InputGetter::UP,
+			InputGetter::DOWN,
+			InputGetter::LEFT,
+			InputGetter::RIGHT,
+			InputGetter::A,
+			InputGetter::B,
+		};
+
+		return std::make_pair(ids_[i], gbbuts_alt[i]);
+	}
+
 	std::size_t numMappings() const { return sizeof ids_ / sizeof *ids_; }
 
 private:
-	InputId ids_[8];
+	InputId ids_[10];
 };
 
 void InputOption::exec(char const *const *argv, int index) {
@@ -544,6 +613,7 @@ private:
 	bool handleEvents(BlitterWrapper &blitter);
 	int run(long sampleRate, int latency, int periods,
 	        ResamplerInfo const &resamplerInfo, BlitterWrapper &blitter);
+	void refreshKeymaps();
 };
 
 static void printOptionUsage(DescOption const *const o) {
@@ -601,6 +671,7 @@ static void printControls() {
 	std::puts("Select:\trshift");
 }
 
+#ifdef ROM_BROWSER
 int GambatteSdl::exec(int const argc, char const *const argv[]) {
 	std::puts("Gambatte SDL"
 #ifdef GAMBATTE_SDL_VERSION_STR
@@ -629,7 +700,156 @@ int GambatteSdl::exec(int const argc, char const *const argv[]) {
 	basicdirpath = (homedir + "/.gambatte/bios/");
 	mkdir(basicdirpath.c_str(), 0777);
 
+	std::set<Uint8> jdevnums;
+	BoolOption fsOption("\t\tStart in full screen mode\n", "full-screen", 'f');
+	LatencyOption latencyOption;
+	PeriodsOption periodsOption;
+	RateOption rateOption;
+	ResamplerOption resamplerOption;
+	ScaleOption scaleOption;
+	VfOption vfOption;
+	BoolOption yuvOption("\t\tUse YUV overlay for (usually faster) scaling\n",
+	                     "yuv-overlay", 'y');
+	BoolOption gbaCgbOption("\t\t\tGBA CGB mode\n", "gba-cgb");
+	BoolOption forceDmgOption("\t\tForce DMG mode\n", "force-dmg");
+	BoolOption multicartCompatOption(
+		"\tSupport certain multicart ROM images by\n"
+		"\t\t\t\tnot strictly respecting ROM header MBC type\n", "multicart-compat");
+	InputOption inputOption;
+	int loadIndex = 0;
 
+	{
+		BoolOption controlsOption("\t\tShow keyboard controls\n", "controls");
+		BoolOption lkOption("\t\tList valid input KEYS\n", "list-keys");
+		std::vector<DescOption *> v;
+		v.push_back(&controlsOption);
+		v.push_back(&gbaCgbOption);
+		v.push_back(&forceDmgOption);
+		v.push_back(&multicartCompatOption);
+		v.push_back(&fsOption);
+		v.push_back(&inputOption);
+		v.push_back(&latencyOption);
+		v.push_back(&lkOption);
+		v.push_back(&periodsOption);
+		v.push_back(&rateOption);
+		v.push_back(&resamplerOption);
+		v.push_back(&scaleOption);
+		v.push_back(&vfOption);
+		v.push_back(&yuvOption);
+
+		Parser parser;
+		std::for_each(v.begin(), v.end(),
+			std::bind1st(std::mem_fun(&Parser::add), &parser));
+
+		for (int i = 1; i < argc; ++i) {
+			if (argv[i][0] == '-') {
+				if (!(i = parser.parse(argc, argv, i))) {
+					//printUsage(v);
+					//return EXIT_FAILURE;
+				}
+			} else if (!loadIndex) {
+				loadIndex = i;
+			}
+		}
+	}
+
+	loadConfig(); // load config.cfg file on startup
+
+	for (std::size_t i = 0; i < inputOption.numMappings(); ++i) {
+		std::pair<InputId, InputGetter::Button> m;
+		if(buttonlayout == 0){
+			m = inputOption.mapping(i);
+		} else {
+			m = inputOption.mapping_alt(i);
+		}
+		if (m.first.type == InputId::type_key) {
+			keyMap.insert(std::make_pair(m.first.keydata, m.second));
+		} else {
+			jmap_t::value_type pair(m.first.jdata, m.second);
+			jdevnums.insert(m.first.jdata.dev_num);
+
+			switch (m.first.type) {
+			case InputId::type_jbutton: jbMap.insert(pair); break;
+			case InputId::type_jaxis:   jaMap.insert(pair); break;
+			case InputId::type_jhat:    jhMap.insert(pair); break;
+			default: break;
+			}
+		}
+	}
+
+	std::string savedir = (homedir + "/.gambatte/saves/");
+	gambatte.setSaveDir(savedir);
+
+	SdlIniter sdlIniter;
+	if (sdlIniter.isFailed())
+		return EXIT_FAILURE;
+
+	if (!jdevnums.empty()
+			&& SDL_InitSubSystem(SDL_INIT_JOYSTICK) < 0) {
+		std::fprintf(stderr, "Unable to init joysticks: %s\n", SDL_GetError());
+		return EXIT_FAILURE;
+	}
+
+	JsOpen jsOpen(jdevnums.begin(), jdevnums.end());
+	SDL_JoystickEventState(SDL_ENABLE);
+	BlitterWrapper blitter(vfOption.filter(),
+	                       scaleOption.scale(), yuvOption.isSet(),
+	                       fsOption.isSet());
+
+	init_globals(&gambatte, &blitter); //init global pointers
+
+	blitter.setBufferDimensions(); //set appropiate resolution on startup
+
+	SDL_ShowCursor(SDL_DISABLE);
+	SDL_WM_SetCaption("Gambatte SDL", 0);
+
+	init_fps_font(); // load fps font on startup
+	init_menu(); //load menu font on startup
+	init_menusurfaces(); //init menu surfaces on startup
+
+	gameiscgb = 0;
+	loadPalette(palname); //load palette for initial menu on startup
+	load_border(dmgbordername); //load DMG border for initial menu on startup
+
+	//gb/gbc bootloader support
+	gambatte.setBootloaderGetter(get_bootloader_from_file);
+
+	main_menu();
+	inputGetter.is = 0;
+
+	return run(rateOption.rate(), latencyOption.latency(), periodsOption.periods(),
+	           resamplerOption.resampler(), blitter);
+}
+
+#else //ROM_BROWSER
+
+int GambatteSdl::exec(int const argc, char const *const argv[]) {
+	std::puts("Gambatte SDL"
+#ifdef GAMBATTE_SDL_VERSION_STR
+	          " (" GAMBATTE_SDL_VERSION_STR ")"
+#endif
+	);
+
+	//create necessary directories
+	std::string basicdirpath;
+
+	basicdirpath = (homedir + "/.gambatte/");
+	mkdir(basicdirpath.c_str(), 0777);
+
+	basicdirpath = (homedir + "/.gambatte/palettes/");
+	mkdir(basicdirpath.c_str(), 0777);
+
+	basicdirpath = (homedir + "/.gambatte/filters/");
+	mkdir(basicdirpath.c_str(), 0777);
+
+	basicdirpath = (homedir + "/.gambatte/borders/");
+	mkdir(basicdirpath.c_str(), 0777);
+
+	basicdirpath = (homedir + "/.gambatte/saves/");
+	mkdir(basicdirpath.c_str(), 0777);
+
+	basicdirpath = (homedir + "/.gambatte/bios/");
+	mkdir(basicdirpath.c_str(), 0777);
 
 	std::set<Uint8> jdevnums;
 	BoolOption fsOption("\t\tStart in full screen mode\n", "full-screen", 'f');
@@ -696,8 +916,15 @@ int GambatteSdl::exec(int const argc, char const *const argv[]) {
 		}
 	}
 
+	loadConfig(); // load config.cfg file on startup
+
 	for (std::size_t i = 0; i < inputOption.numMappings(); ++i) {
-		std::pair<InputId, InputGetter::Button> const m = inputOption.mapping(i);
+		std::pair<InputId, InputGetter::Button> m;
+		if(buttonlayout == 0){
+			m = inputOption.mapping(i);
+		} else {
+			m = inputOption.mapping_alt(i);
+		}
 		if (m.first.type == InputId::type_key) {
 			keyMap.insert(std::make_pair(m.first.keydata, m.second));
 		} else {
@@ -712,8 +939,6 @@ int GambatteSdl::exec(int const argc, char const *const argv[]) {
 			}
 		}
 	}
-
-	loadConfig(); // load config.cfg file on startup
 
 	std::string savedir = (homedir + "/.gambatte/saves/");
 	gambatte.setSaveDir(savedir);
@@ -762,8 +987,6 @@ int GambatteSdl::exec(int const argc, char const *const argv[]) {
 	SDL_ShowCursor(SDL_DISABLE);
 	SDL_WM_SetCaption("Gambatte SDL", 0);
 
-	
-
 	init_fps_font(); // load fps font on startup
 	init_menu(); //load menu font on startup
 	init_menusurfaces(); //init menu surfaces on startup
@@ -780,11 +1003,31 @@ int GambatteSdl::exec(int const argc, char const *const argv[]) {
 	           resamplerOption.resampler(), blitter);
 }
 
+#endif //ROM_BROWSER
+
+void GambatteSdl::refreshKeymaps() {
+	InputOption inputOption;
+	keyMap.clear();
+	for (std::size_t i = 0; i < inputOption.numMappings(); ++i) {
+		if(buttonlayout == 0){
+			std::pair<InputId, InputGetter::Button> m = inputOption.mapping(i);
+			keyMap.insert(std::make_pair(m.first.keydata, m.second));
+		} else {
+			std::pair<InputId, InputGetter::Button> m = inputOption.mapping_alt(i);
+			keyMap.insert(std::make_pair(m.first.keydata, m.second));
+		}
+	}
+}
+
 bool GambatteSdl::handleEvents(BlitterWrapper &blitter) {
 	JoyData jd;
 	SDL_Event e;
 	
 	while (SDL_PollEvent(&e)) {
+		if(refreshkeys == 1){
+			refreshkeys = 0;
+			refreshKeymaps();
+		}
 		switch (e.type) {	
 			case SDL_JOYAXISMOTION:
 				jd.dev_num = e.jaxis.which;
@@ -838,20 +1081,25 @@ bool GambatteSdl::handleEvents(BlitterWrapper &blitter) {
 					}
 				} else {
 					switch (e.key.keysym.sym) {
+#ifdef VERSION_BITTBOY
+					case SDLK_RCTRL: // R button in bittboy
+#else
 					case SDLK_BACKSPACE: // L trigger
 					case SDLK_TAB: // R trigger
 					case SDLK_HOME: // "power flick" in GCW Zero
 					case SDLK_END: // power button in rs-97
+#endif
 						if((menuout == -1) && (menuin == -1)){
 							//main_menu();
 							main_menu_with_anim();
 							inputGetter.is = 0;
 						}
 						break;
+					/*
 					case SDLK_F5:
 						gambatte.saveState(blitter.inBuf().pixels, blitter.inBuf().pitch);
 						break;
-					/*
+					
 					case SDLK_F6: gambatte.selectState(gambatte.currentState() - 1); break;
 					case SDLK_F7: gambatte.selectState(gambatte.currentState() + 1); break;
 					case SDLK_F8: gambatte.loadState(); break;
@@ -955,8 +1203,8 @@ int GambatteSdl::run(long const sampleRate, int const latency, int const periods
 
 } // anon namespace
 
-
 int main(int argc, char **argv) {
 	GambatteSdl gambatteSdl;
 	return gambatteSdl.exec(argc, argv);
 }
+

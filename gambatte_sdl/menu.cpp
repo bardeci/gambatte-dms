@@ -20,13 +20,24 @@
 
 #include "src/audiosink.h"
 
-
 static SDL_Surface *screen;
 static SFont_Font* font;
 static SFont_Font* fpsfont;
 static SDL_Surface *font_bitmap_surface = NULL;
 static SDL_Surface *fpsfont_bitmap_surface = NULL;
 static SDL_RWops *RWops;
+
+#ifdef ROM_BROWSER
+#ifdef VERSION_GCW0
+static std::string gamedir = ("/media/data/roms");
+#elif VERSION_RS97
+static std::string gamedir = (homedir + "/roms");
+#elif VERSION_BITTBOY
+static std::string gamedir = (homedir + "/roms");
+#else
+static std::string gamedir = (homedir + "/roms");
+#endif
+#endif
 
 gambatte::GB *gambatte_p;
 BlitterWrapper *blitter_p;
@@ -155,9 +166,31 @@ static int parse_ext_png(const struct dirent *dir) {
     return 0;
 }
 
+static int parse_ext_zip_gb_gbc(const struct dirent *dir) {
+    if(!dir){
+        return 0;
+    }
+
+    if(dir->d_type == DT_REG) {
+        const char *ext = strrchr(dir->d_name,'.');
+        if((!ext) || (ext == dir->d_name)) {
+            return 0;
+        } else {
+            if((strcmp(ext, ".zip") == 0) || (strcmp(ext, ".gb") == 0) || (strcmp(ext, ".gbc") == 0)){
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
 /* ============================ MAIN MENU =========================== */
 
-static void callback_return(menu_t *caller_menu);
+#ifdef ROM_BROWSER
+static void callback_loadgame(menu_t *caller_menu);
+static void callback_loaddmggame(menu_t *caller_menu);
+static void callback_loadgbcgame(menu_t *caller_menu);
+#endif
 static void callback_selectstateload(menu_t *caller_menu);
 static void callback_selectstatesave(menu_t *caller_menu);
 static void callback_restart(menu_t *caller_menu);
@@ -165,6 +198,7 @@ static void callback_settings(menu_t *caller_menu);
 static void callback_cheats(menu_t *caller_menu);
 static void callback_about(menu_t *caller_menu);
 static void callback_quit(menu_t *caller_menu);
+static void callback_return(menu_t *caller_menu);
 
 static void callback_showfps(menu_t *caller_menu);
 static void callback_scaler(menu_t *caller_menu);
@@ -174,6 +208,7 @@ static void callback_dmgborderimage(menu_t *caller_menu);
 static void callback_gbcborderimage(menu_t *caller_menu);
 static void callback_usebios(menu_t *caller_menu);
 static void callback_ghosting(menu_t *caller_menu);
+static void callback_buttonlayout(menu_t *caller_menu);
 
 static void callback_gamegenie(menu_t *caller_menu);
 static void callback_gameshark(menu_t *caller_menu);
@@ -182,6 +217,8 @@ static void callback_gameshark(menu_t *caller_menu);
 std::string menu_main_title = ("GAMBATTE-GCWZERO");
 #elif VERSION_RS97
 std::string menu_main_title = ("GAMBATTE-RS97");
+#elif VERSION_BITTBOY
+std::string menu_main_title = ("GAMBATTE-BITTBOY");
 #else
 std::string menu_main_title = ("GAMBATTE-OD");
 #endif
@@ -204,6 +241,10 @@ void main_menu_with_anim() {//create a single menu frame to make the entry anima
     menu_add_entry(menu, menu_entry);
 
     menu_entry = new_menu_entry(0);
+    menu_entry_set_text(menu_entry, "Cheat Codes");
+    menu_add_entry(menu, menu_entry);
+
+    menu_entry = new_menu_entry(0);
     menu_entry_set_text(menu_entry, "Reset game");
     menu_add_entry(menu, menu_entry);
 
@@ -211,22 +252,28 @@ void main_menu_with_anim() {//create a single menu frame to make the entry anima
     menu_entry_set_text(menu_entry, "");
     menu_add_entry(menu, menu_entry);
     menu_entry->selectable = 0;
-    
+#ifdef ROM_BROWSER
+    menu_entry = new_menu_entry(0);
+    menu_entry_set_text(menu_entry, "Load Game");
+    menu_add_entry(menu, menu_entry);
+#endif 
     menu_entry = new_menu_entry(0);
     menu_entry_set_text(menu_entry, "Settings");
     menu_add_entry(menu, menu_entry);
 
     menu_entry = new_menu_entry(0);
-    menu_entry_set_text(menu_entry, "Cheats");
+    menu_entry_set_text(menu_entry, "Credits");
     menu_add_entry(menu, menu_entry);
-
+#ifdef POWEROFF
     menu_entry = new_menu_entry(0);
-    menu_entry_set_text(menu_entry, "About");
+    menu_entry_set_text(menu_entry, "Shutdown");
     menu_add_entry(menu, menu_entry);
-    
+#else
     menu_entry = new_menu_entry(0);
     menu_entry_set_text(menu_entry, "Quit");
     menu_add_entry(menu, menu_entry);
+#endif
+    
 
     menuin = 0;
     menu_drawmenuframe(menu);
@@ -235,7 +282,7 @@ void main_menu_with_anim() {//create a single menu frame to make the entry anima
 
 void main_menu() {
 
-    switchToMenuAudio();
+    //switchToMenuAudio();
 
     SDL_EnableKeyRepeat(250, 83);
     forcemenuexit = 0;
@@ -248,46 +295,61 @@ void main_menu() {
     menu_set_title(menu, "Main Menu");
     menu->back_callback = callback_return;
 
-    menu_entry = new_menu_entry(0);
-    menu_entry_set_text(menu_entry, "Load state");
-    menu_add_entry(menu, menu_entry);
-    menu_entry->callback = callback_selectstateload;
+    if(gambatte_p->isLoaded()){
+        menu_entry = new_menu_entry(0);
+        menu_entry_set_text(menu_entry, "Load state");
+        menu_add_entry(menu, menu_entry);
+        menu_entry->callback = callback_selectstateload;
 
-    menu_entry = new_menu_entry(0);
-    menu_entry_set_text(menu_entry, "Save state");
-    menu_add_entry(menu, menu_entry);
-    menu_entry->callback = callback_selectstatesave;
+        menu_entry = new_menu_entry(0);
+        menu_entry_set_text(menu_entry, "Save state");
+        menu_add_entry(menu, menu_entry);
+        menu_entry->callback = callback_selectstatesave;
 
-    menu_entry = new_menu_entry(0);
-    menu_entry_set_text(menu_entry, "Reset game");
-    menu_add_entry(menu, menu_entry);
-    menu_entry->callback = callback_restart;
+        menu_entry = new_menu_entry(0);
+        menu_entry_set_text(menu_entry, "Cheat Codes");
+        menu_add_entry(menu, menu_entry);
+        menu_entry->callback = callback_cheats;
 
+        menu_entry = new_menu_entry(0);
+        menu_entry_set_text(menu_entry, "Reset game");
+        menu_add_entry(menu, menu_entry);
+        menu_entry->callback = callback_restart;
+
+        menu_entry = new_menu_entry(0);
+        menu_entry_set_text(menu_entry, "");
+        menu_add_entry(menu, menu_entry);
+        menu_entry->selectable = 0;
+    }
+
+#ifdef ROM_BROWSER
     menu_entry = new_menu_entry(0);
-    menu_entry_set_text(menu_entry, "");
+    menu_entry_set_text(menu_entry, "Load Game");
     menu_add_entry(menu, menu_entry);
-    menu_entry->selectable = 0;
-    
+    menu_entry->callback = callback_loadgame;
+#endif    
     menu_entry = new_menu_entry(0);
     menu_entry_set_text(menu_entry, "Settings");
     menu_add_entry(menu, menu_entry);
     menu_entry->callback = callback_settings;
 
     menu_entry = new_menu_entry(0);
-    menu_entry_set_text(menu_entry, "Cheats");
-    menu_add_entry(menu, menu_entry);
-    menu_entry->callback = callback_cheats;
-
-    menu_entry = new_menu_entry(0);
-    menu_entry_set_text(menu_entry, "About");
+    menu_entry_set_text(menu_entry, "Credits");
     menu_add_entry(menu, menu_entry);
     menu_entry->callback = callback_about;
-    
+#ifdef POWEROFF
+    menu_entry = new_menu_entry(0);
+    menu_entry_set_text(menu_entry, "Shutdown");
+    menu_add_entry(menu, menu_entry);
+    menu_entry->callback = callback_quit;
+#else
     menu_entry = new_menu_entry(0);
     menu_entry_set_text(menu_entry, "Quit");
     menu_add_entry(menu, menu_entry);
     menu_entry->callback = callback_quit;
+#endif
     
+    switchToMenuAudio();
     menu_main(menu);
     switchToEmulatorAudio();
     delete_menu(menu);
@@ -297,19 +359,26 @@ void main_menu() {
 static void callback_quit(menu_t *caller_menu) {
     playMenuSound_ok();
     SDL_Delay(500);
+    printf("exiting...\n");
     forcemenuexit = 0;
     gambatte_p->saveSavedata();
     caller_menu->quit = 1;
     SDL_Quit();
+#ifdef POWEROFF
+    system("poweroff");
+#endif
     exit(0);
+
 }
 
 static void callback_return(menu_t *caller_menu) {
     //playMenuSound_back();
     //SDL_Delay(208);
-    forcemenuexit = 0;
-    menuout = 0;
-    caller_menu->quit = 1;
+    if(gambatte_p->isLoaded()){
+        forcemenuexit = 0;
+        menuout = 0;
+        caller_menu->quit = 1;
+    }
 }
 
 static void callback_restart(menu_t *caller_menu) {
@@ -324,6 +393,204 @@ static void callback_restart(menu_t *caller_menu) {
     menuout = 0;
     caller_menu->quit = 1;
 }
+
+#ifdef ROM_BROWSER
+
+/* ==================== LOAD GAME MENU ================================ */
+
+static void callback_loadgame_back(menu_t *caller_menu);
+
+static void callback_loadgame(menu_t *caller_menu) {
+    menu_t *menu;
+    menu_entry_t *menu_entry;
+    (void) caller_menu;
+    menu = new_menu();
+        
+    menu_set_header(menu, menu_main_title.c_str());
+    menu_set_title(menu, "Select System");
+    menu->back_callback = callback_loadgame_back;
+
+    menu_entry = new_menu_entry(0);
+    menu_entry_set_text(menu_entry, "Gameboy");
+    menu_add_entry(menu, menu_entry);
+    menu_entry->callback = callback_loaddmggame;
+
+    menu_entry = new_menu_entry(0);
+    menu_entry_set_text(menu_entry, "Gameboy Color");
+    menu_add_entry(menu, menu_entry);
+    menu_entry->callback = callback_loadgbcgame;
+    
+    playMenuSound_in();
+    menu_main(menu);
+    
+    delete_menu(menu);
+
+    if(forcemenuexit > 0) {
+        menuout = 0;
+        caller_menu->quit = 1;
+    }
+}
+
+static void callback_loadgame_back(menu_t *caller_menu) {
+    playMenuSound_back();
+    caller_menu->quit = 1;
+}
+
+/* ==================== LOAD DMG GAME MENU =========================== */
+
+struct dirent **gamelist = NULL;
+int numgames;
+
+static void callback_selecteddmggame(menu_t *caller_menu);
+static void callback_loaddmggame_back(menu_t *caller_menu);
+
+static void callback_loaddmggame(menu_t *caller_menu) {
+
+    menu_t *menu;
+    menu_entry_t *menu_entry;
+    (void) caller_menu;
+    menu = new_menu();
+
+    menu_set_header(menu, menu_main_title.c_str());
+    menu_set_title(menu, "Select Game");
+    menu->back_callback = callback_loaddmggame_back;
+
+    std::string romdir = (gamedir + "/gb");
+    numgames = scandir(romdir.c_str(), &gamelist, parse_ext_zip_gb_gbc, alphasort);
+    if (numgames <= 0) {
+        printf("scandir for %s failed.\n", romdir.c_str());
+    } else {
+        for (int i = 0; i < numgames; ++i){
+            menu_entry = new_menu_entry(0);
+            menu_entry_set_text_no_ext(menu_entry, gamelist[i]->d_name);
+            menu_add_entry(menu, menu_entry);
+            menu_entry->callback = callback_selecteddmggame;
+        }
+    }
+
+    menu->selected_entry = 0; 
+    
+    playMenuSound_in();
+    menu_main(menu);
+
+    delete_menu(menu);
+
+    for (int i = 0; i < numgames; ++i){
+        free(gamelist[i]);
+    }
+    free(gamelist);
+
+    if(forcemenuexit > 0) {
+        menuout = 0;
+        caller_menu->quit = 1;
+    }
+}
+
+static void callback_selecteddmggame(menu_t *caller_menu) {
+    playMenuSound_ok();
+    SDL_Delay(250);
+    gamename = gamelist[caller_menu->selected_entry]->d_name;
+    std::string fullgamepath = (gamedir + "/gb/");
+    fullgamepath += (gamename);
+    if (gambatte_p->load(fullgamepath.c_str(),0 + 0 + 0) < 0) {
+        printf("failed to load ROM: %s\n", fullgamepath.c_str());
+    } else {
+        clearAllCheats(); //clear all cheatcodes from menus
+        if(gambatte_p->isCgb()){
+            gameiscgb = 1;
+            loadFilter(filtername);
+        } else {
+            gameiscgb = 0;
+            loadPalette(palname);
+        }
+        printOverlay("Game loaded");//print overlay text
+        firstframe = 0; //reset the frame counter
+        forcemenuexit = 2;
+        caller_menu->quit = 1;
+    }
+}
+
+static void callback_loaddmggame_back(menu_t *caller_menu) {
+    playMenuSound_back();
+    caller_menu->quit = 1;
+}
+
+/* ==================== LOAD GBC GAME MENU =========================== */
+
+static void callback_selectedgbcgame(menu_t *caller_menu);
+static void callback_loadgbcgame_back(menu_t *caller_menu);
+
+static void callback_loadgbcgame(menu_t *caller_menu) {
+
+    menu_t *menu;
+    menu_entry_t *menu_entry;
+    (void) caller_menu;
+    menu = new_menu();
+
+    menu_set_header(menu, menu_main_title.c_str());
+    menu_set_title(menu, "Select Game");
+    menu->back_callback = callback_loadgbcgame_back;
+
+    std::string romdir = (gamedir + "/gbc");
+    numgames = scandir(romdir.c_str(), &gamelist, parse_ext_zip_gb_gbc, alphasort);
+    if (numgames <= 0) {
+        printf("scandir for %s failed.\n", romdir.c_str());
+    } else {
+        for (int i = 0; i < numgames; ++i){
+            menu_entry = new_menu_entry(0);
+            menu_entry_set_text_no_ext(menu_entry, gamelist[i]->d_name);
+            menu_add_entry(menu, menu_entry);
+            menu_entry->callback = callback_selectedgbcgame;
+        }
+    }
+
+    menu->selected_entry = 0; 
+    
+    playMenuSound_in();
+    menu_main(menu);
+
+    delete_menu(menu);
+
+    for (int i = 0; i < numgames; ++i){
+        free(gamelist[i]);
+    }
+    free(gamelist);
+
+    if(forcemenuexit > 0) {
+        menuout = 0;
+        caller_menu->quit = 1;
+    }
+}
+
+static void callback_selectedgbcgame(menu_t *caller_menu) {
+    playMenuSound_ok();
+    SDL_Delay(250);
+    gamename = gamelist[caller_menu->selected_entry]->d_name;
+    std::string fullgamepath = (gamedir + "/gbc/");
+    fullgamepath += (gamename);
+    if (gambatte_p->load(fullgamepath.c_str(),0 + 0 + 0) < 0) {
+        printf("failed to load ROM: %s\n", fullgamepath.c_str());
+    } else {
+        clearAllCheats(); //clear all cheatcodes from menus
+        if(gambatte_p->isCgb()){
+            gameiscgb = 1;
+            loadFilter(filtername);
+        } else {
+            gameiscgb = 0;
+            loadPalette(palname);
+        }
+        printOverlay("Game loaded");//print overlay text
+        firstframe = 0; //reset the frame counter
+        forcemenuexit = 2;
+        caller_menu->quit = 1;
+    }
+}
+
+static void callback_loadgbcgame_back(menu_t *caller_menu) {
+    playMenuSound_back();
+    caller_menu->quit = 1;
+}
+#endif
 
 /* ==================== SELECT STATE MENU (LOAD) =========================== */
 
@@ -428,29 +695,35 @@ static void callback_selectedstatesave(menu_t *caller_menu) {
 	playMenuSound_ok();
     SDL_Delay(250);
     if(can_reset == 1){//boot logo already ended, can save state safely
-        //set palette to greyscale
-        Uint32 value;
-        for (int i = 0; i < 3; ++i) {
-            for (int k = 0; k < 4; ++k) {
-                if(k == 0)
-                    value = 0xF8FCF8;
-                if(k == 1)
-                    value = 0xA8A8A8;
-                if(k == 2)
-                    value = 0x505450;
-                if(k == 3)
-                    value = 0x000000;
-                gambatte_p->setDmgPaletteColor(i, k, value);
+        if(gameiscgb == 0){ //set palette to greyscale
+            Uint32 value;
+            for (int i = 0; i < 3; ++i) {
+                for (int k = 0; k < 4; ++k) {
+                    if(k == 0)
+                        value = 0xF8FCF8;
+                    if(k == 1)
+                        value = 0xA8A8A8;
+                    if(k == 2)
+                        value = 0x505450;
+                    if(k == 3)
+                        value = 0x000000;
+                    gambatte_p->setDmgPaletteColor(i, k, value);
+                }
             }
-        }
+        } else { // disable color filter
+            gambatte_p->setColorFilter(0, filtervalue);
+        }    
         //run the emulator for 1 frame, so the screen buffer is updated without color palettes
         std::size_t fakesamples = 35112;
         Array<Uint32> const fakeBuf(35112 + 2064);
         gambatte_p->runFor(blitter_p->inBuf().pixels, blitter_p->inBuf().pitch, fakeBuf, fakesamples);
         //save state. the snapshot will now be in greyscale
         gambatte_p->saveState_NoOsd(blitter_p->inBuf().pixels, blitter_p->inBuf().pitch);
-        //restore the color palette
-        loadPalette(palname); //restore palette to actual colors
+        if(gameiscgb == 0){
+            loadPalette(palname); //restore palette
+        } else {
+            loadFilter(filtername); //restore color filter
+        }
 
         char overlaytext[14];
         sprintf(overlaytext, "State %d saved", gambatte_p->currentState());
@@ -524,6 +797,11 @@ static void callback_settings(menu_t *caller_menu) {
     menu_entry_set_text(menu_entry, "Ghosting");
     menu_add_entry(menu, menu_entry);
     menu_entry->callback = callback_ghosting;
+
+    menu_entry = new_menu_entry(0);
+    menu_entry_set_text(menu_entry, "Controls");
+    menu_add_entry(menu, menu_entry);
+    menu_entry->callback = callback_buttonlayout;
 
     menu_entry = new_menu_entry(0);
     menu_entry_set_text(menu_entry, "");
@@ -698,15 +976,36 @@ static void callback_scaler(menu_t *caller_menu) {
     menu_entry->callback = callback_selectedscaler;
 
     menu_entry = new_menu_entry(0);
-    menu_entry_set_text(menu_entry, "Sw 1.50x");
+    menu_entry_set_text(menu_entry, "1.50x Fast");
     menu_add_entry(menu, menu_entry);
     menu_entry->callback = callback_selectedscaler;
 
     menu_entry = new_menu_entry(0);
-    menu_entry_set_text(menu_entry, "Sw Fullscr");
+    menu_entry_set_text(menu_entry, "1.50x Smooth");
     menu_add_entry(menu, menu_entry);
     menu_entry->callback = callback_selectedscaler;
 
+    menu_entry = new_menu_entry(0);
+    menu_entry_set_text(menu_entry, "1.66x Fast");
+    menu_add_entry(menu, menu_entry);
+    menu_entry->callback = callback_selectedscaler;
+
+    menu_entry = new_menu_entry(0);
+    menu_entry_set_text(menu_entry, "1.66x Smooth");
+    menu_add_entry(menu, menu_entry);
+    menu_entry->callback = callback_selectedscaler;
+
+    menu_entry = new_menu_entry(0);
+    menu_entry_set_text(menu_entry, "FullScreen Fast");
+    menu_add_entry(menu, menu_entry);
+    menu_entry->callback = callback_selectedscaler;
+
+    menu_entry = new_menu_entry(0);
+    menu_entry_set_text(menu_entry, "FullScreen Smooth");
+    menu_add_entry(menu, menu_entry);
+    menu_entry->callback = callback_selectedscaler;
+
+#ifdef HW_SCALING
     menu_entry = new_menu_entry(0);
     menu_entry_set_text(menu_entry, "Hw 1.25x");
     menu_add_entry(menu, menu_entry);
@@ -728,9 +1027,10 @@ static void callback_scaler(menu_t *caller_menu) {
     menu_entry->callback = callback_selectedscaler;
 
     menu_entry = new_menu_entry(0);
-    menu_entry_set_text(menu_entry, "Hw Fullscr");
+    menu_entry_set_text(menu_entry, "Hw FullScreen");
     menu_add_entry(menu, menu_entry);
     menu_entry->callback = callback_selectedscaler;
+#endif
 
     menu->selected_entry = selectedscaler; 
     
@@ -743,8 +1043,14 @@ static void callback_scaler(menu_t *caller_menu) {
 static void callback_selectedscaler(menu_t *caller_menu) {
     playMenuSound_ok();
     selectedscaler = caller_menu->selected_entry;
+    if(gameiscgb == 0){
+        load_border(dmgbordername);
+    } else if(gameiscgb == 1){
+        load_border(gbcbordername);
+    }
     blitter_p->setScreenRes(); /* switch to selected resolution */
     clean_menu_screen(caller_menu);
+    
     caller_menu->quit = 0;
 }
 
@@ -812,25 +1118,13 @@ static void callback_dmgpalette(menu_t *caller_menu) {
 
 static void callback_nopalette(menu_t *caller_menu) {
     playMenuSound_ok();
-    Uint32 value;
-    for (int i = 0; i < 3; ++i) {
-        for (int k = 0; k < 4; ++k) {
-            if(k == 0)
-                value = 0xF8FCF8;
-            if(k == 1)
-                value = 0xA8A8A8;
-            if(k == 2)
-                value = 0x505450;
-            if(k == 3)
-                value = 0x000000;
-            gambatte_p->setDmgPaletteColor(i, k, value);
-        }
-    }
-    set_menu_palette(0xF8FCF8, 0xA8A8A8, 0x505450, 0x000000);
     palname = "NONE";
+    loadPalette(palname);
     if(gameiscgb == 1){
+        load_border(gbcbordername);
         caller_menu->quit = 1;
     } else {
+        load_border(dmgbordername);
         caller_menu->quit = 0;
     }
 }
@@ -840,8 +1134,10 @@ static void callback_defaultpalette(menu_t *caller_menu) {
     palname = "DEFAULT";
     loadPalette(palname);
     if(gameiscgb == 1){
+        load_border(gbcbordername);
         caller_menu->quit = 1;
     } else {
+        load_border(dmgbordername);
         caller_menu->quit = 0;
     }
 }
@@ -851,8 +1147,10 @@ static void callback_selectedpalette(menu_t *caller_menu) {
     palname = palettelist[caller_menu->selected_entry - 2]->d_name; // we added 2 extra entries before the list, so we do (-2).
     loadPalette(palname);
     if(gameiscgb == 1){
+        load_border(gbcbordername);
         caller_menu->quit = 1;
     } else {
+        load_border(dmgbordername);
         caller_menu->quit = 0;
     }
 }
@@ -922,7 +1220,7 @@ static void callback_colorfilter(menu_t *caller_menu) {
 static void callback_nofilter(menu_t *caller_menu) {
     playMenuSound_ok();
     filtername = "NONE";
-    colorfilter = 0;
+    loadFilter(filtername);
     if(gameiscgb == 1){
         caller_menu->quit = 0;
     } else {
@@ -1253,6 +1551,52 @@ static void callback_ghosting_back(menu_t *caller_menu) {
     caller_menu->quit = 1;
 }
 
+/* ==================== CONTROLS MENU =========================== */
+
+static void callback_selectedbuttonlayout(menu_t *caller_menu);
+static void callback_buttonlayout_back(menu_t *caller_menu);
+
+static void callback_buttonlayout(menu_t *caller_menu) {
+
+    menu_t *menu;
+    menu_entry_t *menu_entry;
+    (void) caller_menu;
+    menu = new_menu();
+
+    menu_set_header(menu, menu_main_title.c_str());
+    menu_set_title(menu, "Controls");
+    menu->back_callback = callback_buttonlayout_back;
+
+    menu_entry = new_menu_entry(0);
+    menu_entry_set_text(menu_entry, "Default");
+    menu_add_entry(menu, menu_entry);
+    menu_entry->callback = callback_selectedbuttonlayout;
+
+    menu_entry = new_menu_entry(0);
+    menu_entry_set_text(menu_entry, "Alternate");
+    menu_add_entry(menu, menu_entry);
+    menu_entry->callback = callback_selectedbuttonlayout;
+
+    menu->selected_entry = buttonlayout; 
+    
+    playMenuSound_in();
+    menu_main(menu);
+
+    delete_menu(menu);
+}
+
+static void callback_selectedbuttonlayout(menu_t *caller_menu) {
+    playMenuSound_ok();
+    buttonlayout = caller_menu->selected_entry;
+    refreshkeys = 1;
+    caller_menu->quit = 1;
+}
+
+static void callback_buttonlayout_back(menu_t *caller_menu) {
+    playMenuSound_back();
+    caller_menu->quit = 1;
+}
+
 /* ==================== ABOUT MENU =========================== */
 
 
@@ -1266,7 +1610,7 @@ static void callback_about(menu_t *caller_menu) {
     menu = new_menu();
 
     menu_set_header(menu, menu_main_title.c_str());
-    menu_set_title(menu, "About");
+    menu_set_title(menu, "Credits");
     menu->back_callback = callback_about_back;
 
     menu_entry = new_menu_entry(0);
@@ -1363,7 +1707,7 @@ static void callback_cheats(menu_t *caller_menu) {
     menu = new_menu();
         
     menu_set_header(menu, menu_main_title.c_str());
-    menu_set_title(menu, "Cheats");
+    menu_set_title(menu, "Cheat Codes");
     menu->back_callback = callback_cheats_back;
 
     menu_entry = new_menu_entry(0);

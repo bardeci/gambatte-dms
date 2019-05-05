@@ -62,12 +62,21 @@ static int openAudio(long srate, std::size_t samples,
                      void *userdata)
 {
     SDL_AudioSpec spec;
+#ifdef SOUND_MONO
+    spec.freq = (srate * 2); //SOUND_MONO play sound at double speed
+    spec.format = AUDIO_S16SYS;
+    spec.channels = 1; //SOUND_MONO data from both L/R channels is written into a single channel
+    spec.samples = samples;
+    spec.callback = callback;
+    spec.userdata = userdata;
+#else
     spec.freq = srate;
     spec.format = AUDIO_S16SYS;
     spec.channels = 2;
     spec.samples = samples;
     spec.callback = callback;
     spec.userdata = userdata;
+#endif
  
     if (SDL_OpenAudio(&spec, 0) < 0) {
         cur_sdl_audio_spec_set = false;
@@ -126,6 +135,10 @@ AudioSink::Status AudioSink::write(Sint16 const *inBuf, std::size_t samples) {
 	}
 
 	rbuf_.write(inBuf, samples * 2);
+
+	if((menuin < -1) || (menuin >= 128)){ //Mute the sound of the last 3 frames before entering the menu, so the sound buffer is always clean when exiting the menu.
+		rbuf_.fill(0);
+	}
 	return status;
 }
 

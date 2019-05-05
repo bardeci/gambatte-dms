@@ -1,0 +1,16 @@
+CHAINPREFIX=/opt/buildroot-bittboy/output/host
+CROSS_COMPILE=$(CHAINPREFIX)/bin/arm-miyoo-linux-musleabi-
+
+CC = $(CROSS_COMPILE)gcc
+CXX = $(CROSS_COMPILE)g++
+SYSROOT     := $(CHAINPREFIX)/arm-miyoo-linux-musleabi/sysroot
+SDL_CFLAGS  := $(shell $(SYSROOT)/usr/bin/sdl-config --cflags)
+
+OUTPUTNAME = gambatte
+
+DEFINES = -DHAVE_STDINT_H -DVERSION_BITTBOY -DSOUND_MONO -DROM_BROWSER -DPOWEROFF
+INCLUDES = -Isrc/gambatte_sdl -Ilibgambatte -Icommon -Iinclude -Ilibgambatte/include -Ilibgambatte/src $(SDL_CFLAGS)
+OPT_FLAGS  = -Ofast -fdata-sections -fdata-sections -fno-common -fno-PIC -flto
+EXTRA_LDFLAGS = -lasound -lmikmod -lmodplug -Wl,--as-needed -Wl,--gc-sections -flto -s
+
+include common.mk

@@ -68,6 +68,10 @@ public:
 		mem_.setDmgPaletteColor(palNum, colorNum, rgb32);
 	}
 
+	void setColorFilter(int activated, int filtercolors[12]) {
+		mem_.setColorFilter(activated, filtercolors);
+	}
+
 	void setGameGenie(std::string const &codes) { mem_.setGameGenie(codes); }
 	void setGameShark(std::string const &codes) { mem_.setGameShark(codes); }
 

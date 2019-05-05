@@ -108,6 +108,10 @@ public:
 		lcd_.setDmgPaletteColor(palNum, colorNum, rgb32);
 	}
 
+	void setColorFilter(int activated, int filtercolors[12]) {
+		lcd_.setColorFilter(activated, filtercolors);
+	}
+
 	void setGameGenie(std::string const &codes) { cart_.setGameGenie(codes); }
 	void setGameShark(std::string const &codes) { interrupter_.setGameShark(codes); }
 	void updateInput();

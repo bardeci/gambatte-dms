@@ -95,6 +95,8 @@ public:
 	  */
 	void setDmgPaletteColor(int palNum, int colorNum, unsigned long rgb32);
 
+	void setColorFilter(int activated, int filtercolors[12]);
+
 	/** Sets the callback used for getting input state. */
 	void setInputGetter(InputGetter *getInput);
 

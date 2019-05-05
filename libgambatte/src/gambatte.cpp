@@ -174,6 +174,10 @@ void GB::setDmgPaletteColor(int palNum, int colorNum, unsigned long rgb32) {
 	p_->cpu.setDmgPaletteColor(palNum, colorNum, rgb32);
 }
 
+void GB::setColorFilter(int activated, int filtercolors[12]) {
+	p_->cpu.setColorFilter(activated, filtercolors);
+}
+
 bool GB::loadState(std::string const &filepath) {
 	if (p_->cpu.loaded()) {
 		p_->cpu.saveSavedata();

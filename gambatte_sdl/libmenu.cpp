@@ -16,6 +16,7 @@
 #include "libmenu.h"
 #include "SFont.h"
 #include "menu.h"
+#include "scaler.h"
 
 #include "src/audiosink.h"
 #include "menusounds.h"
@@ -47,6 +48,7 @@ SDL_Surface *surface_menuinout;
 SDL_Surface *statepreview;
 SDL_Surface *textoverlay;
 SDL_Surface *textoverlaycolored;
+SDL_Surface *temp;
 
 Mix_Chunk *menusound_in = NULL;
 Mix_Chunk *menusound_back = NULL;
@@ -54,16 +56,21 @@ Mix_Chunk *menusound_move = NULL;
 Mix_Chunk *menusound_ok = NULL;
 
 // Default config values
-int selectedscaler = 0, showfps = 0, ghosting = 1, biosenabled = 0, colorfilter = 0, gameiscgb = 0;
+int selectedscaler = 0, showfps = 0, ghosting = 1, biosenabled = 0, colorfilter = 0, gameiscgb = 0, buttonlayout = 0;
 uint32_t menupalblack = 0x000000, menupaldark = 0x505450, menupallight = 0xA8A8A8, menupalwhite = 0xF8FCF8;
 int filtervalue[12] = {135, 20, 0, 25, 0, 125, 20, 25, 0, 20, 105, 30};
 std::string dmgbordername = "DEFAULT", gbcbordername = "DEFAULT", palname = "DEFAULT", filtername = "NONE";
 std::string homedir = getenv("HOME");
 int numcodes_gg = NUM_GG_CODES, numcodes_gs = NUM_GS_CODES, selectedcode = 0, editmode = 0, blink = 0, footer_alt = 0;
+int textanim = 0, textanimpos = 0, textanimdirection = 0, textanimtimer = 0, textanimwidth = 0, textanimspeed = 0;
 int ggcheats[NUM_GG_CODES *9] = {0};
 int gscheats[NUM_GS_CODES *8] = {0};
 int gscheatsenabled[NUM_GS_CODES] = {0};
-int menuin = -1, menuout = -1, showoverlay = -1, overlay_inout = 0, is_using_bios = 0, can_reset = 1, forcemenuexit = 0;
+int menuin = -1, menuout = -1, showoverlay = -1, overlay_inout = 0, is_using_bios = 0, can_reset = 1, forcemenuexit = 0, refreshkeys = 0;
+int firstframe = 0;
+#ifdef ROM_BROWSER
+std::string gamename = "NONE";
+#endif
 
 
 std::string getSaveStateFilename(int statenum){
@@ -99,12 +106,26 @@ void printSaveStatePreview(SDL_Surface *surface, int posx, int posy){
     rect.w = 82;
     rect.h = 81;
     invert_rect(surface, &rect);
-    //SDL_FillRect(surface, &rect, 0x000000);
     rect.x = posx + 1;
     rect.y = posy + 8;
     rect.w = 80;
     rect.h = 72;
     SDL_BlitSurface(statepreview, NULL, surface, &rect);
+}
+
+void apply_cfilter(SDL_Surface *surface) { 
+	uint8_t r_initial, g_initial, b_initial;
+	uint16_t *src = (uint16_t*)surface->pixels;
+	for (int y = 0; y < (surface->h * surface->w); y++)
+	{
+		r_initial = (*src & 0xf800) >> 8;
+		g_initial = (*src & 0x7e0) >> 3;
+		b_initial = (*src & 0x1f) << 3;
+		*src = ((((r_initial * filtervalue[0] + g_initial * filtervalue[1] + b_initial * filtervalue[2]) >> 8) + filtervalue[3]) & 0xf8) << 8 | 
+			   ((((r_initial * filtervalue[4] + g_initial * filtervalue[5] + b_initial * filtervalue[6]) >> 8) + filtervalue[7]) & 0xfc) << 3 | 
+			   ((((r_initial * filtervalue[8] + g_initial * filtervalue[9] + b_initial * filtervalue[10]) >> 8) + filtervalue[11]) & 0xf8) >> 3;
+	    src++;
+	}
 }
 
 void printOverlay(const char *text){
@@ -121,15 +142,32 @@ void printOverlay(const char *text){
 		convert_bw_surface_colors(textoverlay, textoverlaycolored, menupalblack, menupaldark, menupallight, menupalwhite, 0); //if game is DMG, then apply DMG palette to overlay
 	} else if (gameiscgb == 1){
 		SDL_BlitSurface(textoverlay, NULL, textoverlaycolored, NULL);
+		if(colorfilter == 1){
+			apply_cfilter(textoverlaycolored);
+		}
 	}
 	overlay_inout = 0;
 	showoverlay = 0; //start animation
+}
+
+void clearAllCheats(){ // NOTE: This does not turn off cheats from the game, it just clears the codes from the menu
+	for (int i = 0; i < NUM_GG_CODES * 9; ++i){
+		ggcheats[i] = 0;
+	}
+	for (int i = 0; i < NUM_GS_CODES * 8; ++i){
+		gscheats[i] = 0;
+	}
+	for (int i = 0; i < NUM_GS_CODES; ++i){
+		gscheatsenabled[i] = 0;
+	}
 }
 
 void openMenuAudio(){
 #ifdef VERSION_GCW0
 	Mix_OpenAudio(44100, AUDIO_S16SYS, 2, 1792);
 #elif VERSION_RS97
+	Mix_OpenAudio(44100, AUDIO_S16SYS, 2, 1024);
+#elif VERSION_BITTBOY
 	Mix_OpenAudio(44100, AUDIO_S16SYS, 2, 1024);
 #else
 	Mix_OpenAudio(44100, AUDIO_S16SYS, 2, 1792);
@@ -189,7 +227,7 @@ void playMenuSound_ok(){
 }
 
 int switchToMenuAudio(){
-	SDL_PauseAudio(1);
+	//SDL_PauseAudio(1);
     SDL_CloseAudio(); //disable emulator audio, otherwise menu audio wont work
     openMenuAudio(); //enable menu audio
     loadMenuSounds();
@@ -296,11 +334,21 @@ int menu_drawmenuframe(menu_t *menu) {
 	return menu->selected_entry;
 }
 
+int textanim_reset(){
+	textanimdirection = 0;
+	textanimtimer = 0;
+	textanimspeed = 0;
+	textanimpos = 0;
+	textanimwidth = 0;
+	return 0;
+}
+
 int menu_main(menu_t *menu) {
     SDL_Event event;
 	int dirty, loop, i;
 	loop = 0;
 	int num_selectable = 0;
+	textanim_reset();
 	for (i = 0; i < menu->n_entries; i++) {
 		if(menu->entries[i]->selectable == 1){
 			num_selectable++; // count num of selectable entries
@@ -338,6 +386,7 @@ int menu_main(menu_t *menu) {
 								loop++;
 							} while((menu->entries[menu->selected_entry]->selectable == 0) && (loop < menu->n_entries)); //ensure we select a selectable entry, if there is any.
 							dirty = 1;
+							textanim_reset();
 							break;
 						case SDLK_DOWN:
 							if(num_selectable > 0){
@@ -353,6 +402,7 @@ int menu_main(menu_t *menu) {
 								loop++;
 							} while((menu->entries[menu->selected_entry]->selectable == 0) && (loop < menu->n_entries)); //ensure we select a selectable entry, if there is any.
 							dirty = 1;
+							textanim_reset();
 							break;
 						case SDLK_LEFT:
 							if (menu->entries[menu->selected_entry]->is_shiftable) {
@@ -363,7 +413,24 @@ int menu_main(menu_t *menu) {
 									menu->entries[menu->selected_entry]->selected_entry = menu->entries[menu->selected_entry]->n_entries - 1;
 									dirty = 1;
 								}
-							}				
+							} else if (menu->n_entries >= 26){ // Enable page scrolling if too many menu items
+								if(num_selectable > 0){
+									playMenuSound_move();
+								}
+								loop = 0;
+								do {
+									if (menu->selected_entry > 12) {
+										menu->selected_entry -= 13;
+									} else if ((menu->selected_entry <= 12) && (menu->selected_entry > 0)){
+										menu->selected_entry = 0;
+									} else {
+										menu->selected_entry = menu->n_entries - 1;
+									}
+									loop++;
+								} while((menu->entries[menu->selected_entry]->selectable == 0) && (loop < menu->n_entries)); //ensure we select a selectable entry, if there is any.
+								dirty = 1;
+								textanim_reset();
+							}			
 							break;
 						case SDLK_RIGHT:
 							if (menu->entries[menu->selected_entry]->is_shiftable) {
@@ -374,9 +441,30 @@ int menu_main(menu_t *menu) {
 									menu->entries[menu->selected_entry]->selected_entry = 0;
 									dirty = 1;
 								}
+							} else if (menu->n_entries >= 26){ // Enable page scrolling if too many menu items
+								if(num_selectable > 0){
+									playMenuSound_move();
+								}
+								loop = 0;
+								do {
+									if (menu->selected_entry < menu->n_entries - 14) {
+										menu->selected_entry += 13;
+									} else if ((menu->selected_entry >= menu->n_entries - 14) && (menu->selected_entry < menu->n_entries - 1)){
+										menu->selected_entry = menu->n_entries - 1;
+									} else {
+										menu->selected_entry = 0;
+									}
+									loop++;
+								} while((menu->entries[menu->selected_entry]->selectable == 0) && (loop < menu->n_entries)); //ensure we select a selectable entry, if there is any.
+								dirty = 1;
+								textanim_reset();
 							}
 							break;
+#ifdef VERSION_BITTBOY
+						case SDLK_LALT:	/* TA button in bittboy*/
+#else
 						case SDLK_LCTRL:	/* A button */
+#endif
 							if(menuin == -1){
 								if (menu->entries[menu->selected_entry]->callback != NULL) {
 									footer_alt = 0;
@@ -385,7 +473,11 @@ int menu_main(menu_t *menu) {
 								}
 							}
 							break;
+#ifdef VERSION_BITTBOY
+						case SDLK_LCTRL:	/* A button in bittboy, being used as 'back' */
+#else
 						case SDLK_LALT: /* B button, being used as 'back' */
+#endif
 							if(menuin == -1){
 								if (menu->back_callback != NULL) {
 									footer_alt = 0;
@@ -403,6 +495,49 @@ int menu_main(menu_t *menu) {
 		if(menuin >= 0){
 			dirty = 1;
 		}
+		if(textanim == 1){ //Text animation
+			if(textanimdirection == 0){
+				if(textanimtimer < TEXTANIM_DELAY){
+					textanimtimer++;
+				} else {
+					textanimtimer = 0;
+					textanimdirection = 1;
+				}
+			} else if (textanimdirection == 1){
+				if(textanimpos < textanimwidth){
+					if(textanimspeed < TEXTANIM_SPEED){
+						textanimspeed++;
+					} else {
+						textanimspeed = 0;
+						textanimpos += 8;
+						dirty = 1;
+					}
+				} else {
+					textanimdirection = 2;
+					dirty = 1;
+				}
+			} else if (textanimdirection == 2){
+				if(textanimtimer < TEXTANIM_DELAY){
+					textanimtimer++;
+				} else {
+					textanimtimer = 0;
+					textanimdirection = 3;
+				}
+			} else if (textanimdirection == 3){
+				if(textanimpos > 0){
+					if(textanimspeed < TEXTANIM_SPEED){
+						textanimspeed++;
+					} else {
+						textanimspeed = 0;
+						textanimpos -= 8;
+						dirty = 1;
+					}
+				} else {
+					textanimdirection = 0;
+					dirty = 1;
+				}
+			}
+		}
 		if (dirty) {
 			redraw(menu);
 		}
@@ -410,8 +545,7 @@ int menu_main(menu_t *menu) {
 			SDL_Delay(10);
 		} else {
 			SDL_Delay(0);
-		}
-		
+		}	
 	}
 	if(forcemenuexit == 2) {
 		forcemenuexit = 1;
@@ -552,14 +686,22 @@ int menu_cheat(menu_t *menu) {
 							}
 							dirty = 1;
 							break;
-						case SDLK_LCTRL: /* A button */
+#ifdef VERSION_BITTBOY
+						case SDLK_LALT:	/* TA button in bittboy*/
+#else
+						case SDLK_LCTRL:	/* A button */
+#endif
 							if (menu->entries[menu->selected_entry]->callback != NULL) {
 								footer_alt = 0;
 								menu->entries[menu->selected_entry]->callback(menu);
 								redraw_cheat(menu);
 							}
 							break;
+#ifdef VERSION_BITTBOY
+						case SDLK_LCTRL:	/* A button in bittboy, being used as 'back' */
+#else
 						case SDLK_LALT: /* B button, being used as 'back' */
+#endif
 							if (menu->back_callback != NULL) {
 								if (editmode == 1){
 									footer_alt = 0;
@@ -703,12 +845,33 @@ static void display_menu(SDL_Surface *surface, menu_t *menu) {
 				invert_rect(surface, &highlight);
 			}
 		} else { // rest of menu screens
-			SFont_WriteCenter(surface, font, line * font_height, text);
+			if((SFont_TextWidth(font, text) + (highlight_margin * 2) > surface->w) || (strcmp(menu->title, "Select Game") == 0)){ //if in rom browser OR text does not fit in the screen
+				if ((menu->selected_entry == i) && (menu->entries[i]->selectable == 1)){
+					SFont_Write(surface, font, (0 - textanimpos), line * font_height, text); //if text is selected entry, animate
+				} else {
+					SFont_Write(surface, font, 0, line * font_height, text); //if text is not selected entry, dont animate
+				}	
+			} else {
+				SFont_WriteCenter(surface, font, line * font_height, text);
+			}			
 			if ((menu->selected_entry == i) && (menu->entries[i]->selectable == 1)){ // only highlight selected entry if it's selectable
 				width = SFont_TextWidth(font, text);
 				highlight.x = ((surface->w - width) / 2) - highlight_margin;
 				highlight.y = line * font_height;
 				highlight.w = width + (highlight_margin * 2);
+				if (highlight.w > surface->w){ //If text does not fit in the screen
+					highlight.x = 0;
+					highlight.w = surface->w;
+					textanim = 1;
+					textanimwidth = (width - surface->w);
+				} else if (strcmp(menu->title, "Select Game") == 0) { //In ROM browser
+					highlight.x = 0;
+					textanim = 0;
+					textanim_reset();
+				} else {
+					textanim = 0;
+					textanim_reset();
+				}
 				highlight.h = font_height;
 				invert_rect(surface, &highlight);
 			}
@@ -727,6 +890,21 @@ static void display_menu(SDL_Surface *surface, menu_t *menu) {
 			num_selectable++; // count num of selectable entries
 		}
 	}
+#ifdef VERSION_BITTBOY
+	if((num_selectable == 0) && (menu->n_entries < 4) && (strcmp(menu->title, "Game Genie") == 0)){
+		SFont_WriteCenter(surface, font, 17 * font_height, "A-Cancel    Apply-TA"); // footer while in "Apply Cheats" confirmation screen
+	} else if((num_selectable == 0) && (menu->n_entries < 4) && (strcmp(menu->title, "Settings") == 0)){
+		SFont_WriteCenter(surface, font, 17 * font_height, "A-Cancel     Save-TA"); // footer while in "Save Settings" confirmation screen
+	} else if (num_selectable == 0){
+		SFont_WriteCenter(surface, font, 17 * font_height, "A-Back       Back-TA"); // footer while in "About" screen
+	} else {
+		if((gambatte_p->isLoaded()) || (strcmp(menu->title, "Main Menu") != 0)){
+			SFont_WriteCenter(surface, font, 17 * font_height, "A-Back     Select-TA"); // footer in normal menus
+		} else {
+			SFont_WriteCenter(surface, font, 17 * font_height, "           Select-TA"); // footer in main menu while no rom is loaded
+		}
+	}
+#else
 	if((num_selectable == 0) && (menu->n_entries < 4) && (strcmp(menu->title, "Game Genie") == 0)){
 		SFont_WriteCenter(surface, font, 17 * font_height, "B-Cancel     Apply-A"); // footer while in "Apply Cheats" confirmation screen
 	} else if((num_selectable == 0) && (menu->n_entries < 4) && (strcmp(menu->title, "Settings") == 0)){
@@ -734,8 +912,13 @@ static void display_menu(SDL_Surface *surface, menu_t *menu) {
 	} else if (num_selectable == 0){
 		SFont_WriteCenter(surface, font, 17 * font_height, "B-Back        Back-A"); // footer while in "About" screen
 	} else {
-		SFont_WriteCenter(surface, font, 17 * font_height, "B-Back      Select-A"); // footer in normal menus
+		if((gambatte_p->isLoaded()) || (strcmp(menu->title, "Main Menu") != 0)){
+			SFont_WriteCenter(surface, font, 17 * font_height, "B-Back      Select-A"); // footer in normal menus
+		} else {
+			SFont_WriteCenter(surface, font, 17 * font_height, "            Select-A"); // footer in main menu while no rom is loaded
+		}
 	}
+#endif
 }
 
 static void display_menu_cheat(SDL_Surface *surface, menu_t *menu) {
@@ -913,6 +1096,19 @@ static void display_menu_cheat(SDL_Surface *surface, menu_t *menu) {
 	if(downarrow == 1){
 	    SFont_WriteCenter(surface, font, line * font_height, "}"); // down arrow
 	}
+#ifdef VERSION_BITTBOY
+	if(editmode == 1){
+		SFont_WriteCenter(surface, font, 17 * font_height, "A-Cancel   Accept-TA"); // footer while in edit mode
+	} else if ((collimit == 10) && (menu->selected_entry % 10 == 0)){
+		SFont_WriteCenter(surface, font, 17 * font_height, "A-Back     Toggle-TA"); // footer while highlighting a toggle option in gameshark menu
+	} else {
+		if(footer_alt < FOOTER_ALT_SPEED){
+			SFont_WriteCenter(surface, font, 17 * font_height, "A-Back       Edit-TA"); // footer while highlighting a cheat code
+		} else {
+			SFont_WriteCenter(surface, font, 17 * font_height, "Press Start to Apply"); // alternating footer for gamegenie
+		}
+	}
+#else
 	if(editmode == 1){
 		SFont_WriteCenter(surface, font, 17 * font_height, "B-Cancel    Accept-A"); // footer while in edit mode
 	} else if ((collimit == 10) && (menu->selected_entry % 10 == 0)){
@@ -924,6 +1120,7 @@ static void display_menu_cheat(SDL_Surface *surface, menu_t *menu) {
 			SFont_WriteCenter(surface, font, 17 * font_height, "Press Start to Apply"); // alternating footer for gamegenie
 		}
 	}
+#endif
 }
 
 menu_t *new_menu() {
@@ -1009,12 +1206,20 @@ void menu_entry_set_text(menu_entry_t *entry, const char *text) {
 	strcpy(entry->text, text);
 }
 
-void menu_entry_set_text_no_ext(menu_entry_t *entry, const char *text) { // always removes last 4 characters
+void menu_entry_set_text_no_ext(menu_entry_t *entry, const char *text) { // remove extension from text
 	if (entry->text != NULL) {
 		free(entry->text);
 	}
-	entry->text = (char *)calloc((strlen(text)-3), sizeof(char));
-	strncpy(entry->text, text, (strlen(text)-4));
+	const char *ext = strrchr(text,'.');
+	if((!ext) || (ext == text)) {
+        return;
+    } else if(strcmp(ext, ".gb") == 0){
+		entry->text = (char *)calloc((strlen(text)-2), sizeof(char));
+		strncpy(entry->text, text, (strlen(text)-3));
+    } else {
+    	entry->text = (char *)calloc((strlen(text)-3), sizeof(char));
+		strncpy(entry->text, text, (strlen(text)-4));
+    }
 }
 
 void menu_entry_add_entry(menu_entry_t *entry, const char* text) {
@@ -1094,7 +1299,7 @@ void paint_titlebar(SDL_Surface *surface){
     SDL_FillRect(surface, &rect, hlcolor);
 }
 
-void load_border(std::string borderfilename){ //load border from menu
+/*void load_border(std::string borderfilename){ //load border from menu
 	SDL_FreeSurface(borderimg);
 	std::string fullimgpath = (homedir + "/.gambatte/borders/");
 	fullimgpath += (borderfilename);
@@ -1109,74 +1314,227 @@ void load_border(std::string borderfilename){ //load border from menu
     		SDL_FreeRW(RWops);
 		}
 	} else {
-		borderimg = IMG_Load(fullimgpath.c_str());
+		temp = IMG_Load(fullimgpath.c_str());
+		if(!temp){
+	    	if(borderfilename != "NONE"){
+	    		printf("error loading %s\n", fullimgpath.c_str());
+	    	} else {
+	    		borderimg = SDL_CreateRGBSurface(SDL_SWSURFACE, screen->w, screen->h, 16, 0, 0, 0, 0);
+				clear_surface(borderimg, 0x000000);
+	    	}
+	    } else {
+	    	borderimg = SDL_CreateRGBSurface(SDL_SWSURFACE, screen->w, screen->h, 16, 0, 0, 0, 0);
+			clear_surface(borderimg, 0x000000);
+	    	SDL_Rect brect;
+			brect.x = (borderimg->w - temp->w) / 2;
+			brect.y = (borderimg->h - temp->h) / 2;
+			brect.w = temp->w;
+			brect.h = temp->h;
+			SDL_BlitSurface(temp, NULL, borderimg, &brect);
+			SDL_FreeSurface(temp);
+	    }	
+		//borderimg = IMG_Load(fullimgpath.c_str());
 	}
-    if(!borderimg){
+}*/
+
+void createBorderSurface(){
+	switch(selectedscaler) {
+		case 0:		/* no scaler */
+			borderimg = SDL_CreateRGBSurface(SDL_SWSURFACE, 320, 240, 16, 0, 0, 0, 0);
+			break;
+		case 1:		/* Ayla's 1.5x scaler */
+		case 2:		/* Bilinear 1.5x scaler */
+			borderimg = SDL_CreateRGBSurface(SDL_SWSURFACE, 212, 160, 16, 0, 0, 0, 0);
+			break;
+		case 3:		/* Fast 1.66x scaler */
+		case 4:		/* Bilinear 1.66x scaler */
+			borderimg = SDL_CreateRGBSurface(SDL_SWSURFACE, 192, 144, 16, 0, 0, 0, 0);
+			break;
+		case 5:		/* Ayla's fullscreen scaler */
+		case 6:		/* Bilinear fullscreen scaler */
+#ifdef HW_SCALING
+		case 7:		/* Hardware 1.25x */
+		case 8:		/* Hardware 1.36x */
+		case 9:		/* Hardware 1.5x */
+		case 10:		/* Hardware 1.66x */
+		case 11:		/* Hardware Fullscreen */
+#endif
+		default:
+			borderimg = SDL_CreateRGBSurface(SDL_SWSURFACE, 320, 240, 16, 0, 0, 0, 0);
+			break;
+	}
+	if(gameiscgb == 0){
+		if(dmgbordername != "NONE") {
+			clear_surface(borderimg, convert_hexcolor(borderimg, menupalwhite));
+		} else { //if border image is disabled
+			clear_surface(borderimg, 0x000000);
+		}
+	} else if(gameiscgb == 1){
+		clear_surface(borderimg, 0x000000);
+	}
+}	
+
+void load_border(std::string borderfilename){ //load border from menu
+	SDL_FreeSurface(borderimg);
+	std::string fullimgpath = (homedir + "/.gambatte/borders/");
+	fullimgpath += (borderfilename);
+
+	if (borderfilename == "DEFAULT"){
+		if(gameiscgb == 0){
+			RWops = SDL_RWFromMem(border_default_dmg, sizeof(border_default_dmg));
+    		temp = IMG_LoadPNG_RW(RWops);
+    		SDL_FreeRW(RWops);
+		} else {
+			RWops = SDL_RWFromMem(border_default_gbc, sizeof(border_default_gbc));
+    		temp = IMG_LoadPNG_RW(RWops);
+    		SDL_FreeRW(RWops);
+		}
+	} else {
+		temp = IMG_Load(fullimgpath.c_str());
+	}
+
+	if(!temp){
     	if(borderfilename != "NONE"){
     		printf("error loading %s\n", fullimgpath.c_str());
+    	} else {
+    		createBorderSurface();
     	}
-    }
+    } else {
+    	createBorderSurface();
+    	SDL_Rect brect;
+		brect.x = (borderimg->w - temp->w) / 2;
+		brect.y = (borderimg->h - temp->h) / 2;
+		brect.w = temp->w;
+		brect.h = temp->h;
+		SDL_BlitSurface(temp, NULL, borderimg, &brect);
+		// Add black bars if the border image is smaller than the screen
+		uint32_t barcolor = SDL_MapRGB(borderimg->format, 0, 0, 0);
+		if(borderimg->h > temp->h){	
+			SDL_Rect bara, barb;
+			bara.x = 0;
+	    	bara.y = 0;
+	    	bara.w = borderimg->w;
+	    	bara.h = (borderimg->h - temp->h) / 2;
+	    	SDL_FillRect(borderimg, &bara, barcolor);
+	    	barb.x = 0;
+	    	barb.y = temp->h + ((borderimg->h - temp->h) / 2);
+	    	barb.w = borderimg->w;
+	    	barb.h = (borderimg->h - temp->h) / 2;
+	    	SDL_FillRect(borderimg, &barb, barcolor);
+		}
+		if(borderimg->w > temp->w){
+			SDL_Rect barc, bard;
+			barc.x = 0;
+	    	barc.y = 0;
+	    	barc.w = (borderimg->w - temp->w) / 2;
+	    	barc.h = borderimg->h;
+	    	SDL_FillRect(borderimg, &barc, barcolor);
+	    	bard.x = temp->w + ((borderimg->w - temp->w) / 2);
+	    	bard.y = 0;
+	    	bard.w = (borderimg->w - temp->w) / 2;
+	    	bard.h = borderimg->h;
+	    	SDL_FillRect(borderimg, &bard, barcolor);
+		}		
+		SDL_FreeSurface(temp);
+    }	
+	//borderimg = IMG_Load(fullimgpath.c_str());
 }
 
 void paint_border(SDL_Surface *surface){
-	SDL_Rect rect;
+	size_t offset;
+	SDL_Rect rect, rectb;
+	uint32_t barcolor = SDL_MapRGB(surface->format, 0, 0, 0);
+	int bpp = surface->format->BytesPerPixel;
 	switch(selectedscaler) {
 		case 0:		/* no scaler */
 			rect.x = 0;
     		rect.y = 0;
     		rect.w = 320;
     		rect.h = 240;
-    		break;
+			SDL_BlitSurface(borderimg, &rect, surface, NULL);
+			break;
 		case 1:		/* Ayla's 1.5x scaler */
-    		rect.x = 0;
-    		rect.y = 240;
-    		rect.w = 320;
+		case 2:		/* Bilinear 1.5x scaler */
+			rect.x = 0;
+    		rect.y = 0;
+    		rect.w = 1;
     		rect.h = 240;
-    		break;
-		case 2:		/* Ayla's fullscreen scaler */
+			rectb.x = 319;
+    		rectb.y = 0;
+    		rectb.w = 1;
+    		rectb.h = 240;
+    		SDL_FillRect(surface, &rect, barcolor);
+			SDL_FillRect(surface, &rectb, barcolor);
+    		offset = 1;
+			scaleborder15x((uint32_t*)((uint8_t *)surface->pixels + offset * bpp), (uint32_t*)borderimg->pixels);
+			break;
+		case 3:		/* Fast 1.66x scaler */
+		case 4:		/* Bilinear 1.66x scaler */
+			scaleborder166x((uint32_t*)((uint8_t *)surface->pixels), (uint32_t*)borderimg->pixels);
+			rect.x = 0;
+    		rect.y = 0;
+    		rect.w = 1;
+    		rect.h = 240;
+			rectb.x = 319;
+    		rectb.y = 0;
+    		rectb.w = 1;
+    		rectb.h = 240;
+    		SDL_FillRect(surface, &rect, barcolor);
+			SDL_FillRect(surface, &rectb, barcolor);
+			break;
+		case 5:		/* Ayla's fullscreen scaler */
+		case 6:		/* Bilinear fullscreen scaler */
     		rect.x = 0;
     		rect.y = 0;
     		rect.w = 0;
     		rect.h = 0;
+    		SDL_BlitSurface(borderimg, &rect, surface, NULL);
 			break;
-		case 3:		/* Hardware 1.25x */
+#ifdef HW_SCALING
+		case 7:		/* Hardware 1.25x */
 			rect.x = 32;
-    		rect.y = 23;
+    		rect.y = 24;
     		rect.w = 256;
     		rect.h = 192;
+    		SDL_BlitSurface(borderimg, &rect, surface, NULL);
 			break;
-		case 4:		/* Hardware 1.36x */
+		case 8:		/* Hardware 1.36x */
 			rect.x = 48;
-    		rect.y = 31;
+    		rect.y = 32;
     		rect.w = 224;
     		rect.h = 176;
+    		SDL_BlitSurface(borderimg, &rect, surface, NULL);
 			break;
-		case 5:		/* Hardware 1.5x */
+		case 9:		/* Hardware 1.5x */
 			rect.x = 56;
-    		rect.y = 39;
+    		rect.y = 40;
     		rect.w = 208;
     		rect.h = 160;
+    		SDL_BlitSurface(borderimg, &rect, surface, NULL);
 			break;
-		case 6:		/* Hardware 1.66x*/
+		case 10:		/* Hardware 1.66x*/
 			rect.x = 64;
-    		rect.y = 47;
+    		rect.y = 48;
     		rect.w = 192;
     		rect.h = 144;
+    		SDL_BlitSurface(borderimg, &rect, surface, NULL);
 			break;
-		case 7:		/* Hardware Fullscreen */
+		case 11:		/* Hardware Fullscreen */
 			rect.x = 0;
     		rect.y = 0;
     		rect.w = 0;
     		rect.h = 0;
+    		SDL_BlitSurface(borderimg, &rect, surface, NULL);
 			break;
+#endif
 		default:
 			rect.x = 0;
     		rect.y = 0;
     		rect.w = 320;
     		rect.h = 240;
+    		SDL_BlitSurface(borderimg, &rect, surface, NULL);
 			break;
 	}
-	SDL_BlitSurface(borderimg, &rect, surface, NULL);
 }
 
 uint32_t convert_hexcolor(SDL_Surface *surface, const uint32_t color){
@@ -1494,6 +1852,21 @@ static Uint32 get_pixel(SDL_Surface *surface, int x, int y) {
 
 void loadPalette(std::string palettefile){
     if(palettefile == "NONE"){
+    	Uint32 value;
+	    for (int i = 0; i < 3; ++i) {
+	        for (int k = 0; k < 4; ++k) {
+	            if(k == 0)
+	                value = 0xF8FCF8;
+	            if(k == 1)
+	                value = 0xA8A8A8;
+	            if(k == 2)
+	                value = 0x505450;
+	            if(k == 3)
+	                value = 0x000000;
+	            gambatte_p->setDmgPaletteColor(i, k, value);
+	        }
+	    }
+	    set_menu_palette(0xF8FCF8, 0xA8A8A8, 0x505450, 0x000000);
     	return;
     } else if(palettefile == "DEFAULT"){
 		Uint32 value;
@@ -1530,7 +1903,6 @@ void loadPalette(std::string palettefile){
 		        }
 		    }
 		    if (j == 12){ // all 12 palette values were successfully loaded
-		        set_menu_palette(values[0], values[1], values[2], values[3]);
 		        int m = 0;
 		        for (int i = 0; i < 3; ++i) {
 		            for (int k = 0; k < 4; ++k) {
@@ -1538,6 +1910,7 @@ void loadPalette(std::string palettefile){
 		                m++;
 		            }
 		        }
+		        set_menu_palette(values[0], values[1], values[2], values[3]);
 		    } else {
 		        printf("Error reading: %s:\n",filepath.c_str());
 		        printf("Bad file format.\n");
@@ -1551,6 +1924,8 @@ void loadPalette(std::string palettefile){
 void loadFilter(std::string filterfile){
     if(filterfile == "NONE"){
     	colorfilter = 0;
+    	gambatte_p->setColorFilter(0, filtervalue);
+    	SDL_BlitSurface(textoverlay, NULL, textoverlaycolored, NULL);
     	return;
     } else if(filterfile == "DEFAULT"){
 		filtervalue[0] = 135;
@@ -1566,6 +1941,9 @@ void loadFilter(std::string filterfile){
 		filtervalue[10] = 105;
 		filtervalue[11] = 30;
 		colorfilter = 1;
+		gambatte_p->setColorFilter(1, filtervalue);
+		SDL_BlitSurface(textoverlay, NULL, textoverlaycolored, NULL);
+		apply_cfilter(textoverlaycolored);
 		return;
 	} else {
 		Uint32 values[12];
@@ -1589,6 +1967,9 @@ void loadFilter(std::string filterfile){
 		            filtervalue[i] = values[i];
 		        }
 		        colorfilter = 1;
+		        gambatte_p->setColorFilter(1, filtervalue);
+		        SDL_BlitSurface(textoverlay, NULL, textoverlaycolored, NULL);
+				apply_cfilter(textoverlaycolored);
 		    } else {
 		        printf("Error reading: %s:\n",filepath.c_str());
 		        printf("Bad file format.\n");
@@ -1615,7 +1996,8 @@ void saveConfig(){
 		"DMGBORDERNAME %s\n"
 		"GBCBORDERNAME %s\n"
 		"BIOSENABLED %d\n"
-		"GHOSTING %d\n",
+		"GHOSTING %d\n"
+		"BUTTONLAYOUT %d\n",
 		showfps,
 		selectedscaler,
 		palname.c_str(),
@@ -1623,7 +2005,8 @@ void saveConfig(){
 		dmgbordername.c_str(),
 		gbcbordername.c_str(),
 		biosenabled,
-		ghosting);
+		ghosting,
+		buttonlayout);
     fclose(cfile);
 }
 
@@ -1698,6 +2081,9 @@ void loadConfig(){
 		} else if (!strcmp(line, "GHOSTING")) {
 			sscanf(arg, "%d", &value);
 			ghosting = value;
+		} else if (!strcmp(line, "BUTTONLAYOUT")) {
+			sscanf(arg, "%d", &value);
+			buttonlayout = value;
 		}
 	}
 	fclose(cfile);
