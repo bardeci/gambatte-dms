@@ -157,7 +157,7 @@ public:
 	LatencyOption()
 	: DescOption("latency", 'l', 1)
 #ifdef SOUND_MONO
-	, latency_(128)//SOUND_MONO double latency
+	, latency_(96)//SOUND_MONO double latency
 #else
 	, latency_(64)
 #endif
@@ -915,6 +915,9 @@ int GambatteSdl::exec(int const argc, char const *const argv[]) {
 			return 0;
 		}
 	}
+
+	std::string romflnm(argv[loadIndex]);
+	currgamename = strip_Dir(strip_Extension(romflnm));
 
 	loadConfig(); // load config.cfg file on startup
 

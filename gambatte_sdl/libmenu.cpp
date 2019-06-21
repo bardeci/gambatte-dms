@@ -59,7 +59,7 @@ Mix_Chunk *menusound_ok = NULL;
 int selectedscaler = 0, showfps = 0, ghosting = 1, biosenabled = 0, colorfilter = 0, gameiscgb = 0, buttonlayout = 0;
 uint32_t menupalblack = 0x000000, menupaldark = 0x505450, menupallight = 0xA8A8A8, menupalwhite = 0xF8FCF8;
 int filtervalue[12] = {135, 20, 0, 25, 0, 125, 20, 25, 0, 20, 105, 30};
-std::string dmgbordername = "DEFAULT", gbcbordername = "DEFAULT", palname = "DEFAULT", filtername = "NONE";
+std::string dmgbordername = "DEFAULT", gbcbordername = "DEFAULT", palname = "DEFAULT", filtername = "NONE", currgamename = "DEFAULT";
 std::string homedir = getenv("HOME");
 int numcodes_gg = NUM_GG_CODES, numcodes_gs = NUM_GS_CODES, selectedcode = 0, editmode = 0, blink = 0, footer_alt = 0;
 int textanim = 0, textanimpos = 0, textanimdirection = 0, textanimtimer = 0, textanimwidth = 0, textanimspeed = 0;
@@ -68,6 +68,7 @@ int gscheats[NUM_GS_CODES *8] = {0};
 int gscheatsenabled[NUM_GS_CODES] = {0};
 int menuin = -1, menuout = -1, showoverlay = -1, overlay_inout = 0, is_using_bios = 0, can_reset = 1, forcemenuexit = 0, refreshkeys = 0;
 int firstframe = 0;
+
 #ifdef ROM_BROWSER
 std::string gamename = "NONE";
 #endif
@@ -76,6 +77,24 @@ std::string gamename = "NONE";
 std::string getSaveStateFilename(int statenum){
 	std::string result = gambatte_p->getSaveStatePath(statenum);
 	return result;
+}
+
+std::string const strip_Extension(std::string const &str) {
+	std::string::size_type const lastDot = str.find_last_of('.');
+	std::string::size_type const lastSlash = str.find_last_of('/');
+
+	if (lastDot != std::string::npos && (lastSlash == std::string::npos || lastSlash < lastDot))
+		return str.substr(0, lastDot);
+
+	return str;
+}
+
+std::string const strip_Dir(std::string const &str) {
+	std::string::size_type const lastSlash = str.find_last_of('/');
+	if (lastSlash != std::string::npos)
+		return str.substr(lastSlash + 1);
+
+	return str;
 }
 
 void getSaveStatePreview(int statenum){
@@ -1266,6 +1285,8 @@ int currentEntryInList(menu_t *menu, std::string fname){
 		return 0;
 	} else if (fname == "DEFAULT"){
 		return 1;
+	} else if (fname == "AUTO"){
+		return 2;
 	}
 	fname = fname.substr(0, fname.length() - 4);
     int count = menu->n_entries;
@@ -1298,44 +1319,6 @@ void paint_titlebar(SDL_Surface *surface){
     rect.h = 8;
     SDL_FillRect(surface, &rect, hlcolor);
 }
-
-/*void load_border(std::string borderfilename){ //load border from menu
-	SDL_FreeSurface(borderimg);
-	std::string fullimgpath = (homedir + "/.gambatte/borders/");
-	fullimgpath += (borderfilename);
-	if (borderfilename == "DEFAULT"){
-		if(gameiscgb == 0){
-			RWops = SDL_RWFromMem(border_default_dmg, 5303);
-    		borderimg = IMG_LoadPNG_RW(RWops);
-    		SDL_FreeRW(RWops);
-		} else {
-			RWops = SDL_RWFromMem(border_default_gbc, 10285);
-    		borderimg = IMG_LoadPNG_RW(RWops);
-    		SDL_FreeRW(RWops);
-		}
-	} else {
-		temp = IMG_Load(fullimgpath.c_str());
-		if(!temp){
-	    	if(borderfilename != "NONE"){
-	    		printf("error loading %s\n", fullimgpath.c_str());
-	    	} else {
-	    		borderimg = SDL_CreateRGBSurface(SDL_SWSURFACE, screen->w, screen->h, 16, 0, 0, 0, 0);
-				clear_surface(borderimg, 0x000000);
-	    	}
-	    } else {
-	    	borderimg = SDL_CreateRGBSurface(SDL_SWSURFACE, screen->w, screen->h, 16, 0, 0, 0, 0);
-			clear_surface(borderimg, 0x000000);
-	    	SDL_Rect brect;
-			brect.x = (borderimg->w - temp->w) / 2;
-			brect.y = (borderimg->h - temp->h) / 2;
-			brect.w = temp->w;
-			brect.h = temp->h;
-			SDL_BlitSurface(temp, NULL, borderimg, &brect);
-			SDL_FreeSurface(temp);
-	    }	
-		//borderimg = IMG_Load(fullimgpath.c_str());
-	}
-}*/
 
 void createBorderSurface(){
 	switch(selectedscaler) {
@@ -1377,7 +1360,6 @@ void createBorderSurface(){
 void load_border(std::string borderfilename){ //load border from menu
 	SDL_FreeSurface(borderimg);
 	std::string fullimgpath = (homedir + "/.gambatte/borders/");
-	fullimgpath += (borderfilename);
 
 	if (borderfilename == "DEFAULT"){
 		if(gameiscgb == 0){
@@ -1389,7 +1371,23 @@ void load_border(std::string borderfilename){ //load border from menu
     		temp = IMG_LoadPNG_RW(RWops);
     		SDL_FreeRW(RWops);
 		}
+	} else if (borderfilename == "AUTO"){
+		fullimgpath += (currgamename + ".png");
+		temp = IMG_Load(fullimgpath.c_str());
+		if(!temp){
+			printf("Border file %s not found. Loading default border.\n", fullimgpath.c_str());
+			if(gameiscgb == 0){
+				RWops = SDL_RWFromMem(border_default_dmg, sizeof(border_default_dmg));
+	    		temp = IMG_LoadPNG_RW(RWops);
+	    		SDL_FreeRW(RWops);
+			} else {
+				RWops = SDL_RWFromMem(border_default_gbc, sizeof(border_default_gbc));
+	    		temp = IMG_LoadPNG_RW(RWops);
+	    		SDL_FreeRW(RWops);
+			}
+		}	
 	} else {
+		fullimgpath += (borderfilename);
 		temp = IMG_Load(fullimgpath.c_str());
 	}
 
@@ -1437,7 +1435,6 @@ void load_border(std::string borderfilename){ //load border from menu
 		}		
 		SDL_FreeSurface(temp);
     }	
-	//borderimg = IMG_Load(fullimgpath.c_str());
 }
 
 void paint_border(SDL_Surface *surface){
@@ -1888,12 +1885,36 @@ void loadPalette(std::string palettefile){
 	} else {
 		Uint32 values[12];
 		std::string filepath = (homedir + "/.gambatte/palettes/");
-    	filepath.append(palettefile);
+		if(palettefile == "AUTO"){
+			filepath += (currgamename + ".pal");
+		} else {
+			filepath.append(palettefile);
+		}
 		FILE *fpal = NULL;
 		fpal = fopen(filepath.c_str(), "r");
 		if (fpal == NULL) {
-			printf("Failed to open palette file %s\n", filepath.c_str());
-			return;
+			if(palettefile == "AUTO"){
+				printf("Palette file %s not found. Loading default palette.\n", filepath.c_str());
+				Uint32 value;
+			    for (int i = 0; i < 3; ++i) {
+			        for (int k = 0; k < 4; ++k) {
+			            if(k == 0)
+			                value = 0x64960a;
+			            if(k == 1)
+			                value = 0x1b7e3e;
+			            if(k == 2)
+			                value = 0x084e3c;
+			            if(k == 3)
+			                value = 0x003236;
+			            gambatte_p->setDmgPaletteColor(i, k, value);
+			        }
+			    }
+			    set_menu_palette(0x64960a, 0x1b7e3e, 0x084e3c, 0x003236);
+				return;
+			} else {
+				printf("Failed to open palette file %s\n", filepath.c_str());
+				return;
+			}
 		}
 		if(fpal){
 		    int j = 0;

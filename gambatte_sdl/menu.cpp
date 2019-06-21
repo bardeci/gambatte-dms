@@ -495,6 +495,7 @@ static void callback_selecteddmggame(menu_t *caller_menu) {
     if (gambatte_p->load(fullgamepath.c_str(),0 + 0 + 0) < 0) {
         printf("failed to load ROM: %s\n", fullgamepath.c_str());
     } else {
+        currgamename = strip_Extension(gamename);
         clearAllCheats(); //clear all cheatcodes from menus
         if(gambatte_p->isCgb()){
             gameiscgb = 1;
@@ -571,6 +572,7 @@ static void callback_selectedgbcgame(menu_t *caller_menu) {
     if (gambatte_p->load(fullgamepath.c_str(),0 + 0 + 0) < 0) {
         printf("failed to load ROM: %s\n", fullgamepath.c_str());
     } else {
+        currgamename = strip_Extension(gamename);
         clearAllCheats(); //clear all cheatcodes from menus
         if(gambatte_p->isCgb()){
             gameiscgb = 1;
@@ -1066,6 +1068,7 @@ int numpalettes;
 
 static void callback_nopalette(menu_t *caller_menu);
 static void callback_defaultpalette(menu_t *caller_menu);
+static void callback_autopalette(menu_t *caller_menu);
 static void callback_selectedpalette(menu_t *caller_menu);
 static void callback_dmgpalette_back(menu_t *caller_menu);
 
@@ -1089,6 +1092,11 @@ static void callback_dmgpalette(menu_t *caller_menu) {
     menu_entry_set_text(menu_entry, "Default");
     menu_add_entry(menu, menu_entry);
     menu_entry->callback = callback_defaultpalette;
+
+    menu_entry = new_menu_entry(0);
+    menu_entry_set_text(menu_entry, "Auto");
+    menu_add_entry(menu, menu_entry);
+    menu_entry->callback = callback_autopalette;
 
     std::string palettedir = (homedir + "/.gambatte/palettes");
     numpalettes = scandir(palettedir.c_str(), &palettelist, parse_ext_pal, alphasort);
@@ -1142,9 +1150,22 @@ static void callback_defaultpalette(menu_t *caller_menu) {
     }
 }
 
+static void callback_autopalette(menu_t *caller_menu) {
+    playMenuSound_ok();
+    palname = "AUTO";
+    loadPalette(palname);
+    if(gameiscgb == 1){
+        load_border(gbcbordername);
+        caller_menu->quit = 1;
+    } else {
+        load_border(dmgbordername);
+        caller_menu->quit = 0;
+    }
+}
+
 static void callback_selectedpalette(menu_t *caller_menu) {
     playMenuSound_ok();
-    palname = palettelist[caller_menu->selected_entry - 2]->d_name; // we added 2 extra entries before the list, so we do (-2).
+    palname = palettelist[caller_menu->selected_entry - 3]->d_name; // we added 3 extra entries before the list, so we do (-3).
     loadPalette(palname);
     if(gameiscgb == 1){
         load_border(gbcbordername);
@@ -1262,6 +1283,7 @@ int numdmgborders;
 
 static void callback_nodmgborder(menu_t *caller_menu);
 static void callback_defaultdmgborder(menu_t *caller_menu);
+static void callback_autodmgborder(menu_t *caller_menu);
 static void callback_selecteddmgborder(menu_t *caller_menu);
 static void callback_dmgborderimage_back(menu_t *caller_menu);
 
@@ -1285,6 +1307,11 @@ static void callback_dmgborderimage(menu_t *caller_menu) {
     menu_entry_set_text(menu_entry, "Default");
     menu_add_entry(menu, menu_entry);
     menu_entry->callback = callback_defaultdmgborder;
+
+    menu_entry = new_menu_entry(0);
+    menu_entry_set_text(menu_entry, "Auto");
+    menu_add_entry(menu, menu_entry);
+    menu_entry->callback = callback_autodmgborder;
 
     std::string borderdir = (homedir + "/.gambatte/borders");
     numdmgborders = scandir(borderdir.c_str(), &dmgborderlist, parse_ext_png, alphasort);
@@ -1336,9 +1363,21 @@ static void callback_defaultdmgborder(menu_t *caller_menu) {
     }
 }
 
+static void callback_autodmgborder(menu_t *caller_menu) {
+    playMenuSound_ok();
+    dmgbordername = "AUTO";
+    if(gameiscgb == 1){
+        caller_menu->quit = 1;
+    } else {
+        load_border(dmgbordername);
+        clean_menu_screen(caller_menu);
+        caller_menu->quit = 0;
+    }
+}
+
 static void callback_selecteddmgborder(menu_t *caller_menu) {
     playMenuSound_ok();
-    dmgbordername = dmgborderlist[caller_menu->selected_entry - 2]->d_name; // we added 2 extra entries before the list, so we do (-2).
+    dmgbordername = dmgborderlist[caller_menu->selected_entry - 3]->d_name; // we added 3 extra entries before the list, so we do (-3).
     if(gameiscgb == 1){
         caller_menu->quit = 1;
     } else {
@@ -1360,6 +1399,7 @@ int numgbcborders;
 
 static void callback_nogbcborder(menu_t *caller_menu);
 static void callback_defaultgbcborder(menu_t *caller_menu);
+static void callback_autogbcborder(menu_t *caller_menu);
 static void callback_selectedgbcborder(menu_t *caller_menu);
 static void callback_gbcborderimage_back(menu_t *caller_menu);
 
@@ -1383,6 +1423,11 @@ static void callback_gbcborderimage(menu_t *caller_menu) {
     menu_entry_set_text(menu_entry, "Default");
     menu_add_entry(menu, menu_entry);
     menu_entry->callback = callback_defaultgbcborder;
+
+    menu_entry = new_menu_entry(0);
+    menu_entry_set_text(menu_entry, "Auto");
+    menu_add_entry(menu, menu_entry);
+    menu_entry->callback = callback_autogbcborder;
 
     std::string borderdir = (homedir + "/.gambatte/borders");
     numgbcborders = scandir(borderdir.c_str(), &gbcborderlist, parse_ext_png, alphasort);
@@ -1434,9 +1479,21 @@ static void callback_defaultgbcborder(menu_t *caller_menu) {
     }
 }
 
+static void callback_autogbcborder(menu_t *caller_menu) {
+    playMenuSound_ok();
+    gbcbordername = "AUTO";
+    if(gameiscgb == 1){
+        load_border(gbcbordername);
+        clean_menu_screen(caller_menu);
+        caller_menu->quit = 0;
+    } else {
+        caller_menu->quit = 1;
+    }
+}
+
 static void callback_selectedgbcborder(menu_t *caller_menu) {
     playMenuSound_ok();
-    gbcbordername = gbcborderlist[caller_menu->selected_entry - 2]->d_name; // we added 2 extra entries before the list, so we do (-2).
+    gbcbordername = gbcborderlist[caller_menu->selected_entry - 3]->d_name; // we added 3 extra entries before the list, so we do (-3).
     if(gameiscgb == 1){
         load_border(gbcbordername);
         clean_menu_screen(caller_menu);

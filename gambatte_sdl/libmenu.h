@@ -71,7 +71,7 @@ extern SDL_Surface *textoverlaycolored;
 extern int selectedscaler, showfps, ghosting, biosenabled, colorfilter, gameiscgb, buttonlayout;
 extern uint32_t menupalblack, menupaldark, menupallight, menupalwhite;
 extern int filtervalue[12];
-extern std::string dmgbordername, gbcbordername, palname, filtername, homedir;
+extern std::string dmgbordername, gbcbordername, palname, filtername, currgamename, homedir;
 extern int numcodes_gg, numcodes_gs, selectedcode, editmode;
 extern int ggcheats[NUM_GG_CODES*9];
 extern int gscheats[NUM_GS_CODES*8];
@@ -135,6 +135,8 @@ void playMenuSound_move();
 void playMenuSound_ok();
 
 std::string getSaveStateFilename(int statenum);
+std::string const strip_Extension(std::string const &str);
+std::string const strip_Dir(std::string const &str);
 void getSaveStatePreview(int statenum);
 void printSaveStatePreview(SDL_Surface *surface);
 void apply_cfilter(SDL_Surface *surface);

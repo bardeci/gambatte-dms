@@ -8,7 +8,7 @@ if target == 'gcw0':
     include_path = ' -I/opt/gcw0-toolchain/usr/mipsel-gcw0-linux-uclibc/sysroot/usr/include'
     bin_path = '/opt/gcw0-toolchain/usr/bin/mipsel-linux-'
     sdl_path = '/opt/gcw0-toolchain/usr/mipsel-gcw0-linux-uclibc/sysroot/usr/bin/'
-    version_defines = ' -DVERSION_GCW0 -DHW_SCALING' 
+    version_defines = ' -DVERSION_GCW0 -DHW_SCALING -DSOUND_MONO' 
     extra_cflags = ''
     print "Building Gambatte SDL with GCW Zero toolchain..."
 elif target == 'od':
