@@ -343,7 +343,7 @@ class InputOption : public DescOption {
 public:
 	InputOption()
 	: DescOption("input", 'i', 10)
-#if defined VERSION_GCW0 || defined VERSION_RS97
+#if defined VERSION_GCW0 || defined VERSION_RETROFW
 	{
 		ids_[0].keydata = SDLK_RETURN;
 		ids_[1].keydata = SDLK_ESCAPE;
@@ -356,7 +356,7 @@ public:
 		ids_[8].keydata = SDLK_SPACE;
 		ids_[9].keydata = SDLK_LSHIFT;
 	}
-#elif defined VERSION_BITTBOY
+#elif defined VERSION_BITTBOY || defined VERSION_POCKETGO
 	{
 		ids_[0].keydata = SDLK_RETURN;
 		ids_[1].keydata = SDLK_ESCAPE;
@@ -1084,8 +1084,8 @@ bool GambatteSdl::handleEvents(BlitterWrapper &blitter) {
 					}
 				} else {
 					switch (e.key.keysym.sym) {
-#ifdef VERSION_BITTBOY
-					case SDLK_RCTRL: // R button in bittboy
+#if defined VERSION_BITTBOY || defined VERSION_POCKETGO
+					case SDLK_RCTRL: // R button in bittboy - Reset button in PocketGo
 #else
 					case SDLK_BACKSPACE: // L trigger
 					case SDLK_TAB: // R trigger

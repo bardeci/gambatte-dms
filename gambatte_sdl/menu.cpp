@@ -30,9 +30,9 @@ static SDL_RWops *RWops;
 #ifdef ROM_BROWSER
 #ifdef VERSION_GCW0
 static std::string gamedir = ("/media/data/roms");
-#elif VERSION_RS97
+#elif VERSION_RETROFW
 static std::string gamedir = (homedir + "/roms");
-#elif VERSION_BITTBOY
+#elif defined VERSION_BITTBOY || defined VERSION_POCKETGO
 static std::string gamedir = (homedir + "/roms");
 #else
 static std::string gamedir = (homedir + "/roms");
@@ -215,10 +215,12 @@ static void callback_gameshark(menu_t *caller_menu);
 
 #ifdef VERSION_GCW0
 std::string menu_main_title = ("GAMBATTE-GCWZERO");
-#elif VERSION_RS97
-std::string menu_main_title = ("GAMBATTE-RS97");
+#elif VERSION_RETROFW
+std::string menu_main_title = ("GAMBATTE-RETROFW");
 #elif VERSION_BITTBOY
 std::string menu_main_title = ("GAMBATTE-BITTBOY");
+#elif VERSION_POCKETGO
+std::string menu_main_title = ("GAMBATTE-POCKETGO");
 #else
 std::string menu_main_title = ("GAMBATTE-OD");
 #endif

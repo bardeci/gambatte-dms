@@ -92,9 +92,9 @@ void init_border(SDL_Surface *dst){
 void SdlBlitter::SetVid(int w, int h, int bpp){	
 #ifdef VERSION_GCW0
 	screen = SDL_SetVideoMode(w, h, bpp, SDL_HWSURFACE | SDL_TRIPLEBUF);
-#elif VERSION_RS97
+#elif VERSION_RETROFW
 	screen = SDL_SetVideoMode(w, h, bpp, SDL_HWSURFACE | SDL_TRIPLEBUF);
-#elif VERSION_BITTBOY
+#elif defined VERSION_BITTBOY || defined VERSION_POCKETGO
 	screen = SDL_SetVideoMode(w, h, bpp, SDL_SWSURFACE);
 #else
 	screen = SDL_SetVideoMode(w, h, bpp, SDL_HWSURFACE | SDL_DOUBLEBUF);

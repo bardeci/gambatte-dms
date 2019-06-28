@@ -184,9 +184,9 @@ void clearAllCheats(){ // NOTE: This does not turn off cheats from the game, it 
 void openMenuAudio(){
 #ifdef VERSION_GCW0
 	Mix_OpenAudio(44100, AUDIO_S16SYS, 2, 1792);
-#elif VERSION_RS97
+#elif VERSION_RETROFW
 	Mix_OpenAudio(44100, AUDIO_S16SYS, 2, 1024);
-#elif VERSION_BITTBOY
+#elif defined VERSION_BITTBOY || defined VERSION_POCKETGO
 	Mix_OpenAudio(44100, AUDIO_S16SYS, 2, 1024);
 #else
 	Mix_OpenAudio(44100, AUDIO_S16SYS, 2, 1792);
@@ -479,8 +479,8 @@ int menu_main(menu_t *menu) {
 								textanim_reset();
 							}
 							break;
-#ifdef VERSION_BITTBOY
-						case SDLK_LALT:	/* TA button in bittboy*/
+#if defined VERSION_BITTBOY || defined VERSION_POCKETGO
+						case SDLK_LALT:	/* TA button in bittboy - A button in PocketGo*/
 #else
 						case SDLK_LCTRL:	/* A button */
 #endif
@@ -492,8 +492,8 @@ int menu_main(menu_t *menu) {
 								}
 							}
 							break;
-#ifdef VERSION_BITTBOY
-						case SDLK_LCTRL:	/* A button in bittboy, being used as 'back' */
+#if defined VERSION_BITTBOY || defined VERSION_POCKETGO
+						case SDLK_LCTRL:	/* A button in bittboy - B button in PocketGo, being used as 'back' */
 #else
 						case SDLK_LALT: /* B button, being used as 'back' */
 #endif
@@ -705,8 +705,8 @@ int menu_cheat(menu_t *menu) {
 							}
 							dirty = 1;
 							break;
-#ifdef VERSION_BITTBOY
-						case SDLK_LALT:	/* TA button in bittboy*/
+#if defined VERSION_BITTBOY || defined VERSION_POCKETGO
+						case SDLK_LALT:	/* TA button in bittboy - A button in PocketGo*/
 #else
 						case SDLK_LCTRL:	/* A button */
 #endif
@@ -716,8 +716,8 @@ int menu_cheat(menu_t *menu) {
 								redraw_cheat(menu);
 							}
 							break;
-#ifdef VERSION_BITTBOY
-						case SDLK_LCTRL:	/* A button in bittboy, being used as 'back' */
+#if defined VERSION_BITTBOY || defined VERSION_POCKETGO
+						case SDLK_LCTRL:	/* A button in bittboy - B button in PocketGo, being used as 'back' */
 #else
 						case SDLK_LALT: /* B button, being used as 'back' */
 #endif
