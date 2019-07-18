@@ -74,7 +74,12 @@ OBJS +=	gambatte_sdl/src/audiosink.o \
 	
 all: executable
 
-executable : $(OBJS)
+gambatte_sdl/menu.o: builddate
+
+builddate:
+	echo "#define BUILDDATE \"$$(date +'%Y%m%d-%H%M%S')"\" > ./gambatte_sdl/builddate.h
+
+executable: $(OBJS)
 	$(CC) -o $(OUTPUTNAME) $(OBJS) $(CFLAGS) $(LDFLAGS)
 
 clean:

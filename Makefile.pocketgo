@@ -8,7 +8,7 @@ SDL_CFLAGS  := $(shell $(SYSROOT)/usr/bin/sdl-config --cflags)
 
 OUTPUTNAME = gambatte-pocketgo
 
-DEFINES = -DHAVE_STDINT_H -DVERSION_POCKETGO -DSOUND_MONO
+DEFINES = -DHAVE_STDINT_H -DVERSION_POCKETGO
 INCLUDES = -Isrc/gambatte_sdl -Ilibgambatte -Icommon -Iinclude -Ilibgambatte/include -Ilibgambatte/src $(SDL_CFLAGS)
 OPT_FLAGS  = -Ofast -fdata-sections -fdata-sections -fno-common -fno-PIC -flto
 EXTRA_LDFLAGS = -lasound -lmikmod -lmodplug -Wl,--as-needed -Wl,--gc-sections -flto -s

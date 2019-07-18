@@ -80,7 +80,15 @@ Here is a list of the available config options:
 - Ghosting:
     Enables or disables frame mixing to mimic
     the DMG LCD ghosting.
-    Default is "On".
+    Default is "DMG only".
+
+- Controls:
+    Allows the user to swap the B/A buttons.
+
+- Sound:
+    Allows the user to select between Mono and
+    Stereo sound.
+    Default is "Mono".
 
 
 Palette files
@@ -238,10 +246,10 @@ Boston, MA  02111-1307, USA
 
 ------------------------------------------------
 
-OpenDingux port by Surkow and Hi-Ban.
-Additional menu rework by Hi-Ban.
-Special thanks to Senquack and Pingflood for 
-helping this noob.
+GCW Zero port, additional features and menu
+rework by Hi-Ban.
+Special thanks to Surkow, Senquack and Pingflood
+for helping this noob.
 Source code available at:
 https://github.com/bardeci/dot-matrix-simulator
 

@@ -8,7 +8,7 @@ if target == 'gcw0':
     include_path = ' -I/opt/gcw0-toolchain/usr/mipsel-gcw0-linux-uclibc/sysroot/usr/include'
     bin_path = '/opt/gcw0-toolchain/usr/bin/mipsel-linux-'
     sdl_path = '/opt/gcw0-toolchain/usr/mipsel-gcw0-linux-uclibc/sysroot/usr/bin/'
-    version_defines = ' -DVERSION_GCW0 -DHW_SCALING -DSOUND_MONO' 
+    version_defines = ' -DVERSION_GCW0 -DHW_SCALING' 
     extra_cflags = ''
     print "Building Gambatte SDL with GCW Zero toolchain..."
 elif target == 'od':
@@ -22,7 +22,7 @@ elif target == 'retrofw':
     include_path = ' -I/opt/rs97-toolchain/mipsel-buildroot-linux-uclibc/sysroot/usr/include'
     bin_path = '/opt/rs97-toolchain/bin/mipsel-linux-'
     sdl_path = '/opt/rs97-toolchain/mipsel-buildroot-linux-uclibc/sysroot/usr/bin/'
-    version_defines = ' -DVERSION_RETROFW -DSOUND_MONO'
+    version_defines = ' -DVERSION_RETROFW'
     extra_cflags = ' -Ofast -fdata-sections -mno-fp-exceptions -mno-check-zero-division -mframe-header-opt -fno-common -mips32 -fno-PIC -mno-abicalls -flto -fwhole-program'
     print "Building Gambatte SDL with RetroFW toolchain..."
 else:

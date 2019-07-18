@@ -23,13 +23,23 @@
 
 static SDL_AudioSpec cur_sdl_audio_spec;
 static bool          cur_sdl_audio_spec_set;
+static long curr_srate;
 
 //NOTE THIS IS A NEW FUNCTION AND NOT DECLARED 'static' (so it can be called from menu):
 // It should be added to audiosink.h header file
 int reopenAudio() //dirty and nasty sorcery
 {
-    if (!cur_sdl_audio_spec_set)
+    if (!cur_sdl_audio_spec_set) {
         return -1;
+    }
+
+    if (stereosound == 0){
+	    cur_sdl_audio_spec.freq = (curr_srate * 2); //since now we have 2x samples written into the buffer, we need to play sound at 2x samplerate
+	    cur_sdl_audio_spec.channels = 1; //data from both L/R channels is written into a single channel
+	} else {
+	    cur_sdl_audio_spec.freq = curr_srate;
+	    cur_sdl_audio_spec.channels = 2;
+	}
  
     if (SDL_OpenAudio(&cur_sdl_audio_spec, 0) < 0) {
         cur_sdl_audio_spec_set = false;
@@ -62,21 +72,22 @@ static int openAudio(long srate, std::size_t samples,
                      void *userdata)
 {
     SDL_AudioSpec spec;
-#ifdef SOUND_MONO
-    spec.freq = (srate * 2); //SOUND_MONO play sound at double speed
-    spec.format = AUDIO_S16SYS;
-    spec.channels = 1; //SOUND_MONO data from both L/R channels is written into a single channel
-    spec.samples = samples;
-    spec.callback = callback;
-    spec.userdata = userdata;
-#else
-    spec.freq = srate;
-    spec.format = AUDIO_S16SYS;
-    spec.channels = 2;
-    spec.samples = samples;
-    spec.callback = callback;
-    spec.userdata = userdata;
-#endif
+	if (stereosound == 0){
+	    spec.freq = (srate * 2); //since now we have 2x samples written into the buffer, we need to play sound at 2x samplerate
+	    spec.format = AUDIO_S16SYS;
+	    spec.channels = 1; //data from both L/R channels is written into a single channel
+	    spec.samples = samples;
+	    spec.callback = callback;
+	    spec.userdata = userdata;
+	} else {
+	    spec.freq = srate;
+	    spec.format = AUDIO_S16SYS;
+	    spec.channels = 2;
+	    spec.samples = samples;
+	    spec.callback = callback;
+	    spec.userdata = userdata;
+	}
+	curr_srate = srate;
  
     if (SDL_OpenAudio(&spec, 0) < 0) {
         cur_sdl_audio_spec_set = false;

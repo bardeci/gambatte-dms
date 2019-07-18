@@ -121,11 +121,7 @@ class RateOption : public DescOption {
 public:
 	RateOption()
 	: DescOption("sample-rate", 'r', 1)
-#ifdef SOUND_MONO
-	, rate_(24000)//SOUND_MONO this will be played at 2x samplerate (48000Hz)
-#else
-	, rate_(44100)
-#endif
+	, rate_(48000)
 	{
 	}
 
@@ -134,11 +130,7 @@ public:
 		if (r < 4000 || r > 192000)
 			return;
 
-#ifdef SOUND_MONO
-		rate_ = (r / 2);//SOUND_MONO this will be played at 2x samplerate
-#else
 		rate_ = r;
-#endif
 	}
 
 	virtual std::string const desc() const {
@@ -156,11 +148,7 @@ class LatencyOption : public DescOption {
 public:
 	LatencyOption()
 	: DescOption("latency", 'l', 1)
-#ifdef SOUND_MONO
-	, latency_(96)//SOUND_MONO double latency
-#else
-	, latency_(64)
-#endif
+	, latency_(96)
 	{
 	}
 
@@ -169,11 +157,7 @@ public:
 		if (l < 16 || l > 5000)
 			return;
 
-#ifdef SOUND_MONO
-		latency_ = (l * 2);//SOUND_MONO double latency
-#else
 		latency_ = l;
-#endif
 	}
 
 	virtual std::string const desc() const {
@@ -1087,10 +1071,12 @@ bool GambatteSdl::handleEvents(BlitterWrapper &blitter) {
 #if defined VERSION_BITTBOY || defined VERSION_POCKETGO
 					case SDLK_RCTRL: // R button in bittboy - Reset button in PocketGo
 #else
+	#if defined VERSION_GCW0
 					case SDLK_BACKSPACE: // L trigger
 					case SDLK_TAB: // R trigger
+	#endif
 					case SDLK_HOME: // "power flick" in GCW Zero
-					case SDLK_END: // power button in rs-97
+					case SDLK_END: // power/suspend button in retrofw
 #endif
 						if((menuout == -1) && (menuin == -1)){
 							//main_menu();

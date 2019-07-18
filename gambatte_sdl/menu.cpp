@@ -209,17 +209,18 @@ static void callback_gbcborderimage(menu_t *caller_menu);
 static void callback_usebios(menu_t *caller_menu);
 static void callback_ghosting(menu_t *caller_menu);
 static void callback_buttonlayout(menu_t *caller_menu);
+static void callback_sound(menu_t *caller_menu);
 
 static void callback_gamegenie(menu_t *caller_menu);
 static void callback_gameshark(menu_t *caller_menu);
 
-#ifdef VERSION_GCW0
+#if defined VERSION_GCW0
 std::string menu_main_title = ("GAMBATTE-GCWZERO");
-#elif VERSION_RETROFW
+#elif defined VERSION_RETROFW
 std::string menu_main_title = ("GAMBATTE-RETROFW");
-#elif VERSION_BITTBOY
+#elif defined VERSION_BITTBOY
 std::string menu_main_title = ("GAMBATTE-BITTBOY");
-#elif VERSION_POCKETGO
+#elif defined VERSION_POCKETGO
 std::string menu_main_title = ("GAMBATTE-POCKETGO");
 #else
 std::string menu_main_title = ("GAMBATTE-OD");
@@ -806,6 +807,11 @@ static void callback_settings(menu_t *caller_menu) {
     menu_entry_set_text(menu_entry, "Controls");
     menu_add_entry(menu, menu_entry);
     menu_entry->callback = callback_buttonlayout;
+
+    menu_entry = new_menu_entry(0);
+    menu_entry_set_text(menu_entry, "Sound");
+    menu_add_entry(menu, menu_entry);
+    menu_entry->callback = callback_sound;
 
     menu_entry = new_menu_entry(0);
     menu_entry_set_text(menu_entry, "");
@@ -1656,6 +1662,51 @@ static void callback_buttonlayout_back(menu_t *caller_menu) {
     caller_menu->quit = 1;
 }
 
+/* ==================== SOUND MENU =========================== */
+
+static void callback_selectedsound(menu_t *caller_menu);
+static void callback_sound_back(menu_t *caller_menu);
+
+static void callback_sound(menu_t *caller_menu) {
+
+    menu_t *menu;
+    menu_entry_t *menu_entry;
+    (void) caller_menu;
+    menu = new_menu();
+
+    menu_set_header(menu, menu_main_title.c_str());
+    menu_set_title(menu, "Sound");
+    menu->back_callback = callback_sound_back;
+
+    menu_entry = new_menu_entry(0);
+    menu_entry_set_text(menu_entry, "Mono");
+    menu_add_entry(menu, menu_entry);
+    menu_entry->callback = callback_selectedsound;
+
+    menu_entry = new_menu_entry(0);
+    menu_entry_set_text(menu_entry, "Stereo");
+    menu_add_entry(menu, menu_entry);
+    menu_entry->callback = callback_selectedsound;
+
+    menu->selected_entry = stereosound;
+
+    playMenuSound_in();
+    menu_main(menu);
+
+    delete_menu(menu);
+}
+
+static void callback_selectedsound(menu_t *caller_menu) {
+    playMenuSound_ok();
+    stereosound = caller_menu->selected_entry;
+    caller_menu->quit = 1;
+}
+
+static void callback_sound_back(menu_t *caller_menu) {
+    playMenuSound_back();
+    caller_menu->quit = 1;
+}
+
 /* ==================== ABOUT MENU =========================== */
 
 
@@ -1691,13 +1742,23 @@ static void callback_about(menu_t *caller_menu) {
     menu_entry->callback = callback_about_back;
 
     menu_entry = new_menu_entry(0);
+#if defined VERSION_GCW0
+    menu_entry_set_text(menu_entry, "GCW Zero port by");
+#elif defined VERSION_RETROFW
+    menu_entry_set_text(menu_entry, "RetroFW port by");
+#elif defined VERSION_BITTBOY
+    menu_entry_set_text(menu_entry, "Bittboy port by");
+#elif defined VERSION_POCKETGO
+    menu_entry_set_text(menu_entry, "PocketGo port by");
+#else
     menu_entry_set_text(menu_entry, "OpenDingux port by");
+#endif
     menu_add_entry(menu, menu_entry);
     menu_entry->selectable = 0;
     menu_entry->callback = callback_about_back;
 
     menu_entry = new_menu_entry(0);
-    menu_entry_set_text(menu_entry, "Surkow and Hi-Ban");
+    menu_entry_set_text(menu_entry, "Hi-Ban");
     menu_add_entry(menu, menu_entry);
     menu_entry->selectable = 0;
     menu_entry->callback = callback_about_back;
@@ -1715,7 +1776,7 @@ static void callback_about(menu_t *caller_menu) {
     menu_entry->callback = callback_about_back;
 
     menu_entry = new_menu_entry(0);
-    menu_entry_set_text(menu_entry, "Senquack");
+    menu_entry_set_text(menu_entry, "Surkow, Senquack");
     menu_add_entry(menu, menu_entry);
     menu_entry->selectable = 0;
     menu_entry->callback = callback_about_back;
