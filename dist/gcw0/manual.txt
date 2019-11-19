@@ -1,5 +1,5 @@
 
-Gambatte Emulator for GCW-Zero
+Gambatte Emulator for OpenDingux devices
 ------------------------------------------------
 
 Gambatte is an accuracy-focused, open-source, 
@@ -246,7 +246,7 @@ Boston, MA  02111-1307, USA
 
 ------------------------------------------------
 
-GCW Zero port, additional features and menu
+OpenDingux port, additional features and menu
 rework by Hi-Ban.
 Special thanks to Surkow, Senquack and Pingflood
 for helping this noob.

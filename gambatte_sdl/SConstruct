@@ -4,18 +4,11 @@
 # -DPOWEROFF: Replaces the "Quit" option with a "Power Off" option.
 
 target = ARGUMENTS.get('target', 0)
-if target == 'gcw0':
+if target == 'opendingux':
     include_path = ' -I/opt/gcw0-toolchain/usr/mipsel-gcw0-linux-uclibc/sysroot/usr/include'
     bin_path = '/opt/gcw0-toolchain/usr/bin/mipsel-linux-'
     sdl_path = '/opt/gcw0-toolchain/usr/mipsel-gcw0-linux-uclibc/sysroot/usr/bin/'
-    version_defines = ' -DVERSION_GCW0 -DHW_SCALING' 
-    extra_cflags = ''
-    print "Building Gambatte SDL with GCW Zero toolchain..."
-elif target == 'od':
-    include_path = ' -Iopt/opendingux-toolchain/usr/include'
-    bin_path = '/opt/opendingux-toolchain/usr/bin/mipsel-linux-'
-    sdl_path = '/opt/opendingux-toolchain/usr/bin/'
-    version_defines = ''
+    version_defines = ' -DVERSION_OPENDINGUX -DHW_SCALING'
     extra_cflags = ''
     print "Building Gambatte SDL with OpenDingux toolchain..."
 elif target == 'retrofw':

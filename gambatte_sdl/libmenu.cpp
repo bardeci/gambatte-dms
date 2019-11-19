@@ -182,7 +182,7 @@ void clearAllCheats(){ // NOTE: This does not turn off cheats from the game, it 
 }
 
 void openMenuAudio(){
-#ifdef VERSION_GCW0
+#ifdef VERSION_OPENDINGUX
 	Mix_OpenAudio(44100, AUDIO_S16SYS, 2, 1792);
 #elif VERSION_RETROFW
 	Mix_OpenAudio(44100, AUDIO_S16SYS, 2, 1024);
@@ -479,11 +479,7 @@ int menu_main(menu_t *menu) {
 								textanim_reset();
 							}
 							break;
-#if defined VERSION_BITTBOY || defined VERSION_POCKETGO
-						case SDLK_LALT:	/* TA button in bittboy - A button in PocketGo*/
-#else
-						case SDLK_LCTRL:	/* A button */
-#endif
+						case SDLK_LCTRL:	/* A button - TA button in bittboy*/
 							if(menuin == -1){
 								if (menu->entries[menu->selected_entry]->callback != NULL) {
 									footer_alt = 0;
@@ -492,11 +488,7 @@ int menu_main(menu_t *menu) {
 								}
 							}
 							break;
-#if defined VERSION_BITTBOY || defined VERSION_POCKETGO
-						case SDLK_LCTRL:	/* A button in bittboy - B button in PocketGo, being used as 'back' */
-#else
-						case SDLK_LALT: /* B button, being used as 'back' */
-#endif
+						case SDLK_LALT: /* B button - A button in bittboy, being used as 'back' */
 							if(menuin == -1){
 								if (menu->back_callback != NULL) {
 									footer_alt = 0;
@@ -705,22 +697,14 @@ int menu_cheat(menu_t *menu) {
 							}
 							dirty = 1;
 							break;
-#if defined VERSION_BITTBOY || defined VERSION_POCKETGO
-						case SDLK_LALT:	/* TA button in bittboy - A button in PocketGo*/
-#else
-						case SDLK_LCTRL:	/* A button */
-#endif
+						case SDLK_LCTRL:	/* A button - TA button in bittboy*/
 							if (menu->entries[menu->selected_entry]->callback != NULL) {
 								footer_alt = 0;
 								menu->entries[menu->selected_entry]->callback(menu);
 								redraw_cheat(menu);
 							}
 							break;
-#if defined VERSION_BITTBOY || defined VERSION_POCKETGO
-						case SDLK_LCTRL:	/* A button in bittboy - B button in PocketGo, being used as 'back' */
-#else
-						case SDLK_LALT: /* B button, being used as 'back' */
-#endif
+						case SDLK_LALT: /* B button - A button in bittboy, being used as 'back' */
 							if (menu->back_callback != NULL) {
 								if (editmode == 1){
 									footer_alt = 0;
@@ -1375,15 +1359,20 @@ void load_border(std::string borderfilename){ //load border from menu
 		fullimgpath += (currgamename + ".png");
 		temp = IMG_Load(fullimgpath.c_str());
 		if(!temp){
-			printf("Border file %s not found. Loading default border.\n", fullimgpath.c_str());
-			if(gameiscgb == 0){
-				RWops = SDL_RWFromMem(border_default_dmg, sizeof(border_default_dmg));
-	    		temp = IMG_LoadPNG_RW(RWops);
-	    		SDL_FreeRW(RWops);
-			} else {
-				RWops = SDL_RWFromMem(border_default_gbc, sizeof(border_default_gbc));
-	    		temp = IMG_LoadPNG_RW(RWops);
-	    		SDL_FreeRW(RWops);
+			printf("Border file %s not found. Searching for default.png...\n", fullimgpath.c_str());
+			fullimgpath = (homedir + "/.gambatte/borders/default.png");
+			temp = IMG_Load(fullimgpath.c_str());
+			if(!temp){
+				printf("Border file %s not found. Loading default border...\n", fullimgpath.c_str());
+				if(gameiscgb == 0){
+					RWops = SDL_RWFromMem(border_default_dmg, sizeof(border_default_dmg));
+		    		temp = IMG_LoadPNG_RW(RWops);
+		    		SDL_FreeRW(RWops);
+				} else {
+					RWops = SDL_RWFromMem(border_default_gbc, sizeof(border_default_gbc));
+		    		temp = IMG_LoadPNG_RW(RWops);
+		    		SDL_FreeRW(RWops);
+				}
 			}
 		}	
 	} else {
@@ -1894,23 +1883,28 @@ void loadPalette(std::string palettefile){
 		fpal = fopen(filepath.c_str(), "r");
 		if (fpal == NULL) {
 			if(palettefile == "AUTO"){
-				printf("Palette file %s not found. Loading default palette.\n", filepath.c_str());
-				Uint32 value;
-			    for (int i = 0; i < 3; ++i) {
-			        for (int k = 0; k < 4; ++k) {
-			            if(k == 0)
-			                value = 0x64960a;
-			            if(k == 1)
-			                value = 0x1b7e3e;
-			            if(k == 2)
-			                value = 0x084e3c;
-			            if(k == 3)
-			                value = 0x003236;
-			            gambatte_p->setDmgPaletteColor(i, k, value);
-			        }
-			    }
-			    set_menu_palette(0x64960a, 0x1b7e3e, 0x084e3c, 0x003236);
-				return;
+				printf("Palette file %s not found. Searching for default.pal...\n", filepath.c_str());
+				filepath = (homedir + "/.gambatte/palettes/default.pal");
+				fpal = fopen(filepath.c_str(), "r");
+				if (fpal == NULL) {
+					printf("Palette file %s not found. Loading default palette...\n", filepath.c_str());
+					Uint32 value;
+				    for (int i = 0; i < 3; ++i) {
+				        for (int k = 0; k < 4; ++k) {
+				            if(k == 0)
+				                value = 0x64960a;
+				            if(k == 1)
+				                value = 0x1b7e3e;
+				            if(k == 2)
+				                value = 0x084e3c;
+				            if(k == 3)
+				                value = 0x003236;
+				            gambatte_p->setDmgPaletteColor(i, k, value);
+				        }
+				    }
+				    set_menu_palette(0x64960a, 0x1b7e3e, 0x084e3c, 0x003236);
+					return;
+				}
 			} else {
 				printf("Failed to open palette file %s\n", filepath.c_str());
 				return;

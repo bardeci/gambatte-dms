@@ -327,7 +327,6 @@ class InputOption : public DescOption {
 public:
 	InputOption()
 	: DescOption("input", 'i', 10)
-#if defined VERSION_GCW0 || defined VERSION_RETROFW
 	{
 		ids_[0].keydata = SDLK_RETURN;
 		ids_[1].keydata = SDLK_ESCAPE;
@@ -340,33 +339,6 @@ public:
 		ids_[8].keydata = SDLK_SPACE;
 		ids_[9].keydata = SDLK_LSHIFT;
 	}
-#elif defined VERSION_BITTBOY || defined VERSION_POCKETGO
-	{
-		ids_[0].keydata = SDLK_RETURN;
-		ids_[1].keydata = SDLK_ESCAPE;
-		ids_[2].keydata = SDLK_LCTRL;
-		ids_[3].keydata = SDLK_SPACE;
-		ids_[4].keydata = SDLK_UP;
-		ids_[5].keydata = SDLK_DOWN;
-		ids_[6].keydata = SDLK_LEFT;
-		ids_[7].keydata = SDLK_RIGHT;
-		ids_[8].keydata = SDLK_LALT;
-		ids_[9].keydata = SDLK_LSHIFT;
-	}
-#else
-	{
-		ids_[0].keydata = SDLK_RETURN;
-		ids_[1].keydata = SDLK_ESCAPE;
-		ids_[2].keydata = SDLK_LCTRL;
-		ids_[3].keydata = SDLK_LALT;
-		ids_[4].keydata = SDLK_UP;
-		ids_[5].keydata = SDLK_DOWN;
-		ids_[6].keydata = SDLK_LEFT;
-		ids_[7].keydata = SDLK_RIGHT;
-		ids_[8].keydata = SDLK_SPACE;
-		ids_[9].keydata = SDLK_LSHIFT;
-	}
-#endif
 
 	virtual void exec(char const *const *argv, int index);
 
@@ -1071,7 +1043,7 @@ bool GambatteSdl::handleEvents(BlitterWrapper &blitter) {
 #if defined VERSION_BITTBOY || defined VERSION_POCKETGO
 					case SDLK_RCTRL: // R button in bittboy - Reset button in PocketGo
 #else
-	#if defined VERSION_GCW0
+	#if defined VERSION_OPENDINGUX
 					case SDLK_BACKSPACE: // L trigger
 					case SDLK_TAB: // R trigger
 	#endif

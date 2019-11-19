@@ -28,7 +28,7 @@ static SDL_Surface *fpsfont_bitmap_surface = NULL;
 static SDL_RWops *RWops;
 
 #ifdef ROM_BROWSER
-#ifdef VERSION_GCW0
+#ifdef VERSION_OPENDINGUX
 static std::string gamedir = ("/media/data/roms");
 #elif VERSION_RETROFW
 static std::string gamedir = (homedir + "/roms");
@@ -214,8 +214,8 @@ static void callback_sound(menu_t *caller_menu);
 static void callback_gamegenie(menu_t *caller_menu);
 static void callback_gameshark(menu_t *caller_menu);
 
-#if defined VERSION_GCW0
-std::string menu_main_title = ("GAMBATTE-GCWZERO");
+#if defined VERSION_OPENDINGUX
+std::string menu_main_title = ("GAMBATTE-OPENDINGUX");
 #elif defined VERSION_RETROFW
 std::string menu_main_title = ("GAMBATTE-RETROFW");
 #elif defined VERSION_BITTBOY
@@ -773,25 +773,27 @@ static void callback_settings(menu_t *caller_menu) {
     menu_add_entry(menu, menu_entry);
     menu_entry->callback = callback_scaler;
 
-    menu_entry = new_menu_entry(0);
-    menu_entry_set_text(menu_entry, "Mono Palette");
-    menu_add_entry(menu, menu_entry);
-    menu_entry->callback = callback_dmgpalette;
+    if (gameiscgb == 0) { // Display only the DMG relevant options.
+        menu_entry = new_menu_entry(0);
+        menu_entry_set_text(menu_entry, "Mono Palette");
+        menu_add_entry(menu, menu_entry);
+        menu_entry->callback = callback_dmgpalette;
 
-    menu_entry = new_menu_entry(0);
-    menu_entry_set_text(menu_entry, "Color Filter");
-    menu_add_entry(menu, menu_entry);
-    menu_entry->callback = callback_colorfilter;
+        menu_entry = new_menu_entry(0);
+        menu_entry_set_text(menu_entry, "DMG Border");
+        menu_add_entry(menu, menu_entry);
+        menu_entry->callback = callback_dmgborderimage;
+    } else if (gameiscgb == 1) { // Display only the GBC relevant options.
+        menu_entry = new_menu_entry(0);
+        menu_entry_set_text(menu_entry, "Color Filter");
+        menu_add_entry(menu, menu_entry);
+        menu_entry->callback = callback_colorfilter;
 
-    menu_entry = new_menu_entry(0);
-    menu_entry_set_text(menu_entry, "DMG Border");
-    menu_add_entry(menu, menu_entry);
-    menu_entry->callback = callback_dmgborderimage;
-
-    menu_entry = new_menu_entry(0);
-    menu_entry_set_text(menu_entry, "GBC Border");
-    menu_add_entry(menu, menu_entry);
-    menu_entry->callback = callback_gbcborderimage;
+        menu_entry = new_menu_entry(0);
+        menu_entry_set_text(menu_entry, "GBC Border");
+        menu_add_entry(menu, menu_entry);
+        menu_entry->callback = callback_gbcborderimage;
+    }
 
     menu_entry = new_menu_entry(0);
     menu_entry_set_text(menu_entry, "Boot logos");
@@ -1742,23 +1744,23 @@ static void callback_about(menu_t *caller_menu) {
     menu_entry->callback = callback_about_back;
 
     menu_entry = new_menu_entry(0);
-#if defined VERSION_GCW0
-    menu_entry_set_text(menu_entry, "GCW Zero port by");
+#if defined VERSION_OPENDINGUX
+    menu_entry_set_text(menu_entry, "OpenDingux port");
 #elif defined VERSION_RETROFW
-    menu_entry_set_text(menu_entry, "RetroFW port by");
+    menu_entry_set_text(menu_entry, "RetroFW port");
 #elif defined VERSION_BITTBOY
-    menu_entry_set_text(menu_entry, "Bittboy port by");
+    menu_entry_set_text(menu_entry, "Bittboy port");
 #elif defined VERSION_POCKETGO
-    menu_entry_set_text(menu_entry, "PocketGo port by");
+    menu_entry_set_text(menu_entry, "PocketGo port");
 #else
-    menu_entry_set_text(menu_entry, "OpenDingux port by");
+    menu_entry_set_text(menu_entry, "This port");
 #endif
     menu_add_entry(menu, menu_entry);
     menu_entry->selectable = 0;
     menu_entry->callback = callback_about_back;
 
     menu_entry = new_menu_entry(0);
-    menu_entry_set_text(menu_entry, "Hi-Ban");
+    menu_entry_set_text(menu_entry, "by Hi-Ban");
     menu_add_entry(menu, menu_entry);
     menu_entry->selectable = 0;
     menu_entry->callback = callback_about_back;

@@ -14,7 +14,7 @@ extern "C" {
 #define NUM_GG_CODES 20
 #define NUM_GS_CODES 20
 
-#ifdef VERSION_GCW0
+#ifdef VERSION_OPENDINGUX
 	#define BLINK_SPEED 12
 	#define FOOTER_ALT_SPEED 100
 	#define TEXTANIM_DELAY 46
