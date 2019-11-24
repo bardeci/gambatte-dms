@@ -1044,8 +1044,8 @@ bool GambatteSdl::handleEvents(BlitterWrapper &blitter) {
 					case SDLK_RCTRL: // R button in bittboy - Reset button in PocketGo
 #else
 	#if defined VERSION_OPENDINGUX
-					case SDLK_BACKSPACE: // L trigger
-					case SDLK_TAB: // R trigger
+					case SDLK_BACKSPACE: // R trigger
+					//case SDLK_TAB: // L trigger
 	#endif
 					case SDLK_HOME: // "power flick" in GCW Zero
 					case SDLK_END: // power/suspend button in retrofw
@@ -1101,7 +1101,7 @@ static std::size_t const gb_samples_per_frame = 35112;
 static std::size_t const gambatte_max_overproduction = 2064;
 
 static bool isFastForward(Uint8 const *keys) {
-	return keys[SDLK_F9];
+	return keys[SDLK_TAB];
 }
 
 int GambatteSdl::run(long const sampleRate, int const latency, int const periods,
@@ -1113,6 +1113,8 @@ int GambatteSdl::run(long const sampleRate, int const latency, int const periods
 	Uint8 const *const keys = SDL_GetKeyState(0);
 	std::size_t bufsamples = 0;
 	bool audioOutBufLow = false;
+	int ffwd = 0;
+	int ffwd_speed = 6;
 
 	SDL_PauseAudio(0);
 
@@ -1123,6 +1125,9 @@ int GambatteSdl::run(long const sampleRate, int const latency, int const periods
 
 		BlitterWrapper::Buf const &vbuf = blitter.inBuf();
 		std::size_t runsamples = gb_samples_per_frame - bufsamples;
+		if (isFastForward(keys)) {
+			runsamples = runsamples / ffwd_speed; //in ffwd mode: attempt to decrease the amount of used resources by lowering the number of samples per frame.
+		}
 		std::ptrdiff_t const vidFrameDoneSampleCnt = gambatte.runFor(
 			vbuf.pixels, vbuf.pitch, audioBuf + bufsamples, runsamples);
 		std::size_t const outsamples = vidFrameDoneSampleCnt >= 0
@@ -1131,10 +1136,15 @@ int GambatteSdl::run(long const sampleRate, int const latency, int const periods
 		bufsamples += runsamples;
 		bufsamples -= outsamples;
 
-		if (isFastForward(keys)) {
-			if (vidFrameDoneSampleCnt >= 0) {
-				blitter.draw();
-				blitter.present();
+		if (isFastForward(keys)) { // in ffwd mode: dont wait for frame time, dont write sound into the buffer and only draw one of every <ffwd_speed> frames.
+			if(ffwd < ffwd_speed) {
+				ffwd++;
+			} else {
+				ffwd = 0;
+				if (vidFrameDoneSampleCnt >= 0) {
+					blitter.draw();
+					blitter.present();
+				}
 			}
 		} else {
 			bool const blit = vidFrameDoneSampleCnt >= 0
@@ -1149,9 +1159,9 @@ int GambatteSdl::run(long const sampleRate, int const latency, int const periods
 				frameWait.waitForNextFrameTime(ft);
 				blitter.present();
 			}
+			std::memmove(audioBuf, audioBuf + outsamples, bufsamples * sizeof *audioBuf);
 		}
 
-		std::memmove(audioBuf, audioBuf + outsamples, bufsamples * sizeof *audioBuf);
 		if(menuin == -2){
 			menuin = -1;
 			main_menu();

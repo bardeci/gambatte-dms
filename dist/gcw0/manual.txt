@@ -17,7 +17,8 @@ B Button            B Button
 A Button            A Button
 Select              Select
 Start               Start
-L / R / POWER       Menu
+R trigger / POWER   Menu
+L trigger           Fast Forward
 
 
 General Menu Controls

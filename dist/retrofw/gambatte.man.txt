@@ -18,6 +18,7 @@ A Button            A Button
 Select              Select
 Start               Start
 POWER               Menu
+L trigger           Fast Forward
 
 
 General Menu Controls
