@@ -1,0 +1,11 @@
+[Desktop Entry]
+Name=GB
+Comment=Gambatte emulator
+Exec=gambatte.retrofw %f
+Terminal=false
+Type=Application
+StartupNotify=true
+Icon=gambatte
+Categories=emulators.systems;
+X-OD-Manual=gambatte.man.txt
+X-OD-Filter=.zip,.gb
