@@ -1,7 +1,7 @@
 [Desktop Entry]
 Name=Gambatte
-Comment=Gameboy emulator
-Exec=gambatte_sdl %f
+Comment=GB/GBC emulator
+Exec=gambatte.opendingux %f
 Terminal=false
 Type=Application
 StartupNotify=true

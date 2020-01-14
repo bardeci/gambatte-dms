@@ -59,8 +59,9 @@ Mix_Chunk *menusound_ok = NULL;
 int selectedscaler = 0, showfps = 0, ghosting = 1, biosenabled = 0, colorfilter = 0, gameiscgb = 0, buttonlayout = 0, stereosound = 0;
 uint32_t menupalblack = 0x000000, menupaldark = 0x505450, menupallight = 0xA8A8A8, menupalwhite = 0xF8FCF8;
 int filtervalue[12] = {135, 20, 0, 25, 0, 125, 20, 25, 0, 20, 105, 30};
-std::string dmgbordername = "DEFAULT", gbcbordername = "DEFAULT", palname = "DEFAULT", filtername = "NONE", currgamename = "DEFAULT";
+std::string dmgbordername = "DEFAULT", gbcbordername = "DEFAULT", palname = "DEFAULT", filtername = "NONE", currgamename = "default";
 std::string homedir = getenv("HOME");
+std::string ipuscaling = "NONE";
 int numcodes_gg = NUM_GG_CODES, numcodes_gs = NUM_GS_CODES, selectedcode = 0, editmode = 0, blink = 0, footer_alt = 0;
 int textanim = 0, textanimpos = 0, textanimdirection = 0, textanimtimer = 0, textanimwidth = 0, textanimspeed = 0;
 int ggcheats[NUM_GG_CODES *9] = {0};
@@ -819,6 +820,16 @@ static void display_menu(SDL_Surface *surface, menu_t *menu) {
     SFont_WriteCenter(surface, font, (line * font_height), menu->header);
     line ++;
     SFont_WriteCenter(surface, font, (line * font_height), menu->title);
+    if((gambatte_p->isLoaded()) && (currgamename != "default") && ((strcmp(menu->title, "Settings") == 0) || (strcmp(menu->title, " Settings ") == 0) || (strcmp(menu->title, "  Settings  ") == 0))){
+    	std::string tempconfigfile = (homedir + "/.gambatte/settings/");
+        tempconfigfile += (currgamename + ".cfg");
+        FILE * cfile;
+        cfile = fopen(tempconfigfile.c_str(), "r");
+        if (cfile != NULL) { //if per-game config file exists for the current ROM, draw PG (per-game) marker on settings menu title
+            fclose(cfile);
+            SFont_Write(surface, font, 111, 4, ".");
+        }
+    }
     if(uparrow == 1){
     	line ++;
     	SFont_WriteCenter(surface, font, line * font_height, "{"); // up arrow
@@ -894,12 +905,14 @@ static void display_menu(SDL_Surface *surface, menu_t *menu) {
 		}
 	}
 #ifdef VERSION_BITTBOY
-	if((num_selectable == 0) && (menu->n_entries < 4) && (strcmp(menu->title, "Game Genie") == 0)){
+	if(strcmp(menu->title, " Game Genie ") == 0){
 		SFont_WriteCenter(surface, font, 17 * font_height, "A-Cancel    Apply-TA"); // footer while in "Apply Cheats" confirmation screen
-	} else if((num_selectable == 0) && (menu->n_entries < 4) && (strcmp(menu->title, "Settings") == 0)){
+	} else if((strcmp(menu->title, " Settings ") == 0) || (strcmp(menu->title, " Per-Game Settings ") == 0)){
 		SFont_WriteCenter(surface, font, 17 * font_height, "A-Cancel     Save-TA"); // footer while in "Save Settings" confirmation screen
-	} else if (num_selectable == 0){
-		SFont_WriteCenter(surface, font, 17 * font_height, "A-Back       Back-TA"); // footer while in "About" screen
+	} else if((strcmp(menu->title, "  Settings  ") == 0) || (strcmp(menu->title, "  Per-Game Settings  ") == 0)){
+		SFont_WriteCenter(surface, font, 17 * font_height, "A-Cancel   Delete-TA"); // footer while in "Delete Settings" confirmation screen
+	} else if(strcmp(menu->title, "Credits") == 0){
+		SFont_WriteCenter(surface, font, 17 * font_height, "A-Back       Back-TA"); // footer while in "Credits" screen
 	} else {
 		if((gambatte_p->isLoaded()) || (strcmp(menu->title, "Main Menu") != 0)){
 			SFont_WriteCenter(surface, font, 17 * font_height, "A-Back     Select-TA"); // footer in normal menus
@@ -908,12 +921,14 @@ static void display_menu(SDL_Surface *surface, menu_t *menu) {
 		}
 	}
 #else
-	if((num_selectable == 0) && (menu->n_entries < 4) && (strcmp(menu->title, "Game Genie") == 0)){
+	if(strcmp(menu->title, " Game Genie ") == 0){
 		SFont_WriteCenter(surface, font, 17 * font_height, "B-Cancel     Apply-A"); // footer while in "Apply Cheats" confirmation screen
-	} else if((num_selectable == 0) && (menu->n_entries < 4) && (strcmp(menu->title, "Settings") == 0)){
+	} else if((strcmp(menu->title, " Settings ") == 0) || (strcmp(menu->title, " Per-Game Settings ") == 0)){
 		SFont_WriteCenter(surface, font, 17 * font_height, "B-Cancel      Save-A"); // footer while in "Save Settings" confirmation screen
-	} else if (num_selectable == 0){
-		SFont_WriteCenter(surface, font, 17 * font_height, "B-Back        Back-A"); // footer while in "About" screen
+	} else if((strcmp(menu->title, "  Settings  ") == 0) || (strcmp(menu->title, "  Per-Game Settings  ") == 0)){
+		SFont_WriteCenter(surface, font, 17 * font_height, "B-Cancel    Delete-A"); // footer while in "Delete Settings" confirmation screen
+	} else if(strcmp(menu->title, "Credits") == 0){
+		SFont_WriteCenter(surface, font, 17 * font_height, "B-Back        Back-A"); // footer while in "Credits" screen
 	} else {
 		if((gambatte_p->isLoaded()) || (strcmp(menu->title, "Main Menu") != 0)){
 			SFont_WriteCenter(surface, font, 17 * font_height, "B-Back      Select-A"); // footer in normal menus
@@ -1319,13 +1334,11 @@ void createBorderSurface(){
 			break;
 		case 5:		/* Ayla's fullscreen scaler */
 		case 6:		/* Bilinear fullscreen scaler */
-#ifdef HW_SCALING
 		case 7:		/* Hardware 1.25x */
 		case 8:		/* Hardware 1.36x */
 		case 9:		/* Hardware 1.5x */
 		case 10:		/* Hardware 1.66x */
 		case 11:		/* Hardware Fullscreen */
-#endif
 		default:
 			borderimg = SDL_CreateRGBSurface(SDL_SWSURFACE, 320, 240, 16, 0, 0, 0, 0);
 			break;
@@ -1476,7 +1489,6 @@ void paint_border(SDL_Surface *surface){
     		rect.h = 0;
     		SDL_BlitSurface(borderimg, &rect, surface, NULL);
 			break;
-#ifdef HW_SCALING
 		case 7:		/* Hardware 1.25x */
 			rect.x = 32;
     		rect.y = 24;
@@ -1512,7 +1524,6 @@ void paint_border(SDL_Surface *surface){
     		rect.h = 0;
     		SDL_BlitSurface(borderimg, &rect, surface, NULL);
 			break;
-#endif
 		default:
 			rect.x = 0;
     		rect.y = 0;
@@ -1995,15 +2006,20 @@ void loadFilter(std::string filterfile){
 	}
 }
 
-void saveConfig(){
-	std::string configfile = (homedir + "/.gambatte/config.cfg");
+void saveConfig(int pergame){
+	std::string configfile = (homedir + "/.gambatte/settings/");
+	if (pergame == 0) {
+		configfile += ("default.cfg");
+	} else {
+		configfile += (currgamename + ".cfg");
+	}
 	FILE * cfile;
     cfile = fopen(configfile.c_str(), "w");
     if (cfile == NULL) {
 		printf("Failed to open config file for writing.\n");
 		return;
 	}
-    fprintf(cfile,
+    if (fprintf(cfile,
 		"SHOWFPS %d\n"
 		"SELECTEDSCALER %d\n"
 		"PALNAME %s\n"
@@ -2023,24 +2039,45 @@ void saveConfig(){
 		biosenabled,
 		ghosting,
 		buttonlayout,
-		stereosound);
+		stereosound) < 0) {
+    	printf("Failed to save config file.\n");
+    } else {
+    	printf("Config file successfully saved.\n");
+    }
     fclose(cfile);
 }
 
+void deleteConfig(){
+	std::string configfile = (homedir + "/.gambatte/settings/");
+	configfile += (currgamename + ".cfg");
+	if (currgamename != "default"){
+		if (remove(configfile.c_str()) == 0){
+			printf("Config file successfully deleted.\n");
+		} else {
+			printf("Failed deleting config file.\n");
+		}
+	}
+}
+
 void loadConfig(){
-	std::string configfile = (homedir + "/.gambatte/config.cfg");
+	std::string configfile = (homedir + "/.gambatte/settings/");
+	configfile += (currgamename + ".cfg");
 	FILE * cfile;
 	char line[4096];
     cfile = fopen(configfile.c_str(), "r");
     if (cfile == NULL) {
-		printf("Failed to open config file for reading.\n");
-		return;
+    	printf("Per-Game config not found. Loading default config...\n");
+    	configfile = (homedir + "/.gambatte/settings/default.cfg");
+    	cfile = fopen(configfile.c_str(), "r");
+    	if (cfile == NULL) {
+    		printf("Failed to open config file for reading.\n");
+			return;
+    	}
 	}
 	while (fgets(line, sizeof(line), cfile)) {
 		char *arg = strchr(line, ' ');
 		int value;
-		char charvalue[32];
-		std::string stringvalue;
+		char charvalue[64];
 		if (!arg) {
 			continue;
 		}

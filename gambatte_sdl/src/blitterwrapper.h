@@ -36,6 +36,7 @@ public:
 	void draw();
 	void present() { blitter_.present(); }
 	void toggleFullScreen() { blitter_.toggleFullScreen(); }
+	void CheckIPU() { blitter_.CheckIPU(); }
 	void setBufferDimensions() { blitter_.setBufferDimensions(); }
 	void setScreenRes() { blitter_.setScreenRes(); }
 	void force320x240() { blitter_.force320x240(); }

@@ -1,5 +1,4 @@
 # OPTIONAL DEFINES:
-# -DHW_SCALING: Enables hardware scaling (only for systems which support it)
 # -DROM_BROWSER: Enables internal rom browser (gb and gbc romdirs are hardcoded for each system)
 # -DPOWEROFF: Replaces the "Quit" option with a "Power Off" option.
 
@@ -8,7 +7,7 @@ if target == 'opendingux':
     include_path = ' -I/opt/gcw0-toolchain/usr/mipsel-gcw0-linux-uclibc/sysroot/usr/include'
     bin_path = '/opt/gcw0-toolchain/usr/bin/mipsel-linux-'
     sdl_path = '/opt/gcw0-toolchain/usr/mipsel-gcw0-linux-uclibc/sysroot/usr/bin/'
-    version_defines = ' -DVERSION_OPENDINGUX -DHW_SCALING'
+    version_defines = ' -DVERSION_OPENDINGUX'
     extra_cflags = ''
     print "Building Gambatte SDL with OpenDingux toolchain..."
 elif target == 'retrofw':

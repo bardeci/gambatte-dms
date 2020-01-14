@@ -71,7 +71,7 @@ extern SDL_Surface *textoverlaycolored;
 extern int selectedscaler, showfps, ghosting, biosenabled, colorfilter, gameiscgb, buttonlayout, stereosound;
 extern uint32_t menupalblack, menupaldark, menupallight, menupalwhite;
 extern int filtervalue[12];
-extern std::string dmgbordername, gbcbordername, palname, filtername, currgamename, homedir;
+extern std::string dmgbordername, gbcbordername, palname, filtername, currgamename, homedir, ipuscaling;
 extern int numcodes_gg, numcodes_gs, selectedcode, editmode;
 extern int ggcheats[NUM_GG_CODES*9];
 extern int gscheats[NUM_GS_CODES*8];
@@ -118,7 +118,8 @@ int currentEntryInList(menu_t *menu, std::string text);
 void clear_surface(SDL_Surface *surface, Uint32 color);
 void loadPalette(std::string palettefile);
 void loadFilter(std::string filterfile);
-void saveConfig();
+void saveConfig(int pergame = 0);
+void deleteConfig();
 void loadConfig();
 
 void openMenuAudio();

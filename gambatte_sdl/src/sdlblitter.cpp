@@ -89,6 +89,37 @@ void init_border(SDL_Surface *dst){
 	}
 }
 
+void SdlBlitter::CheckIPU(){
+	FILE *aspect_ratio_file = NULL;
+	std::string ipu_OpenDingux = ("/sys/devices/platform/jz-lcd.0/keep_aspect_ratio");
+	std::string ipu_RetroFW10 = ("/proc/jz/ipu_ratio");
+	std::string ipu_RetroFW20 = ("/proc/jz/ipu");
+
+	aspect_ratio_file = fopen(ipu_OpenDingux.c_str(), "r+");
+	if (aspect_ratio_file != NULL) {
+		fclose(aspect_ratio_file);
+		ipuscaling = ipu_OpenDingux;
+		printf("Detected IPU scaling - OpenDingux\n");
+		return;
+	}
+	aspect_ratio_file = fopen(ipu_RetroFW10.c_str(), "r+");
+	if (aspect_ratio_file != NULL) {
+		fclose(aspect_ratio_file);
+		ipuscaling = ipu_RetroFW10;
+		printf("Detected IPU scaling - RetroFW 1.X\n");
+		return;
+	}
+	aspect_ratio_file = fopen("/proc/jz/gpio", "r+"); //workaround to check if the fw is retrofw2
+	if (aspect_ratio_file != NULL) {
+		fclose(aspect_ratio_file);
+		ipuscaling = ipu_RetroFW20;
+		printf("Detected IPU scaling - RetroFW 2.X\n");
+		return;
+	}
+	printf("Could not detect IPU scaling\n");
+	return;
+}
+
 void SdlBlitter::SetVid(int w, int h, int bpp){	
 #ifdef VERSION_OPENDINGUX
 	screen = SDL_SetVideoMode(w, h, bpp, SDL_HWSURFACE | SDL_TRIPLEBUF);
@@ -103,7 +134,7 @@ void SdlBlitter::SetVid(int w, int h, int bpp){
 
 void SdlBlitter::setBufferDimensions() {
 	
-	FILE* aspect_ratio_file = fopen("/sys/devices/platform/jz-lcd.0/keep_aspect_ratio", "w");
+	FILE* aspect_ratio_file = fopen(ipuscaling.c_str(), "w");
 	switch(selectedscaler) {
 		case 0:		/* no scaler */
 		case 1:		/* Ayla's 1.5x scaler */
@@ -114,49 +145,44 @@ void SdlBlitter::setBufferDimensions() {
 		case 6:		/* Bilinear fullscreen scaler */
 			SetVid(320, 240, 16);
 			break;
-#ifdef HW_SCALING
 		case 7:		/* Hardware 1.25x */
-			SetVid(256, 192, 16);
-			if (aspect_ratio_file)
-			{ 
+			if (aspect_ratio_file) {
 				fwrite("1", 1, 1, aspect_ratio_file);
+				fclose(aspect_ratio_file);
 			}
+			SetVid(256, 192, 16);
 			break;
 		case 8:		/* Hardware 1.36x */
-			SetVid(224, 176, 16);
-			if (aspect_ratio_file)
-			{ 
+			if (aspect_ratio_file) {
 				fwrite("1", 1, 1, aspect_ratio_file);
+				fclose(aspect_ratio_file);
 			}
+			SetVid(224, 176, 16);
 			break;
 		case 9:		/* Hardware 1.5x */
-			SetVid(208, 160, 16);
-			if (aspect_ratio_file)
-			{ 
+			if (aspect_ratio_file) {
 				fwrite("1", 1, 1, aspect_ratio_file);
+				fclose(aspect_ratio_file);
 			}
+			SetVid(208, 160, 16);
 			break;
 		case 10:		/* Hardware 1.66x */
-			SetVid(192, 144, 16);
-			if (aspect_ratio_file)
-			{ 
+			if (aspect_ratio_file) {
 				fwrite("1", 1, 1, aspect_ratio_file);
+				fclose(aspect_ratio_file);
 			}
+			SetVid(192, 144, 16);
 			break;
 		case 11:		/* Hardware Fullscreen */
-			SetVid(160, 144, 16);
-			if (aspect_ratio_file)
-			{ 
+			if (aspect_ratio_file) {
 				fwrite("0", 1, 1, aspect_ratio_file);
+				fclose(aspect_ratio_file);
 			}
+			SetVid(160, 144, 16);
 			break;
-#endif
 		default:
 			SetVid(320, 240, 16);
 			break;
-	}
-	if(aspect_ratio_file){
-		fclose(aspect_ratio_file);
 	}
 
 	menu_set_screen(screen);
@@ -165,7 +191,7 @@ void SdlBlitter::setBufferDimensions() {
 }
 
 void SdlBlitter::setScreenRes() {
-	FILE* aspect_ratio_file = fopen("/sys/devices/platform/jz-lcd.0/keep_aspect_ratio", "w");
+	FILE* aspect_ratio_file = fopen(ipuscaling.c_str(), "w");
 
 	switch(selectedscaler) {
 		case 0:		/* no scaler */
@@ -178,55 +204,55 @@ void SdlBlitter::setScreenRes() {
 			if(screen->w != 320 || screen->h != 240)
 				SetVid(320, 240, 16);
 			break;
-#ifdef HW_SCALING
 		case 7:		/* Hardware 1.25x */
-			if(screen->w != 256 || screen->h != 192)
-				SetVid(256, 192, 16);
-			if (aspect_ratio_file)
-			{ 
+			if (aspect_ratio_file) {
 				fwrite("1", 1, 1, aspect_ratio_file);
+				fclose(aspect_ratio_file);
+			}
+			if(screen->w != 256 || screen->h != 192) {
+				SetVid(256, 192, 16);
 			}
 			break;
 		case 8:		/* Hardware 1.36x */
-			if(screen->w != 224 || screen->h != 176)
-				SetVid(224, 176, 16);
-			if (aspect_ratio_file)
-			{ 
+			if (aspect_ratio_file) {
 				fwrite("1", 1, 1, aspect_ratio_file);
+				fclose(aspect_ratio_file);
+			}
+			if(screen->w != 224 || screen->h != 176) {
+				SetVid(224, 176, 16);
 			}
 			break;
 		case 9:		/* Hardware 1.5x */
-			if(screen->w != 208 || screen->h != 160)
-				SetVid(208, 160, 16);
-			if (aspect_ratio_file)
-			{ 
+			if (aspect_ratio_file) {
 				fwrite("1", 1, 1, aspect_ratio_file);
+				fclose(aspect_ratio_file);
+			}
+			if(screen->w != 208 || screen->h != 160) {
+				SetVid(208, 160, 16);
 			}
 			break;
 		case 10:		/* Hardware 1.66x */
-			if(screen->w != 192 || screen->h != 144)
-				SetVid(192, 144, 16);
-			if (aspect_ratio_file)
-			{ 
+			if (aspect_ratio_file) {
 				fwrite("1", 1, 1, aspect_ratio_file);
+				fclose(aspect_ratio_file);
+			}
+			if(screen->w != 192 || screen->h != 144) {
+				SetVid(192, 144, 16);
 			}
 			break;
 		case 11:		/* Hardware Fullscreen */
-			if(screen->w != 160 || screen->h != 144)
-				SetVid(160, 144, 16);
-			if (aspect_ratio_file)
-			{ 
+			if (aspect_ratio_file) {
 				fwrite("0", 1, 1, aspect_ratio_file);
+				fclose(aspect_ratio_file);
+			}
+			if(screen->w != 160 || screen->h != 144) {
+				SetVid(160, 144, 16);
 			}
 			break;
-#endif
 		default:
 			if(screen->w != 320 || screen->h != 240)
 				SetVid(320, 240, 16);
 			break;
-	}
-	if(aspect_ratio_file){
-		fclose(aspect_ratio_file);
 	}
 }
 
@@ -441,13 +467,11 @@ void SdlBlitter::draw() {
 			case 6:		/* Bilinear fullscreen scaler */
 				fullscreen_upscale_pseudobilinear((uint32_t*)screen->pixels, (uint32_t*)surface->pixels);
 				break;
-#ifdef HW_SCALING
 			case 7:		/* Hardware 1.25x */
 			case 8:		/* Hardware 1.36x */
 			case 9:		/* Hardware 1.5x */
 			case 10:		/* Hardware 1.66x */
 			case 11:		/* Hardware Fullscreen */
-#endif
 			default:
 				/*SDL_Rect dst2;
 				dst2.x = (screen->w - surface->w) / 2;
@@ -507,13 +531,11 @@ void SdlBlitter::draw() {
 			case 6:		/* Bilinear fullscreen scaler */
 				fullscreen_upscale_pseudobilinear((uint32_t*)screen->pixels, (uint32_t*)currframe->pixels);
 				break;
-#ifdef HW_SCALING
 			case 7:		/* Hardware 1.25x */
 			case 8:		/* Hardware 1.36x */
 			case 9:		/* Hardware 1.5x */
 			case 10:		/* Hardware 1.66x */
 			case 11:		/* Hardware Fullscreen */
-#endif
 			default:
 				/*SDL_Rect dst2;
 				dst2.x = (screen->w - currframe->w) / 2;
@@ -588,13 +610,11 @@ void SdlBlitter::scaleMenu() {
 		case 6:		/* Bilinear fullscreen scaler */
 			fullscreen_upscale_pseudobilinear((uint32_t*)screen->pixels, (uint32_t*)menuscreen->pixels);
 			break;
-#ifdef HW_SCALING
 		case 7:		/* Hardware 1.25x */
 		case 8:		/* Hardware 1.36x */
 		case 9:		/* Hardware 1.5x */
 		case 10:		/* Hardware 1.66x */
 		case 11:		/* Hardware Fullscreen */
-#endif
 		default:
 			/*SDL_Rect dst2;
 			dst2.x = (screen->w - menuscreen->w) / 2;

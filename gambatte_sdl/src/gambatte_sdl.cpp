@@ -641,6 +641,9 @@ int GambatteSdl::exec(int const argc, char const *const argv[]) {
 	basicdirpath = (homedir + "/.gambatte/");
 	mkdir(basicdirpath.c_str(), 0777);
 
+	basicdirpath = (homedir + "/.gambatte/settings/");
+	mkdir(basicdirpath.c_str(), 0777);
+
 	basicdirpath = (homedir + "/.gambatte/palettes/");
 	mkdir(basicdirpath.c_str(), 0777);
 
@@ -754,6 +757,7 @@ int GambatteSdl::exec(int const argc, char const *const argv[]) {
 
 	init_globals(&gambatte, &blitter); //init global pointers
 
+	blitter.CheckIPU();
 	blitter.setBufferDimensions(); //set appropiate resolution on startup
 
 	SDL_ShowCursor(SDL_DISABLE);
@@ -790,6 +794,9 @@ int GambatteSdl::exec(int const argc, char const *const argv[]) {
 	std::string basicdirpath;
 
 	basicdirpath = (homedir + "/.gambatte/");
+	mkdir(basicdirpath.c_str(), 0777);
+
+	basicdirpath = (homedir + "/.gambatte/settings/");
 	mkdir(basicdirpath.c_str(), 0777);
 
 	basicdirpath = (homedir + "/.gambatte/palettes/");
@@ -941,6 +948,7 @@ int GambatteSdl::exec(int const argc, char const *const argv[]) {
 
 	init_globals(&gambatte, &blitter); //init global pointers
 
+	blitter.CheckIPU();
 	blitter.setBufferDimensions(); //set appropiate resolution on startup
 
 	SDL_ShowCursor(SDL_DISABLE);
@@ -1040,16 +1048,10 @@ bool GambatteSdl::handleEvents(BlitterWrapper &blitter) {
 					}
 				} else {
 					switch (e.key.keysym.sym) {
-#if defined VERSION_BITTBOY || defined VERSION_POCKETGO
-					case SDLK_RCTRL: // R button in bittboy - Reset button in PocketGo
-#else
-	#if defined VERSION_OPENDINGUX
+					case SDLK_RCTRL: // R button in bittboy / Reset button in PocketGo / Menu button in PlayGO
 					case SDLK_BACKSPACE: // R trigger
-					//case SDLK_TAB: // L trigger
-	#endif
-					case SDLK_HOME: // "power flick" in GCW Zero
-					case SDLK_END: // power/suspend button in retrofw
-#endif
+					case SDLK_HOME: // Power button in Opendingux devices
+					case SDLK_END: // Power/Suspend button in RetroFW devices
 						if((menuout == -1) && (menuin == -1)){
 							//main_menu();
 							main_menu_with_anim();

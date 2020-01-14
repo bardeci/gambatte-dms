@@ -48,6 +48,7 @@ public:
 	void draw();
 	void present();
 	void toggleFullScreen();
+	void CheckIPU();
 	void SetVid(int w, int h, int bpp);
 	void setBufferDimensions();
 	void setScreenRes();

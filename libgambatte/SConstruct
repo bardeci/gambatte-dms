@@ -2,7 +2,7 @@ target = ARGUMENTS.get('target', 0)
 if target == 'opendingux':
     include_path = ' -I/opt/gcw0-toolchain/usr/mipsel-gcw0-linux-uclibc/sysroot/usr/include'
     bin_path = '/opt/gcw0-toolchain/usr/bin/mipsel-linux-'
-    version_defines = ' -DVERSION_OPENDINGUX -DHW_SCALING'
+    version_defines = ' -DVERSION_OPENDINGUX'
     extra_cflags = ''
     print "Building Gambatte library with OpenDingux toolchain..."
 elif target == 'retrofw':

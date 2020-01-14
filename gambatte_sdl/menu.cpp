@@ -166,6 +166,7 @@ static int parse_ext_png(const struct dirent *dir) {
     return 0;
 }
 
+#ifdef ROM_BROWSER
 static int parse_ext_zip_gb_gbc(const struct dirent *dir) {
     if(!dir){
         return 0;
@@ -183,13 +184,12 @@ static int parse_ext_zip_gb_gbc(const struct dirent *dir) {
     }
     return 0;
 }
+#endif
 
 /* ============================ MAIN MENU =========================== */
 
 #ifdef ROM_BROWSER
 static void callback_loadgame(menu_t *caller_menu);
-static void callback_loaddmggame(menu_t *caller_menu);
-static void callback_loadgbcgame(menu_t *caller_menu);
 #endif
 static void callback_selectstateload(menu_t *caller_menu);
 static void callback_selectstatesave(menu_t *caller_menu);
@@ -199,20 +199,6 @@ static void callback_cheats(menu_t *caller_menu);
 static void callback_about(menu_t *caller_menu);
 static void callback_quit(menu_t *caller_menu);
 static void callback_return(menu_t *caller_menu);
-
-static void callback_showfps(menu_t *caller_menu);
-static void callback_scaler(menu_t *caller_menu);
-static void callback_dmgpalette(menu_t *caller_menu);
-static void callback_colorfilter(menu_t *caller_menu);
-static void callback_dmgborderimage(menu_t *caller_menu);
-static void callback_gbcborderimage(menu_t *caller_menu);
-static void callback_usebios(menu_t *caller_menu);
-static void callback_ghosting(menu_t *caller_menu);
-static void callback_buttonlayout(menu_t *caller_menu);
-static void callback_sound(menu_t *caller_menu);
-
-static void callback_gamegenie(menu_t *caller_menu);
-static void callback_gameshark(menu_t *caller_menu);
 
 #if defined VERSION_OPENDINGUX
 std::string menu_main_title = ("GAMBATTE-OPENDINGUX");
@@ -384,6 +370,11 @@ static void callback_return(menu_t *caller_menu) {
     }
 }
 
+static void callback_back(menu_t *caller_menu) {
+    playMenuSound_back();
+    caller_menu->quit = 1;
+}
+
 static void callback_restart(menu_t *caller_menu) {
     playMenuSound_ok();
     SDL_Delay(250);
@@ -401,7 +392,8 @@ static void callback_restart(menu_t *caller_menu) {
 
 /* ==================== LOAD GAME MENU ================================ */
 
-static void callback_loadgame_back(menu_t *caller_menu);
+static void callback_loaddmggame(menu_t *caller_menu);
+static void callback_loadgbcgame(menu_t *caller_menu);
 
 static void callback_loadgame(menu_t *caller_menu) {
     menu_t *menu;
@@ -411,7 +403,7 @@ static void callback_loadgame(menu_t *caller_menu) {
         
     menu_set_header(menu, menu_main_title.c_str());
     menu_set_title(menu, "Select System");
-    menu->back_callback = callback_loadgame_back;
+    menu->back_callback = callback_back;
 
     menu_entry = new_menu_entry(0);
     menu_entry_set_text(menu_entry, "Gameboy");
@@ -434,18 +426,12 @@ static void callback_loadgame(menu_t *caller_menu) {
     }
 }
 
-static void callback_loadgame_back(menu_t *caller_menu) {
-    playMenuSound_back();
-    caller_menu->quit = 1;
-}
-
 /* ==================== LOAD DMG GAME MENU =========================== */
 
 struct dirent **gamelist = NULL;
 int numgames;
 
 static void callback_selecteddmggame(menu_t *caller_menu);
-static void callback_loaddmggame_back(menu_t *caller_menu);
 
 static void callback_loaddmggame(menu_t *caller_menu) {
 
@@ -456,7 +442,7 @@ static void callback_loaddmggame(menu_t *caller_menu) {
 
     menu_set_header(menu, menu_main_title.c_str());
     menu_set_title(menu, "Select Game");
-    menu->back_callback = callback_loaddmggame_back;
+    menu->back_callback = callback_back;
 
     std::string romdir = (gamedir + "/gb");
     numgames = scandir(romdir.c_str(), &gamelist, parse_ext_zip_gb_gbc, alphasort);
@@ -500,6 +486,7 @@ static void callback_selecteddmggame(menu_t *caller_menu) {
     } else {
         currgamename = strip_Extension(gamename);
         clearAllCheats(); //clear all cheatcodes from menus
+        loadConfig();
         if(gambatte_p->isCgb()){
             gameiscgb = 1;
             loadFilter(filtername);
@@ -514,15 +501,9 @@ static void callback_selecteddmggame(menu_t *caller_menu) {
     }
 }
 
-static void callback_loaddmggame_back(menu_t *caller_menu) {
-    playMenuSound_back();
-    caller_menu->quit = 1;
-}
-
 /* ==================== LOAD GBC GAME MENU =========================== */
 
 static void callback_selectedgbcgame(menu_t *caller_menu);
-static void callback_loadgbcgame_back(menu_t *caller_menu);
 
 static void callback_loadgbcgame(menu_t *caller_menu) {
 
@@ -533,7 +514,7 @@ static void callback_loadgbcgame(menu_t *caller_menu) {
 
     menu_set_header(menu, menu_main_title.c_str());
     menu_set_title(menu, "Select Game");
-    menu->back_callback = callback_loadgbcgame_back;
+    menu->back_callback = callback_back;
 
     std::string romdir = (gamedir + "/gbc");
     numgames = scandir(romdir.c_str(), &gamelist, parse_ext_zip_gb_gbc, alphasort);
@@ -577,6 +558,7 @@ static void callback_selectedgbcgame(menu_t *caller_menu) {
     } else {
         currgamename = strip_Extension(gamename);
         clearAllCheats(); //clear all cheatcodes from menus
+        loadConfig();
         if(gambatte_p->isCgb()){
             gameiscgb = 1;
             loadFilter(filtername);
@@ -590,17 +572,11 @@ static void callback_selectedgbcgame(menu_t *caller_menu) {
         caller_menu->quit = 1;
     }
 }
-
-static void callback_loadgbcgame_back(menu_t *caller_menu) {
-    playMenuSound_back();
-    caller_menu->quit = 1;
-}
 #endif
 
 /* ==================== SELECT STATE MENU (LOAD) =========================== */
 
 static void callback_selectedstateload(menu_t *caller_menu);
-static void callback_selectstateload_back(menu_t *caller_menu);
 
 static void callback_selectstateload(menu_t *caller_menu) {
     #define N_STATES 10
@@ -613,7 +589,7 @@ static void callback_selectstateload(menu_t *caller_menu) {
 
     menu_set_header(menu, menu_main_title.c_str());
     menu_set_title(menu, "Load State");
-	menu->back_callback = callback_selectstateload_back;
+	menu->back_callback = callback_back;
 	
     for (i = 0; i < N_STATES; i++) {
         menu_entry = new_menu_entry(0);
@@ -652,15 +628,10 @@ static void callback_selectedstateload(menu_t *caller_menu) {
     caller_menu->quit = 1;
 }
 
-static void callback_selectstateload_back(menu_t *caller_menu) {
-    playMenuSound_back();
-    caller_menu->quit = 1;
-}
 
 /* ==================== SELECT STATE MENU (SAVE) =========================== */
 
 static void callback_selectedstatesave(menu_t *caller_menu);
-static void callback_selectstatesave_back(menu_t *caller_menu);
 
 static void callback_selectstatesave(menu_t *caller_menu) {
     #define N_STATES 10
@@ -673,7 +644,7 @@ static void callback_selectstatesave(menu_t *caller_menu) {
 
     menu_set_header(menu, menu_main_title.c_str());
     menu_set_title(menu, "Save State");
-	menu->back_callback = callback_selectstatesave_back;
+	menu->back_callback = callback_back;
 	
     for (i = 0; i < N_STATES; i++) {
         menu_entry = new_menu_entry(0);
@@ -740,28 +711,34 @@ static void callback_selectedstatesave(menu_t *caller_menu) {
     caller_menu->quit = 1;
 }
 
-static void callback_selectstatesave_back(menu_t *caller_menu) {
-    playMenuSound_back();
-    caller_menu->quit = 1;
-}
-
 /* ==================== SETTINGS MENU ================================ */
+
+static void callback_showfps(menu_t *caller_menu);
+static void callback_scaler(menu_t *caller_menu);
+static void callback_dmgpalette(menu_t *caller_menu);
+static void callback_colorfilter(menu_t *caller_menu);
+static void callback_dmgborderimage(menu_t *caller_menu);
+static void callback_gbcborderimage(menu_t *caller_menu);
+static void callback_usebios(menu_t *caller_menu);
+static void callback_ghosting(menu_t *caller_menu);
+static void callback_buttonlayout(menu_t *caller_menu);
+static void callback_sound(menu_t *caller_menu);
 
 static void callback_saveconfig_confirm(menu_t *caller_menu);
 static void callback_saveconfig_apply(menu_t *caller_menu);
 static void callback_saveconfig_apply_back(menu_t *caller_menu);
-static void callback_saveconfig_back(menu_t *caller_menu);
-static void callback_settings_back(menu_t *caller_menu);
+
+static void callback_pergame_settings(menu_t *caller_menu);
 
 static void callback_settings(menu_t *caller_menu) {
     menu_t *menu;
 	menu_entry_t *menu_entry;
     (void) caller_menu;
     menu = new_menu();
-        
+
     menu_set_header(menu, menu_main_title.c_str());
     menu_set_title(menu, "Settings");
-	menu->back_callback = callback_settings_back;
+	menu->back_callback = callback_back;
 
     menu_entry = new_menu_entry(0);
     menu_entry_set_text(menu_entry, "Show FPS");
@@ -821,13 +798,20 @@ static void callback_settings(menu_t *caller_menu) {
     menu_entry->selectable = 0;
 
     menu_entry = new_menu_entry(0);
-    menu_entry_set_text(menu_entry, "Save settings");
+    menu_entry_set_text(menu_entry, "Save global settings");
     menu_add_entry(menu, menu_entry);
     menu_entry->callback = callback_saveconfig_confirm;
-    
+
+    if(gambatte_p->isLoaded()){
+        menu_entry = new_menu_entry(0);
+        menu_entry_set_text(menu_entry, "Per-Game settings");
+        menu_add_entry(menu, menu_entry);
+        menu_entry->callback = callback_pergame_settings;
+    }
+
 	playMenuSound_in();
     menu_main(menu);
-    
+
     delete_menu(menu);
 
     if(forcemenuexit > 0) {
@@ -844,15 +828,21 @@ static void callback_saveconfig_confirm(menu_t *caller_menu) {
     menu = new_menu();
 
     menu_set_header(menu, menu_main_title.c_str());
-    menu_set_title(menu, "Settings");
-    menu->back_callback = callback_saveconfig_back;
+    menu_set_title(menu, " Settings ");
+    menu->back_callback = callback_back;
 
     menu_entry = new_menu_entry(0);
-    menu_entry_set_text(menu_entry, "Save settings?");
+    menu_entry_set_text(menu_entry, "Save global");
     menu_add_entry(menu, menu_entry);
     menu_entry->selectable = 0;
     menu_entry->callback = callback_saveconfig_apply;
-    
+
+    menu_entry = new_menu_entry(0);
+    menu_entry_set_text(menu_entry, "settings?");
+    menu_add_entry(menu, menu_entry);
+    menu_entry->selectable = 0;
+    menu_entry->callback = callback_saveconfig_apply;
+
     playMenuSound_in();
     menu_main(menu);
 
@@ -873,29 +863,17 @@ static void callback_saveconfig_apply(menu_t *caller_menu) {
     menu_entry_t *menu_entry;
     (void) caller_menu;
     menu = new_menu();
-        
+
     menu_set_header(menu, menu_main_title.c_str());
-    menu_set_title(menu, "Settings");
+    menu_set_title(menu, " Settings ");
     menu->back_callback = callback_saveconfig_apply_back;
 
     menu_entry = new_menu_entry(0);
-    menu_entry_set_text(menu_entry, " ");
+    menu_entry_set_text(menu_entry, "Done!");
     menu_add_entry(menu, menu_entry);
     menu_entry->selectable = 0;
     menu_entry->callback = callback_saveconfig_apply_back;
 
-    menu_entry = new_menu_entry(0);
-    menu_entry_set_text(menu_entry, "Settings saved!");
-    menu_add_entry(menu, menu_entry);
-    menu_entry->selectable = 0;
-    menu_entry->callback = callback_saveconfig_apply_back;
-
-    menu_entry = new_menu_entry(0);
-    menu_entry_set_text(menu_entry, " ");
-    menu_add_entry(menu, menu_entry);
-    menu_entry->selectable = 0;
-    menu_entry->callback = callback_saveconfig_apply_back;
-    
     menu_message(menu);
 
     delete_menu(menu);
@@ -911,20 +889,210 @@ static void callback_saveconfig_apply_back(menu_t *caller_menu) {
     caller_menu->quit = 1;
 }
 
-static void callback_saveconfig_back(menu_t *caller_menu) {
-    playMenuSound_back();
+/* ==================== PER-GAME SETTINGS MENU ======================== */
+
+static void callback_saveconfig_pergame_confirm(menu_t *caller_menu);
+static void callback_saveconfig_pergame_apply(menu_t *caller_menu);
+static void callback_saveconfig_pergame_apply_back(menu_t *caller_menu);
+
+static void callback_deleteconfig_pergame_confirm(menu_t *caller_menu);
+static void callback_deleteconfig_pergame_apply(menu_t *caller_menu);
+static void callback_deleteconfig_pergame_apply_back(menu_t *caller_menu);
+
+static void callback_pergame_settings(menu_t *caller_menu) {
+    menu_t *menu;
+    menu_entry_t *menu_entry;
+    (void) caller_menu;
+    menu = new_menu();
+
+    menu_set_header(menu, menu_main_title.c_str());
+    menu_set_title(menu, "Per-Game Settings");
+    menu->back_callback = callback_back;
+
+    menu_entry = new_menu_entry(0);
+    menu_entry_set_text(menu_entry, "Save settings");
+    menu_add_entry(menu, menu_entry);
+    menu_entry->callback = callback_saveconfig_pergame_confirm;
+
+    menu_entry = new_menu_entry(0);
+    menu_entry_set_text(menu_entry, "Delete settings");
+    menu_add_entry(menu, menu_entry);
+    menu_entry->callback = callback_deleteconfig_pergame_confirm;
+
+    playMenuSound_in();
+    menu_main(menu);
+
+    delete_menu(menu);
+
+    if(forcemenuexit > 0) {
+        forcemenuexit = 0;
+        caller_menu->selected_entry = 0;
+    }
+}
+
+static void callback_saveconfig_pergame_confirm(menu_t *caller_menu) {
+
+    menu_t *menu;
+    menu_entry_t *menu_entry;
+    (void) caller_menu;
+    menu = new_menu();
+
+    menu_set_header(menu, menu_main_title.c_str());
+    menu_set_title(menu, " Per-Game Settings ");
+    menu->back_callback = callback_back;
+
+    menu_entry = new_menu_entry(0);
+    menu_entry_set_text(menu_entry, "Save settings");
+    menu_add_entry(menu, menu_entry);
+    menu_entry->selectable = 0;
+    menu_entry->callback = callback_saveconfig_pergame_apply;
+
+    menu_entry = new_menu_entry(0);
+    menu_entry_set_text(menu_entry, "for the current");
+    menu_add_entry(menu, menu_entry);
+    menu_entry->selectable = 0;
+    menu_entry->callback = callback_saveconfig_pergame_apply;
+
+    menu_entry = new_menu_entry(0);
+    menu_entry_set_text(menu_entry, "game?");
+    menu_add_entry(menu, menu_entry);
+    menu_entry->selectable = 0;
+    menu_entry->callback = callback_saveconfig_pergame_apply;
+
+    playMenuSound_in();
+    menu_main(menu);
+
+    delete_menu(menu);
+
+    if(forcemenuexit > 0) {
+        menuout = 0;
+        caller_menu->quit = 1;
+    }
+}
+
+static void callback_saveconfig_pergame_apply(menu_t *caller_menu) {
+
+    playMenuSound_ok();
+    saveConfig(1);
+
+    menu_t *menu;
+    menu_entry_t *menu_entry;
+    (void) caller_menu;
+    menu = new_menu();
+
+    menu_set_header(menu, menu_main_title.c_str());
+    menu_set_title(menu, " Per-Game Settings ");
+    menu->back_callback = callback_saveconfig_pergame_apply_back;
+
+    menu_entry = new_menu_entry(0);
+    menu_entry_set_text(menu_entry, "Done!");
+    menu_add_entry(menu, menu_entry);
+    menu_entry->selectable = 0;
+    menu_entry->callback = callback_saveconfig_pergame_apply_back;
+
+    menu_message(menu);
+
+    delete_menu(menu);
+
+    if(forcemenuexit > 0) {
+        menuout = 0;
+        caller_menu->quit = 1;
+    }
+}
+
+static void callback_saveconfig_pergame_apply_back(menu_t *caller_menu) {
+    forcemenuexit = 2;
     caller_menu->quit = 1;
 }
 
-static void callback_settings_back(menu_t *caller_menu) {
-    playMenuSound_back();
+static void callback_deleteconfig_pergame_confirm(menu_t *caller_menu) {
+
+    menu_t *menu;
+    menu_entry_t *menu_entry;
+    (void) caller_menu;
+    menu = new_menu();
+
+    menu_set_header(menu, menu_main_title.c_str());
+    menu_set_title(menu, "  Per-Game Settings  ");
+    menu->back_callback = callback_back;
+
+    menu_entry = new_menu_entry(0);
+    menu_entry_set_text(menu_entry, "Delete settings");
+    menu_add_entry(menu, menu_entry);
+    menu_entry->selectable = 0;
+    menu_entry->callback = callback_deleteconfig_pergame_apply;
+
+    menu_entry = new_menu_entry(0);
+    menu_entry_set_text(menu_entry, "for the current");
+    menu_add_entry(menu, menu_entry);
+    menu_entry->selectable = 0;
+    menu_entry->callback = callback_deleteconfig_pergame_apply;
+
+    menu_entry = new_menu_entry(0);
+    menu_entry_set_text(menu_entry, "game?");
+    menu_add_entry(menu, menu_entry);
+    menu_entry->selectable = 0;
+    menu_entry->callback = callback_deleteconfig_pergame_apply;
+
+    playMenuSound_in();
+    menu_main(menu);
+
+    delete_menu(menu);
+
+    if(forcemenuexit > 0) {
+        menuout = 0;
+        caller_menu->quit = 1;
+    }
+}
+
+static void callback_deleteconfig_pergame_apply(menu_t *caller_menu) {
+
+    playMenuSound_ok();
+    deleteConfig(); // delete custom config
+    loadConfig(); // load default config
+    refreshkeys = 1;                  //
+    if(gameiscgb == 0){               //
+        loadPalette(palname);         //
+        load_border(dmgbordername);   //
+    } else if(gameiscgb == 1){        // apply loaded default config
+        loadFilter(filtername);       //
+        load_border(gbcbordername);   //
+    }                                 //
+    blitter_p->setScreenRes();        //
+
+    menu_t *menu;
+    menu_entry_t *menu_entry;
+    (void) caller_menu;
+    menu = new_menu();
+
+    menu_set_header(menu, menu_main_title.c_str());
+    menu_set_title(menu, "  Per-Game Settings  ");
+    menu->back_callback = callback_deleteconfig_pergame_apply_back;
+
+    menu_entry = new_menu_entry(0);
+    menu_entry_set_text(menu_entry, "Done!");
+    menu_add_entry(menu, menu_entry);
+    menu_entry->selectable = 0;
+    menu_entry->callback = callback_deleteconfig_pergame_apply_back;
+
+    menu_message(menu);
+
+    delete_menu(menu);
+
+    if(forcemenuexit > 0) {
+        menuout = 0;
+        caller_menu->quit = 1;
+    }
+}
+
+static void callback_deleteconfig_pergame_apply_back(menu_t *caller_menu) {
+    forcemenuexit = 2;
     caller_menu->quit = 1;
 }
 
 /* ==================== SHOW FPS MENU =========================== */
 
 static void callback_selectedshowfps(menu_t *caller_menu);
-static void callback_showfps_back(menu_t *caller_menu);
 
 static void callback_showfps(menu_t *caller_menu) {
 
@@ -935,7 +1103,7 @@ static void callback_showfps(menu_t *caller_menu) {
 
     menu_set_header(menu, menu_main_title.c_str());
     menu_set_title(menu, "Show FPS");
-    menu->back_callback = callback_showfps_back;
+    menu->back_callback = callback_back;
 
     menu_entry = new_menu_entry(0);
     menu_entry_set_text(menu_entry, "OFF");
@@ -948,7 +1116,7 @@ static void callback_showfps(menu_t *caller_menu) {
     menu_entry->callback = callback_selectedshowfps;
 
     menu->selected_entry = showfps; 
-    
+
     playMenuSound_in();
     menu_main(menu);
 
@@ -961,15 +1129,9 @@ static void callback_selectedshowfps(menu_t *caller_menu) {
     caller_menu->quit = 1;
 }
 
-static void callback_showfps_back(menu_t *caller_menu) {
-    playMenuSound_back();
-    caller_menu->quit = 1;
-}
-
 /* ==================== SCALER MENU =========================== */
 
 static void callback_selectedscaler(menu_t *caller_menu);
-static void callback_scaler_back(menu_t *caller_menu);
 
 static void callback_scaler(menu_t *caller_menu) {
 
@@ -980,7 +1142,7 @@ static void callback_scaler(menu_t *caller_menu) {
 
     menu_set_header(menu, menu_main_title.c_str());
     menu_set_title(menu, "Select Scaler");
-    menu->back_callback = callback_scaler_back;
+    menu->back_callback = callback_back;
 
     menu_entry = new_menu_entry(0);
     menu_entry_set_text(menu_entry, "No Scaling");
@@ -1017,32 +1179,32 @@ static void callback_scaler(menu_t *caller_menu) {
     menu_add_entry(menu, menu_entry);
     menu_entry->callback = callback_selectedscaler;
 
-#ifdef HW_SCALING
-    menu_entry = new_menu_entry(0);
-    menu_entry_set_text(menu_entry, "Hw 1.25x");
-    menu_add_entry(menu, menu_entry);
-    menu_entry->callback = callback_selectedscaler;
+    if (ipuscaling != "NONE") {
+        menu_entry = new_menu_entry(0);
+        menu_entry_set_text(menu_entry, "Hw 1.25x");
+        menu_add_entry(menu, menu_entry);
+        menu_entry->callback = callback_selectedscaler;
 
-    menu_entry = new_menu_entry(0);
-    menu_entry_set_text(menu_entry, "Hw 1.36x");
-    menu_add_entry(menu, menu_entry);
-    menu_entry->callback = callback_selectedscaler;
+        menu_entry = new_menu_entry(0);
+        menu_entry_set_text(menu_entry, "Hw 1.36x");
+        menu_add_entry(menu, menu_entry);
+        menu_entry->callback = callback_selectedscaler;
 
-    menu_entry = new_menu_entry(0);
-    menu_entry_set_text(menu_entry, "Hw 1.50x");
-    menu_add_entry(menu, menu_entry);
-    menu_entry->callback = callback_selectedscaler;
+        menu_entry = new_menu_entry(0);
+        menu_entry_set_text(menu_entry, "Hw 1.50x");
+        menu_add_entry(menu, menu_entry);
+        menu_entry->callback = callback_selectedscaler;
 
-    menu_entry = new_menu_entry(0);
-    menu_entry_set_text(menu_entry, "Hw 1.66x");
-    menu_add_entry(menu, menu_entry);
-    menu_entry->callback = callback_selectedscaler;
+        menu_entry = new_menu_entry(0);
+        menu_entry_set_text(menu_entry, "Hw 1.66x");
+        menu_add_entry(menu, menu_entry);
+        menu_entry->callback = callback_selectedscaler;
 
-    menu_entry = new_menu_entry(0);
-    menu_entry_set_text(menu_entry, "Hw FullScreen");
-    menu_add_entry(menu, menu_entry);
-    menu_entry->callback = callback_selectedscaler;
-#endif
+        menu_entry = new_menu_entry(0);
+        menu_entry_set_text(menu_entry, "Hw FullScreen");
+        menu_add_entry(menu, menu_entry);
+        menu_entry->callback = callback_selectedscaler;
+    }
 
     menu->selected_entry = selectedscaler; 
     
@@ -1066,11 +1228,6 @@ static void callback_selectedscaler(menu_t *caller_menu) {
     caller_menu->quit = 0;
 }
 
-static void callback_scaler_back(menu_t *caller_menu) {
-    playMenuSound_back();
-    caller_menu->quit = 1;
-}
-
 /* ==================== DMG PALETTE MENU =========================== */
 
 struct dirent **palettelist = NULL;
@@ -1080,7 +1237,6 @@ static void callback_nopalette(menu_t *caller_menu);
 static void callback_defaultpalette(menu_t *caller_menu);
 static void callback_autopalette(menu_t *caller_menu);
 static void callback_selectedpalette(menu_t *caller_menu);
-static void callback_dmgpalette_back(menu_t *caller_menu);
 
 static void callback_dmgpalette(menu_t *caller_menu) {
 
@@ -1091,7 +1247,7 @@ static void callback_dmgpalette(menu_t *caller_menu) {
 
     menu_set_header(menu, menu_main_title.c_str());
     menu_set_title(menu, "Mono Palette");
-    menu->back_callback = callback_dmgpalette_back;
+    menu->back_callback = callback_back;
 
     menu_entry = new_menu_entry(0);
     menu_entry_set_text(menu_entry, "No palette");
@@ -1186,11 +1342,6 @@ static void callback_selectedpalette(menu_t *caller_menu) {
     }
 }
 
-static void callback_dmgpalette_back(menu_t *caller_menu) {
-    playMenuSound_back();
-    caller_menu->quit = 1;
-}
-
 /* ==================== COLOR FILTER MENU =========================== */
 
 struct dirent **filterlist = NULL;
@@ -1199,7 +1350,6 @@ int numfilters;
 static void callback_nofilter(menu_t *caller_menu);
 static void callback_defaultfilter(menu_t *caller_menu);
 static void callback_selectedfilter(menu_t *caller_menu);
-static void callback_colorfilter_back(menu_t *caller_menu);
 
 static void callback_colorfilter(menu_t *caller_menu) {
 
@@ -1210,7 +1360,7 @@ static void callback_colorfilter(menu_t *caller_menu) {
 
     menu_set_header(menu, menu_main_title.c_str());
     menu_set_title(menu, "Color Filter");
-    menu->back_callback = callback_colorfilter_back;
+    menu->back_callback = callback_back;
 
     menu_entry = new_menu_entry(0);
     menu_entry_set_text(menu_entry, "No filter");
@@ -1281,11 +1431,6 @@ static void callback_selectedfilter(menu_t *caller_menu) {
     }
 }
 
-static void callback_colorfilter_back(menu_t *caller_menu) {
-    playMenuSound_back();
-    caller_menu->quit = 1;
-}
-
 /* ==================== DMG BORDER IMAGE MENU =========================== */
 
 struct dirent **dmgborderlist = NULL;
@@ -1295,7 +1440,6 @@ static void callback_nodmgborder(menu_t *caller_menu);
 static void callback_defaultdmgborder(menu_t *caller_menu);
 static void callback_autodmgborder(menu_t *caller_menu);
 static void callback_selecteddmgborder(menu_t *caller_menu);
-static void callback_dmgborderimage_back(menu_t *caller_menu);
 
 static void callback_dmgborderimage(menu_t *caller_menu) {
 
@@ -1306,7 +1450,7 @@ static void callback_dmgborderimage(menu_t *caller_menu) {
 
     menu_set_header(menu, menu_main_title.c_str());
     menu_set_title(menu, "DMG Border");
-    menu->back_callback = callback_dmgborderimage_back;
+    menu->back_callback = callback_back;
 
     menu_entry = new_menu_entry(0);
     menu_entry_set_text(menu_entry, "No border");
@@ -1397,11 +1541,6 @@ static void callback_selecteddmgborder(menu_t *caller_menu) {
     }
 }
 
-static void callback_dmgborderimage_back(menu_t *caller_menu) {
-    playMenuSound_back();
-    caller_menu->quit = 1;
-}
-
 /* ==================== GBC BORDER IMAGE MENU =========================== */
 
 struct dirent **gbcborderlist = NULL;
@@ -1411,7 +1550,6 @@ static void callback_nogbcborder(menu_t *caller_menu);
 static void callback_defaultgbcborder(menu_t *caller_menu);
 static void callback_autogbcborder(menu_t *caller_menu);
 static void callback_selectedgbcborder(menu_t *caller_menu);
-static void callback_gbcborderimage_back(menu_t *caller_menu);
 
 static void callback_gbcborderimage(menu_t *caller_menu) {
 
@@ -1422,7 +1560,7 @@ static void callback_gbcborderimage(menu_t *caller_menu) {
 
     menu_set_header(menu, menu_main_title.c_str());
     menu_set_title(menu, "GBC Border");
-    menu->back_callback = callback_gbcborderimage_back;
+    menu->back_callback = callback_back;
 
     menu_entry = new_menu_entry(0);
     menu_entry_set_text(menu_entry, "No border");
@@ -1513,15 +1651,9 @@ static void callback_selectedgbcborder(menu_t *caller_menu) {
     }
 }
 
-static void callback_gbcborderimage_back(menu_t *caller_menu) {
-    playMenuSound_back();
-    caller_menu->quit = 1;
-}
-
 /* ==================== BOOT LOGOS MENU =========================== */
 
 static void callback_selectedbios(menu_t *caller_menu);
-static void callback_usebios_back(menu_t *caller_menu);
 
 static void callback_usebios(menu_t *caller_menu) {
 
@@ -1532,7 +1664,7 @@ static void callback_usebios(menu_t *caller_menu) {
 
     menu_set_header(menu, menu_main_title.c_str());
     menu_set_title(menu, "Boot Logos");
-    menu->back_callback = callback_usebios_back;
+    menu->back_callback = callback_back;
 
     menu_entry = new_menu_entry(0);
     menu_entry_set_text(menu_entry, "OFF");
@@ -1558,15 +1690,9 @@ static void callback_selectedbios(menu_t *caller_menu) {
     caller_menu->quit = 1;
 }
 
-static void callback_usebios_back(menu_t *caller_menu) {
-    playMenuSound_back();
-    caller_menu->quit = 1;
-}
-
 /* ==================== GHOSTING MENU =========================== */
 
 static void callback_selectedghosting(menu_t *caller_menu);
-static void callback_ghosting_back(menu_t *caller_menu);
 
 static void callback_ghosting(menu_t *caller_menu) {
 
@@ -1577,7 +1703,7 @@ static void callback_ghosting(menu_t *caller_menu) {
 
     menu_set_header(menu, menu_main_title.c_str());
     menu_set_title(menu, "Ghosting");
-    menu->back_callback = callback_ghosting_back;
+    menu->back_callback = callback_back;
 
     menu_entry = new_menu_entry(0);
     menu_entry_set_text(menu_entry, "OFF");
@@ -1613,15 +1739,9 @@ static void callback_selectedghosting(menu_t *caller_menu) {
     caller_menu->quit = 1;
 }
 
-static void callback_ghosting_back(menu_t *caller_menu) {
-    playMenuSound_back();
-    caller_menu->quit = 1;
-}
-
 /* ==================== CONTROLS MENU =========================== */
 
 static void callback_selectedbuttonlayout(menu_t *caller_menu);
-static void callback_buttonlayout_back(menu_t *caller_menu);
 
 static void callback_buttonlayout(menu_t *caller_menu) {
 
@@ -1632,7 +1752,7 @@ static void callback_buttonlayout(menu_t *caller_menu) {
 
     menu_set_header(menu, menu_main_title.c_str());
     menu_set_title(menu, "Controls");
-    menu->back_callback = callback_buttonlayout_back;
+    menu->back_callback = callback_back;
 
     menu_entry = new_menu_entry(0);
     menu_entry_set_text(menu_entry, "Default");
@@ -1659,15 +1779,9 @@ static void callback_selectedbuttonlayout(menu_t *caller_menu) {
     caller_menu->quit = 1;
 }
 
-static void callback_buttonlayout_back(menu_t *caller_menu) {
-    playMenuSound_back();
-    caller_menu->quit = 1;
-}
-
 /* ==================== SOUND MENU =========================== */
 
 static void callback_selectedsound(menu_t *caller_menu);
-static void callback_sound_back(menu_t *caller_menu);
 
 static void callback_sound(menu_t *caller_menu) {
 
@@ -1678,7 +1792,7 @@ static void callback_sound(menu_t *caller_menu) {
 
     menu_set_header(menu, menu_main_title.c_str());
     menu_set_title(menu, "Sound");
-    menu->back_callback = callback_sound_back;
+    menu->back_callback = callback_back;
 
     menu_entry = new_menu_entry(0);
     menu_entry_set_text(menu_entry, "Mono");
@@ -1704,15 +1818,7 @@ static void callback_selectedsound(menu_t *caller_menu) {
     caller_menu->quit = 1;
 }
 
-static void callback_sound_back(menu_t *caller_menu) {
-    playMenuSound_back();
-    caller_menu->quit = 1;
-}
-
 /* ==================== ABOUT MENU =========================== */
-
-
-static void callback_about_back(menu_t *caller_menu);
 
 static void callback_about(menu_t *caller_menu) {
 
@@ -1723,25 +1829,25 @@ static void callback_about(menu_t *caller_menu) {
 
     menu_set_header(menu, menu_main_title.c_str());
     menu_set_title(menu, "Credits");
-    menu->back_callback = callback_about_back;
+    menu->back_callback = callback_back;
 
     menu_entry = new_menu_entry(0);
     menu_entry_set_text(menu_entry, "Gambatte");
     menu_add_entry(menu, menu_entry);
     menu_entry->selectable = 0;
-    menu_entry->callback = callback_about_back;
+    menu_entry->callback = callback_back;
 
     menu_entry = new_menu_entry(0);
     menu_entry_set_text(menu_entry, "by Sindre Aamas");
     menu_add_entry(menu, menu_entry);
     menu_entry->selectable = 0;
-    menu_entry->callback = callback_about_back;
+    menu_entry->callback = callback_back;
 
     menu_entry = new_menu_entry(0);
     menu_entry_set_text(menu_entry, "");
     menu_add_entry(menu, menu_entry);
     menu_entry->selectable = 0;
-    menu_entry->callback = callback_about_back;
+    menu_entry->callback = callback_back;
 
     menu_entry = new_menu_entry(0);
 #if defined VERSION_OPENDINGUX
@@ -1757,55 +1863,55 @@ static void callback_about(menu_t *caller_menu) {
 #endif
     menu_add_entry(menu, menu_entry);
     menu_entry->selectable = 0;
-    menu_entry->callback = callback_about_back;
+    menu_entry->callback = callback_back;
 
     menu_entry = new_menu_entry(0);
     menu_entry_set_text(menu_entry, "by Hi-Ban");
     menu_add_entry(menu, menu_entry);
     menu_entry->selectable = 0;
-    menu_entry->callback = callback_about_back;
+    menu_entry->callback = callback_back;
 
     menu_entry = new_menu_entry(0);
     menu_entry_set_text(menu_entry, "");
     menu_add_entry(menu, menu_entry);
     menu_entry->selectable = 0;
-    menu_entry->callback = callback_about_back;
+    menu_entry->callback = callback_back;
 
     menu_entry = new_menu_entry(0);
     menu_entry_set_text(menu_entry, "Special thanks to");
     menu_add_entry(menu, menu_entry);
     menu_entry->selectable = 0;
-    menu_entry->callback = callback_about_back;
+    menu_entry->callback = callback_back;
 
     menu_entry = new_menu_entry(0);
     menu_entry_set_text(menu_entry, "Surkow, Senquack");
     menu_add_entry(menu, menu_entry);
     menu_entry->selectable = 0;
-    menu_entry->callback = callback_about_back;
+    menu_entry->callback = callback_back;
 
     menu_entry = new_menu_entry(0);
     menu_entry_set_text(menu_entry, "and Pingflood");
     menu_add_entry(menu, menu_entry);
     menu_entry->selectable = 0;
-    menu_entry->callback = callback_about_back;
+    menu_entry->callback = callback_back;
 
     menu_entry = new_menu_entry(0);
     menu_entry_set_text(menu_entry, "");
     menu_add_entry(menu, menu_entry);
     menu_entry->selectable = 0;
-    menu_entry->callback = callback_about_back;
+    menu_entry->callback = callback_back;
 
     menu_entry = new_menu_entry(0);
     menu_entry_set_text(menu_entry, "build version:");
     menu_add_entry(menu, menu_entry);
     menu_entry->selectable = 0;
-    menu_entry->callback = callback_about_back;
+    menu_entry->callback = callback_back;
 
     menu_entry = new_menu_entry(0);
     menu_entry_set_text(menu_entry, BUILDDATE);
     menu_add_entry(menu, menu_entry);
     menu_entry->selectable = 0;
-    menu_entry->callback = callback_about_back;
+    menu_entry->callback = callback_back;
     
     playMenuSound_in();
     menu_main(menu);
@@ -1813,14 +1919,10 @@ static void callback_about(menu_t *caller_menu) {
     delete_menu(menu);
 }
 
-static void callback_about_back(menu_t *caller_menu) {
-    playMenuSound_back();
-    caller_menu->quit = 1;
-}
-
 /* ==================== CHEATS MENU ================================ */
 
-static void callback_cheats_back(menu_t *caller_menu);
+static void callback_gamegenie(menu_t *caller_menu);
+static void callback_gameshark(menu_t *caller_menu);
 
 static void callback_cheats(menu_t *caller_menu) {
     menu_t *menu;
@@ -1830,7 +1932,7 @@ static void callback_cheats(menu_t *caller_menu) {
         
     menu_set_header(menu, menu_main_title.c_str());
     menu_set_title(menu, "Cheat Codes");
-    menu->back_callback = callback_cheats_back;
+    menu->back_callback = callback_back;
 
     menu_entry = new_menu_entry(0);
     menu_entry_set_text(menu_entry, "Game Genie");
@@ -1851,11 +1953,6 @@ static void callback_cheats(menu_t *caller_menu) {
     	menuout = 0;
     	caller_menu->quit = 1;
     }
-}
-
-static void callback_cheats_back(menu_t *caller_menu) {
-    playMenuSound_back();
-    caller_menu->quit = 1;
 }
 
 /* ==================== GAME GENIE MENU ================================ */
@@ -2001,7 +2098,7 @@ static void callback_gamegenie_confirm(menu_t *caller_menu) {
         menu = new_menu();
 
         menu_set_header(menu, menu_main_title.c_str());
-        menu_set_title(menu, "Game Genie");
+        menu_set_title(menu, " Game Genie ");
         menu->back_callback = callback_gamegenie_back;
 
         menu_entry = new_menu_entry(0);
@@ -2089,23 +2186,11 @@ static void callback_gamegenie_apply(menu_t *caller_menu) {
     menu = new_menu();
         
     menu_set_header(menu, menu_main_title.c_str());
-    menu_set_title(menu, "Game Genie");
+    menu_set_title(menu, " Game Genie ");
     menu->back_callback = callback_gamegenie_apply_back;
 
     menu_entry = new_menu_entry(0);
-    menu_entry_set_text(menu_entry, " ");
-    menu_add_entry(menu, menu_entry);
-    menu_entry->selectable = 0;
-    menu_entry->callback = callback_gamegenie_apply_back;
-
-    menu_entry = new_menu_entry(0);
-    menu_entry_set_text(menu_entry, "Codes Applied!");
-    menu_add_entry(menu, menu_entry);
-    menu_entry->selectable = 0;
-    menu_entry->callback = callback_gamegenie_apply_back;
-
-    menu_entry = new_menu_entry(0);
-    menu_entry_set_text(menu_entry, " ");
+    menu_entry_set_text(menu_entry, "Done!");
     menu_add_entry(menu, menu_entry);
     menu_entry->selectable = 0;
     menu_entry->callback = callback_gamegenie_apply_back;
