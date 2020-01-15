@@ -535,7 +535,8 @@ static bool presumedMulti64Mbc1(unsigned char const header[], unsigned rombanks)
 
 LoadRes Cartridge::loadROM(std::string const &romfile,
                            bool const forceDmg,
-                           bool const multicartCompat)
+                           bool const multicartCompat,
+                           int const preferCGB)
 {
 	scoped_ptr<File> const rom(newFileInstance(romfile));
 	if (rom->fail())
@@ -608,7 +609,28 @@ LoadRes Cartridge::loadROM(std::string const &romfile,
 		}*/
 
 		rambanks = numRambanksFromH14x(header[0x147], header[0x149]);
-		cgb = header[0x0143] >> 7 & (1 ^ forceDmg);
+
+		switch (header[0x0143]) {
+			case 0x80://Game is CGB/DMG compatible.
+				printf("CART TYPE: GBC/DMG\n");
+				if (preferCGB == 1) {
+					cgb = true;
+				} else {
+					cgb = false;
+				}
+				break;
+			case 0xC0://Game is CGB only.
+				printf("CART TYPE: GBC\n");
+				cgb = true;
+				break;
+			default://Game is DMG.
+				printf("CART TYPE: DMG\n");
+				cgb = false;
+				break;
+		}
+		if(forceDmg){
+			cgb = false;
+		}
 	}
 
 	std::size_t const filesize = rom->size();

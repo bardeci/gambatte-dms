@@ -712,7 +712,7 @@ int GambatteSdl::exec(int const argc, char const *const argv[]) {
 		}
 	}
 
-	loadConfig(); // load config.cfg file on startup
+	loadConfig(); // load default.cfg file on startup
 
 	for (std::size_t i = 0; i < inputOption.numMappings(); ++i) {
 		std::pair<InputId, InputGetter::Button> m;
@@ -916,7 +916,8 @@ int GambatteSdl::exec(int const argc, char const *const argv[]) {
 			gambatte.load(argv[loadIndex],
 			                gbaCgbOption.isSet()          * GB::GBA_CGB
 			              + forceDmgOption.isSet()        * GB::FORCE_DMG
-			              + multicartCompatOption.isSet() * GB::MULTICART_COMPAT)) {
+			              + multicartCompatOption.isSet() * GB::MULTICART_COMPAT,
+			              prefercgb)) {
 		std::printf("failed to load ROM %s: %s\n", argv[loadIndex], to_string(error).c_str());
 		return EXIT_FAILURE;
 	}

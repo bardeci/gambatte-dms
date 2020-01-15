@@ -52,7 +52,7 @@ Here is a list of the available config options:
     Shows or hides the FPS counter.
     Default is "Off".
 
-- Select Scaler:
+- Scaler:
     Allows to select between a range of scalers.
     Default is "No Scaling".
 
@@ -73,6 +73,10 @@ Here is a list of the available config options:
     The "Auto" option will try to find a border
     with the same name as the ROM file, and it
     will load the default border if it fails.
+
+- System:
+    Allows to select the system priority when
+    a ROM supports both DMG and GBC modes.
 
 - Boot Logos:
     Allows to use GB/GBC BIOS files to display

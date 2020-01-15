@@ -132,13 +132,14 @@ void GB::setSaveDir(std::string const &sdir) {
 	p_->cpu.setSaveDir(sdir);
 }
 
-LoadRes GB::load(std::string const &romfile, unsigned const flags) {
+LoadRes GB::load(std::string const &romfile, unsigned const flags, int const preferCGB) {
 	if (p_->cpu.loaded())
 		p_->cpu.saveSavedata();
 
 	LoadRes const loadres = p_->cpu.load(romfile,
 	                                     flags & FORCE_DMG,
-	                                     flags & MULTICART_COMPAT);
+	                                     flags & MULTICART_COMPAT,
+	                                     preferCGB);
 	if (loadres == LOADRES_OK) {
 		//SaveState state;
 		//p_->cpu.setStatePtrs(state);

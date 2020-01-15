@@ -56,7 +56,7 @@ Mix_Chunk *menusound_move = NULL;
 Mix_Chunk *menusound_ok = NULL;
 
 // Default config values
-int selectedscaler = 0, showfps = 0, ghosting = 1, biosenabled = 0, colorfilter = 0, gameiscgb = 0, buttonlayout = 0, stereosound = 0;
+int selectedscaler = 0, showfps = 0, ghosting = 1, biosenabled = 0, colorfilter = 0, gameiscgb = 0, buttonlayout = 0, stereosound = 0, prefercgb = 0;
 uint32_t menupalblack = 0x000000, menupaldark = 0x505450, menupallight = 0xA8A8A8, menupalwhite = 0xF8FCF8;
 int filtervalue[12] = {135, 20, 0, 25, 0, 125, 20, 25, 0, 20, 105, 30};
 std::string dmgbordername = "DEFAULT", gbcbordername = "DEFAULT", palname = "DEFAULT", filtername = "NONE", currgamename = "default";
@@ -2026,6 +2026,7 @@ void saveConfig(int pergame){
 		"FILTERNAME %s\n"
 		"DMGBORDERNAME %s\n"
 		"GBCBORDERNAME %s\n"
+		"PREFERCGB %d\n"
 		"BIOSENABLED %d\n"
 		"GHOSTING %d\n"
 		"BUTTONLAYOUT %d\n"
@@ -2036,6 +2037,7 @@ void saveConfig(int pergame){
 		filtername.c_str(),
 		dmgbordername.c_str(),
 		gbcbordername.c_str(),
+		prefercgb,
 		biosenabled,
 		ghosting,
 		buttonlayout,
@@ -2129,6 +2131,9 @@ void loadConfig(){
 			}
 			strcpy(charvalue, arg);
 			gbcbordername = std::string(charvalue);
+		} else if (!strcmp(line, "PREFERCGB")) {
+			sscanf(arg, "%d", &value);
+			prefercgb = value;
 		} else if (!strcmp(line, "BIOSENABLED")) {
 			sscanf(arg, "%d", &value);
 			biosenabled = value;

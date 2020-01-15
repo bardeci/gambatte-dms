@@ -93,7 +93,7 @@ public:
 
 	unsigned long event(unsigned long cycleCounter);
 	unsigned long resetCounters(unsigned long cycleCounter);
-	LoadRes loadROM(std::string const &romfile, bool forceDmg, bool multicartCompat);
+	LoadRes loadROM(std::string const &romfile, bool forceDmg, bool multicartCompat, int preferCGB);
 	void setSaveDir(std::string const &dir) { cart_.setSaveDir(dir); }
 	void setInputGetter(InputGetter *getInput) { getInput_ = getInput; }
 	void setEndtime(unsigned long cc, unsigned long inc);

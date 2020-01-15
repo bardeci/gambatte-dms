@@ -479,14 +479,14 @@ static void callback_selecteddmggame(menu_t *caller_menu) {
     playMenuSound_ok();
     SDL_Delay(250);
     gamename = gamelist[caller_menu->selected_entry]->d_name;
+    currgamename = strip_Extension(gamename);
+    loadConfig();
     std::string fullgamepath = (gamedir + "/gb/");
     fullgamepath += (gamename);
-    if (gambatte_p->load(fullgamepath.c_str(),0 + 0 + 0) < 0) {
+    if (gambatte_p->load(fullgamepath.c_str(),0 + 0 + 0, prefercgb) < 0) {
         printf("failed to load ROM: %s\n", fullgamepath.c_str());
     } else {
-        currgamename = strip_Extension(gamename);
         clearAllCheats(); //clear all cheatcodes from menus
-        loadConfig();
         if(gambatte_p->isCgb()){
             gameiscgb = 1;
             loadFilter(filtername);
@@ -551,14 +551,14 @@ static void callback_selectedgbcgame(menu_t *caller_menu) {
     playMenuSound_ok();
     SDL_Delay(250);
     gamename = gamelist[caller_menu->selected_entry]->d_name;
+    currgamename = strip_Extension(gamename);
+    loadConfig();
     std::string fullgamepath = (gamedir + "/gbc/");
     fullgamepath += (gamename);
-    if (gambatte_p->load(fullgamepath.c_str(),0 + 0 + 0) < 0) {
+    if (gambatte_p->load(fullgamepath.c_str(),0 + 0 + 0, prefercgb) < 0) {
         printf("failed to load ROM: %s\n", fullgamepath.c_str());
     } else {
-        currgamename = strip_Extension(gamename);
         clearAllCheats(); //clear all cheatcodes from menus
-        loadConfig();
         if(gambatte_p->isCgb()){
             gameiscgb = 1;
             loadFilter(filtername);
@@ -719,6 +719,7 @@ static void callback_dmgpalette(menu_t *caller_menu);
 static void callback_colorfilter(menu_t *caller_menu);
 static void callback_dmgborderimage(menu_t *caller_menu);
 static void callback_gbcborderimage(menu_t *caller_menu);
+static void callback_system(menu_t *caller_menu);
 static void callback_usebios(menu_t *caller_menu);
 static void callback_ghosting(menu_t *caller_menu);
 static void callback_buttonlayout(menu_t *caller_menu);
@@ -746,7 +747,7 @@ static void callback_settings(menu_t *caller_menu) {
     menu_entry->callback = callback_showfps;
 
     menu_entry = new_menu_entry(0);
-    menu_entry_set_text(menu_entry, "Select Scaler");
+    menu_entry_set_text(menu_entry, "Scaler");
     menu_add_entry(menu, menu_entry);
     menu_entry->callback = callback_scaler;
 
@@ -771,6 +772,11 @@ static void callback_settings(menu_t *caller_menu) {
         menu_add_entry(menu, menu_entry);
         menu_entry->callback = callback_gbcborderimage;
     }
+
+    menu_entry = new_menu_entry(0);
+    menu_entry_set_text(menu_entry, "System");
+    menu_add_entry(menu, menu_entry);
+    menu_entry->callback = callback_system;
 
     menu_entry = new_menu_entry(0);
     menu_entry_set_text(menu_entry, "Boot logos");
@@ -798,7 +804,7 @@ static void callback_settings(menu_t *caller_menu) {
     menu_entry->selectable = 0;
 
     menu_entry = new_menu_entry(0);
-    menu_entry_set_text(menu_entry, "Save global settings");
+    menu_entry_set_text(menu_entry, "Save as default");
     menu_add_entry(menu, menu_entry);
     menu_entry->callback = callback_saveconfig_confirm;
 
@@ -832,7 +838,7 @@ static void callback_saveconfig_confirm(menu_t *caller_menu) {
     menu->back_callback = callback_back;
 
     menu_entry = new_menu_entry(0);
-    menu_entry_set_text(menu_entry, "Save global");
+    menu_entry_set_text(menu_entry, "Save default");
     menu_add_entry(menu, menu_entry);
     menu_entry->selectable = 0;
     menu_entry->callback = callback_saveconfig_apply;
@@ -1141,7 +1147,7 @@ static void callback_scaler(menu_t *caller_menu) {
     menu = new_menu();
 
     menu_set_header(menu, menu_main_title.c_str());
-    menu_set_title(menu, "Select Scaler");
+    menu_set_title(menu, "Scaler");
     menu->back_callback = callback_back;
 
     menu_entry = new_menu_entry(0);
@@ -1649,6 +1655,45 @@ static void callback_selectedgbcborder(menu_t *caller_menu) {
     } else {
         caller_menu->quit = 1;
     }
+}
+
+/* ==================== SYSTEM MENU =========================== */
+
+static void callback_selectedsystem(menu_t *caller_menu);
+
+static void callback_system(menu_t *caller_menu) {
+
+    menu_t *menu;
+    menu_entry_t *menu_entry;
+    (void) caller_menu;
+    menu = new_menu();
+
+    menu_set_header(menu, menu_main_title.c_str());
+    menu_set_title(menu, "System");
+    menu->back_callback = callback_back;
+
+    menu_entry = new_menu_entry(0);
+    menu_entry_set_text(menu_entry, "Priority DMG");
+    menu_add_entry(menu, menu_entry);
+    menu_entry->callback = callback_selectedsystem;
+
+    menu_entry = new_menu_entry(0);
+    menu_entry_set_text(menu_entry, "Priority GBC");
+    menu_add_entry(menu, menu_entry);
+    menu_entry->callback = callback_selectedsystem;
+
+    menu->selected_entry = prefercgb;
+
+    playMenuSound_in();
+    menu_main(menu);
+
+    delete_menu(menu);
+}
+
+static void callback_selectedsystem(menu_t *caller_menu) {
+    playMenuSound_ok();
+    prefercgb = caller_menu->selected_entry;
+    caller_menu->quit = 1;
 }
 
 /* ==================== BOOT LOGOS MENU =========================== */

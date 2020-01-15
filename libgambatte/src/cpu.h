@@ -53,8 +53,8 @@ public:
 		mem_.setOsdElement(osdElement);
 	}
 
-	LoadRes load(std::string const &romfile, bool forceDmg, bool multicartCompat) {
-		return mem_.loadROM(romfile, forceDmg, multicartCompat);
+	LoadRes load(std::string const &romfile, bool forceDmg, bool multicartCompat, int preferCGB) {
+		return mem_.loadROM(romfile, forceDmg, multicartCompat, preferCGB);
 	}
 
 	bool loaded() const { return mem_.loaded(); }

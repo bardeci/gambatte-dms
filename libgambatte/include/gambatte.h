@@ -50,7 +50,7 @@ public:
 	  * @param flags    ORed combination of LoadFlags.
 	  * @return 0 on success, negative value on failure.
 	  */
-	LoadRes load(std::string const &romfile, unsigned flags = 0);
+	LoadRes load(std::string const &romfile, unsigned flags = 0, int preferCGB = 0);
 
 	/**
 	  * Emulates until at least 'samples' audio samples are produced in the

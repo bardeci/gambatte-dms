@@ -68,7 +68,7 @@ extern SDL_Surface *menuscreen;
 extern SDL_Surface *surface_menuinout;
 extern SDL_Surface *textoverlay;
 extern SDL_Surface *textoverlaycolored;
-extern int selectedscaler, showfps, ghosting, biosenabled, colorfilter, gameiscgb, buttonlayout, stereosound;
+extern int selectedscaler, showfps, ghosting, biosenabled, colorfilter, gameiscgb, buttonlayout, stereosound, prefercgb;
 extern uint32_t menupalblack, menupaldark, menupallight, menupalwhite;
 extern int filtervalue[12];
 extern std::string dmgbordername, gbcbordername, palname, filtername, currgamename, homedir, ipuscaling;
