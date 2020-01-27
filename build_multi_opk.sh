@@ -26,9 +26,9 @@ echo "cd gambatte_sdl && scons"
 (cd gambatte_sdl && scons -Q target=opendingux)
 mv gambatte_sdl/gambatte_sdl gambatte_sdl/gambatte.opendingux
 
-rm -f gambatte-multi-r572u3-$BDAT.opk
+rm -f gambatte-multi-r572u4-$BDAT.opk
 
-mksquashfs ./dist/gcw0/default.gcw0.desktop ./dist/retrofw/default.retrofw.desktop ./dist/retrofw/gb.retrofw.desktop ./dist/retrofw/gbc.retrofw.desktop ./gambatte_sdl/gambatte.opendingux ./gambatte_sdl/gambatte.retrofw ./dist/gcw0/gambatte.png ./dist/gcw0/manual.txt ./dist/retrofw/gambatte.man.txt gambatte-multi-r572u3-$BDAT.opk -all-root -no-xattrs -noappend -no-exports
+mksquashfs ./dist/gcw0/default.gcw0.desktop ./dist/retrofw/default.retrofw.desktop ./dist/retrofw/gb.retrofw.desktop ./dist/retrofw/gbc.retrofw.desktop ./gambatte_sdl/gambatte.opendingux ./gambatte_sdl/gambatte.retrofw ./dist/gcw0/gambatte.png ./dist/gcw0/manual.txt ./dist/retrofw/gambatte.man.txt gambatte-multi-r572u4-$BDAT.opk -all-root -no-xattrs -noappend -no-exports
 
 echo "cd gambatte_sdl && scons -c"
 (cd gambatte_sdl && scons -c)

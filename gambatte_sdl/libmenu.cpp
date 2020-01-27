@@ -480,7 +480,7 @@ int menu_main(menu_t *menu) {
 								textanim_reset();
 							}
 							break;
-						case SDLK_LCTRL:	/* A button - TA button in bittboy*/
+						case KEYMAP_MENUACCEPT:	// button used to accept/select a menu item
 							if(menuin == -1){
 								if (menu->entries[menu->selected_entry]->callback != NULL) {
 									footer_alt = 0;
@@ -489,7 +489,7 @@ int menu_main(menu_t *menu) {
 								}
 							}
 							break;
-						case SDLK_LALT: /* B button - A button in bittboy, being used as 'back' */
+						case KEYMAP_MENUCANCEL: // button used to cancel/go back
 							if(menuin == -1){
 								if (menu->back_callback != NULL) {
 									footer_alt = 0;
@@ -698,14 +698,14 @@ int menu_cheat(menu_t *menu) {
 							}
 							dirty = 1;
 							break;
-						case SDLK_LCTRL:	/* A button - TA button in bittboy*/
+						case KEYMAP_MENUACCEPT:	// button used to accept/select a menu item
 							if (menu->entries[menu->selected_entry]->callback != NULL) {
 								footer_alt = 0;
 								menu->entries[menu->selected_entry]->callback(menu);
 								redraw_cheat(menu);
 							}
 							break;
-						case SDLK_LALT: /* B button - A button in bittboy, being used as 'back' */
+						case KEYMAP_MENUCANCEL: // button used to cancel/go back
 							if (menu->back_callback != NULL) {
 								if (editmode == 1){
 									footer_alt = 0;
@@ -715,7 +715,7 @@ int menu_cheat(menu_t *menu) {
 							}
 							dirty = 1;
 							break;
-						case SDLK_RETURN: 	/* start button - Apply*/
+						case SDLK_RETURN: 	// start button - Apply
 							if (collimit == 11){ // if gamegenie
 								if (menu->entries[menu->n_entries -1]->callback != NULL) {
 									menu->entries[menu->n_entries -1]->callback(menu);
@@ -904,23 +904,6 @@ static void display_menu(SDL_Surface *surface, menu_t *menu) {
 			num_selectable++; // count num of selectable entries
 		}
 	}
-#ifdef VERSION_BITTBOY
-	if(strcmp(menu->title, " Game Genie ") == 0){
-		SFont_WriteCenter(surface, font, 17 * font_height, "A-Cancel    Apply-TA"); // footer while in "Apply Cheats" confirmation screen
-	} else if((strcmp(menu->title, " Settings ") == 0) || (strcmp(menu->title, " Per-Game Settings ") == 0)){
-		SFont_WriteCenter(surface, font, 17 * font_height, "A-Cancel     Save-TA"); // footer while in "Save Settings" confirmation screen
-	} else if((strcmp(menu->title, "  Settings  ") == 0) || (strcmp(menu->title, "  Per-Game Settings  ") == 0)){
-		SFont_WriteCenter(surface, font, 17 * font_height, "A-Cancel   Delete-TA"); // footer while in "Delete Settings" confirmation screen
-	} else if(strcmp(menu->title, "Credits") == 0){
-		SFont_WriteCenter(surface, font, 17 * font_height, "A-Back       Back-TA"); // footer while in "Credits" screen
-	} else {
-		if((gambatte_p->isLoaded()) || (strcmp(menu->title, "Main Menu") != 0)){
-			SFont_WriteCenter(surface, font, 17 * font_height, "A-Back     Select-TA"); // footer in normal menus
-		} else {
-			SFont_WriteCenter(surface, font, 17 * font_height, "           Select-TA"); // footer in main menu while no rom is loaded
-		}
-	}
-#else
 	if(strcmp(menu->title, " Game Genie ") == 0){
 		SFont_WriteCenter(surface, font, 17 * font_height, "B-Cancel     Apply-A"); // footer while in "Apply Cheats" confirmation screen
 	} else if((strcmp(menu->title, " Settings ") == 0) || (strcmp(menu->title, " Per-Game Settings ") == 0)){
@@ -936,7 +919,6 @@ static void display_menu(SDL_Surface *surface, menu_t *menu) {
 			SFont_WriteCenter(surface, font, 17 * font_height, "            Select-A"); // footer in main menu while no rom is loaded
 		}
 	}
-#endif
 }
 
 static void display_menu_cheat(SDL_Surface *surface, menu_t *menu) {
@@ -1114,19 +1096,6 @@ static void display_menu_cheat(SDL_Surface *surface, menu_t *menu) {
 	if(downarrow == 1){
 	    SFont_WriteCenter(surface, font, line * font_height, "}"); // down arrow
 	}
-#ifdef VERSION_BITTBOY
-	if(editmode == 1){
-		SFont_WriteCenter(surface, font, 17 * font_height, "A-Cancel   Accept-TA"); // footer while in edit mode
-	} else if ((collimit == 10) && (menu->selected_entry % 10 == 0)){
-		SFont_WriteCenter(surface, font, 17 * font_height, "A-Back     Toggle-TA"); // footer while highlighting a toggle option in gameshark menu
-	} else {
-		if(footer_alt < FOOTER_ALT_SPEED){
-			SFont_WriteCenter(surface, font, 17 * font_height, "A-Back       Edit-TA"); // footer while highlighting a cheat code
-		} else {
-			SFont_WriteCenter(surface, font, 17 * font_height, "Press Start to Apply"); // alternating footer for gamegenie
-		}
-	}
-#else
 	if(editmode == 1){
 		SFont_WriteCenter(surface, font, 17 * font_height, "B-Cancel    Accept-A"); // footer while in edit mode
 	} else if ((collimit == 10) && (menu->selected_entry % 10 == 0)){
@@ -1138,7 +1107,6 @@ static void display_menu_cheat(SDL_Surface *surface, menu_t *menu) {
 			SFont_WriteCenter(surface, font, 17 * font_height, "Press Start to Apply"); // alternating footer for gamegenie
 		}
 	}
-#endif
 }
 
 menu_t *new_menu() {

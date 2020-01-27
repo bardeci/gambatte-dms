@@ -73,7 +73,7 @@ conf = env.Configure()
 conf.CheckLib('z')
 conf.Finish()
 
-version_str_def = [ 'GAMBATTE_SDL_VERSION_STR', r'\"r572u3\"' ]
+version_str_def = [ 'GAMBATTE_SDL_VERSION_STR', r'\"r572u4\"' ]
 
 env.Program('gambatte_sdl',
             [env.Object('src/gambatte_sdl.cpp',

@@ -1,11 +1,12 @@
 [Desktop Entry]
 Name=Gambatte
 Comment=GB/GBC emulator
-Exec=gambatte.retrofw %f
+Exec=gambatte.retrofw
 Terminal=false
 Type=Application
 StartupNotify=true
 Icon=gambatte
 Categories=emulators;
 X-OD-Manual=gambatte.man.txt
+X-OD-Selector=/home/retrofw/roms/gb
 X-OD-Filter=.zip,.gb,.gbc

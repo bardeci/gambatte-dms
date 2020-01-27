@@ -17,7 +17,7 @@ sed "s/^Version:.*/Version: `date +%Y%m%d`/" dist/retrofw/control > /tmp/.gambat
 tar --owner=0 --group=0 -czvf /tmp/.gambatte-ipk/control.tar.gz -C /tmp/.gambatte-ipk/ control
 tar --owner=0 --group=0 -czvf /tmp/.gambatte-ipk/data.tar.gz -C /tmp/.gambatte-ipk/root/ .
 echo 2.0 > /tmp/.gambatte-ipk/debian-binary
-ar r gambatte-retrofw-r572u3-$BDAT.ipk /tmp/.gambatte-ipk/control.tar.gz /tmp/.gambatte-ipk/data.tar.gz /tmp/.gambatte-ipk/debian-binary
+ar r gambatte-retrofw-r572u4-$BDAT.ipk /tmp/.gambatte-ipk/control.tar.gz /tmp/.gambatte-ipk/data.tar.gz /tmp/.gambatte-ipk/debian-binary
 
 echo "cd gambatte_sdl && scons -c"
 (cd gambatte_sdl && scons -c)

@@ -9,9 +9,9 @@ echo "cd gambatte_sdl && scons"
 (cd gambatte_sdl && scons -Q target=opendingux)
 mv gambatte_sdl/gambatte_sdl gambatte_sdl/gambatte.opendingux
 
-rm -f gambatte-opendingux-r572u3-$BDAT.opk
+rm -f gambatte-opendingux-r572u4-$BDAT.opk
 
-mksquashfs ./dist/gcw0/default.gcw0.desktop ./gambatte_sdl/gambatte.opendingux ./dist/gcw0/gambatte.png ./dist/gcw0/manual.txt gambatte-opendingux-r572u3-$BDAT.opk -all-root -no-xattrs -noappend -no-exports
+mksquashfs ./dist/gcw0/default.gcw0.desktop ./gambatte_sdl/gambatte.opendingux ./dist/gcw0/gambatte.png ./dist/gcw0/manual.txt gambatte-opendingux-r572u4-$BDAT.opk -all-root -no-xattrs -noappend -no-exports
 
 echo "cd gambatte_sdl && scons -c"
 (cd gambatte_sdl && scons -c)

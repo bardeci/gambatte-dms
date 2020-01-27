@@ -139,7 +139,7 @@ File Paths
 ------------------------------------------------
 
 - Emulator Settings are saved in:
-    $HOME/.gambatte/config.cfg
+    $HOME/.gambatte/settings/
 
 - Savestates and game saves are stored in:
     $HOME/.gambatte/saves/
