@@ -10,7 +10,6 @@
 #   define prefetch(x, y)
 #endif
 
-
 /* Ayla's fullscreen upscaler */
 /* Upscale from 160x144 to 320x240 */
 void fullscreen_upscale(uint32_t *to, uint32_t *from)
@@ -855,6 +854,77 @@ void scale166x_pseudobilinear(uint32_t* dst, uint32_t* src)
         }
     }
 }
+
+#ifdef VGA_SCREEN
+/* Upscales a 160x144 image to 480x432 using a grid-looking upscaler algorithm.
+ *
+ * Input:
+ *   src: A packed 160x144 pixel image. The pixel format of this image is RGB 565.
+ *   gridcolor: An hexadecimal color. The format of this color is 0xRRGGBB.
+ * Output:
+ *   dst: A packed 480x432 pixel image. The pixel format of this image is RGB 565.
+ */
+
+uint16_t hexcolor_to_rgb565(const uint32_t color)
+{
+    uint8_t colorr = ((color >> 16) & 0xFF);
+    uint8_t colorg = ((color >> 8) & 0xFF);
+    uint8_t colorb = ((color) & 0xFF);
+
+    uint16_t r = ((colorr >> 3) & 0x1f) << 11;
+    uint16_t g = ((colorg >> 2) & 0x3f) << 5;
+    uint16_t b = (colorb >> 3) & 0x1f;
+
+    return (uint16_t) (r | g | b);
+}
+
+void scale3x_dotmatrix(uint32_t* dst, uint32_t* src, uint32_t* gridcolor)
+{
+    uint16_t* Src16 = (uint16_t*) src;
+    uint16_t* Dst16 = (uint16_t*) dst;
+    uint16_t* gcolor = hexcolor_to_rgb565(gridcolor);
+
+    // There are 160 pixels horizontally, and 144 vertically.
+    // Each pixel becomes 3x3 with an added grid pattern.
+
+    uint32_t BlockX, BlockY;
+    uint16_t* BlockSrc;
+    uint16_t* BlockDst;
+    for (BlockY = 0; BlockY < 144; BlockY++)
+    {
+        BlockSrc = Src16 + BlockY * 160 * 1;
+        BlockDst = Dst16 + BlockY * 640 * 3;
+        for (BlockX = 0; BlockX < 160; BlockX++)
+        {
+            // Before:          After:
+            // (a)              (x)(a)(a)
+            //                  (x)(a)(a)
+            //                  (x)(x)(x)
+
+            uint16_t  _1 = *(BlockSrc);
+            uint16_t  _2 = Weight1_1( _1,  gcolor);
+
+            // -- Row 1 --
+            *(BlockDst               ) = _2;
+            *(BlockDst            + 1) = _1;
+            *(BlockDst            + 2) = _1;
+
+            // -- Row 2 --
+            *(BlockDst + 640 *  1    ) = _2;
+            *(BlockDst + 640 *  1 + 1) = _1;
+            *(BlockDst + 640 *  1 + 2) = _1;
+
+            // -- Row 3 --
+            *(BlockDst + 640 *  2    ) = _2;
+            *(BlockDst + 640 *  2 + 1) = _2;
+            *(BlockDst + 640 *  2 + 2) = _2;
+
+            BlockSrc += 1;
+            BlockDst += 3;
+        }
+    }
+}
+#endif
 
 //---------------- BORDER SCALERS ---------------------//
 

@@ -1,7 +1,7 @@
 [Desktop Entry]
-Name=Gambatte
+Name=Gambatte-DMS
 Comment=GB/GBC emulator
-Exec=gambatte.opendingux %f
+Exec=gambatte-dms.opendingux %f
 Terminal=false
 Type=Application
 StartupNotify=true

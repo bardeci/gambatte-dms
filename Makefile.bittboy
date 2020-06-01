@@ -6,7 +6,7 @@ CXX = $(CROSS_COMPILE)g++
 SYSROOT     := $(CHAINPREFIX)/arm-miyoo-linux-musleabi/sysroot
 SDL_CFLAGS  := $(shell $(SYSROOT)/usr/bin/sdl-config --cflags)
 
-OUTPUTNAME = gambatte-bittboy
+OUTPUTNAME = gambatte-dms-bittboy
 
 DEFINES = -DHAVE_STDINT_H -DVERSION_BITTBOY
 INCLUDES = -Isrc/gambatte_sdl -Ilibgambatte -Icommon -Iinclude -Ilibgambatte/include -Ilibgambatte/src $(SDL_CFLAGS)

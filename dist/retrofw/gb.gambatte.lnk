@@ -1,6 +1,6 @@
 title=GB
-description=Gambatte Emulator
-exec=/home/retrofw/emus/gambatte/gambatte.dge
+description=Gambatte-DMS Emulator
+exec=/home/retrofw/emus/gambatte/gambatte-dms.dge
 selectordir=/home/retrofw/roms/gb
 selectorfilter=.zip,.gb,.gbc
 clock=600

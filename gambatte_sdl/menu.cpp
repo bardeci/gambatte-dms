@@ -200,17 +200,7 @@ static void callback_about(menu_t *caller_menu);
 static void callback_quit(menu_t *caller_menu);
 static void callback_return(menu_t *caller_menu);
 
-#if defined VERSION_OPENDINGUX
-std::string menu_main_title = ("GAMBATTE-OPENDINGUX");
-#elif defined VERSION_RETROFW
-std::string menu_main_title = ("GAMBATTE-RETROFW");
-#elif defined VERSION_BITTBOY
-std::string menu_main_title = ("GAMBATTE-BITTBOY");
-#elif defined VERSION_POCKETGO
-std::string menu_main_title = ("GAMBATTE-POCKETGO");
-#else
-std::string menu_main_title = ("GAMBATTE-OD");
-#endif
+std::string menu_main_title = ("GAMBATTE-DMS");
 
 void main_menu_with_anim() {//create a single menu frame to make the entry animation
 
@@ -722,7 +712,7 @@ static void callback_gbcborderimage(menu_t *caller_menu);
 static void callback_system(menu_t *caller_menu);
 static void callback_usebios(menu_t *caller_menu);
 static void callback_ghosting(menu_t *caller_menu);
-static void callback_buttonlayout(menu_t *caller_menu);
+static void callback_controls(menu_t *caller_menu);
 static void callback_sound(menu_t *caller_menu);
 
 static void callback_saveconfig_confirm(menu_t *caller_menu);
@@ -791,7 +781,7 @@ static void callback_settings(menu_t *caller_menu) {
     menu_entry = new_menu_entry(0);
     menu_entry_set_text(menu_entry, "Controls");
     menu_add_entry(menu, menu_entry);
-    menu_entry->callback = callback_buttonlayout;
+    menu_entry->callback = callback_controls;
 
     menu_entry = new_menu_entry(0);
     menu_entry_set_text(menu_entry, "Sound");
@@ -1771,7 +1761,7 @@ static void callback_ghosting(menu_t *caller_menu) {
     menu_entry->callback = callback_selectedghosting;
 
     menu->selected_entry = ghosting; 
-    
+
     playMenuSound_in();
     menu_main(menu);
 
@@ -1784,7 +1774,43 @@ static void callback_selectedghosting(menu_t *caller_menu) {
     caller_menu->quit = 1;
 }
 
-/* ==================== CONTROLS MENU =========================== */
+/* ==================== CONTROLS MENU ================================ */
+
+static void callback_buttonlayout(menu_t *caller_menu);
+static void callback_ffwhotkey(menu_t *caller_menu);
+
+static void callback_controls(menu_t *caller_menu) {
+    menu_t *menu;
+    menu_entry_t *menu_entry;
+    (void) caller_menu;
+    menu = new_menu();
+
+    menu_set_header(menu, menu_main_title.c_str());
+    menu_set_title(menu, "Controls");
+    menu->back_callback = callback_back;
+
+    menu_entry = new_menu_entry(0);
+    menu_entry_set_text(menu_entry, "Button Layout");
+    menu_add_entry(menu, menu_entry);
+    menu_entry->callback = callback_buttonlayout;
+
+    menu_entry = new_menu_entry(0);
+    menu_entry_set_text(menu_entry, "Fast Forward");
+    menu_add_entry(menu, menu_entry);
+    menu_entry->callback = callback_ffwhotkey;
+
+    playMenuSound_in();
+    menu_main(menu);
+
+    delete_menu(menu);
+
+    if(forcemenuexit > 0) {
+        menuout = 0;
+        caller_menu->quit = 1;
+    }
+}
+
+/* ==================== BUTTON LAYOUT MENU =========================== */
 
 static void callback_selectedbuttonlayout(menu_t *caller_menu);
 
@@ -1796,7 +1822,7 @@ static void callback_buttonlayout(menu_t *caller_menu) {
     menu = new_menu();
 
     menu_set_header(menu, menu_main_title.c_str());
-    menu_set_title(menu, "Controls");
+    menu_set_title(menu, "Button Layout");
     menu->back_callback = callback_back;
 
     menu_entry = new_menu_entry(0);
@@ -1806,6 +1832,11 @@ static void callback_buttonlayout(menu_t *caller_menu) {
 
     menu_entry = new_menu_entry(0);
     menu_entry_set_text(menu_entry, "Alternate");
+    menu_add_entry(menu, menu_entry);
+    menu_entry->callback = callback_selectedbuttonlayout;
+
+    menu_entry = new_menu_entry(0);
+    menu_entry_set_text(menu_entry, "Alternate 2");
     menu_add_entry(menu, menu_entry);
     menu_entry->callback = callback_selectedbuttonlayout;
 
@@ -1821,6 +1852,45 @@ static void callback_selectedbuttonlayout(menu_t *caller_menu) {
     playMenuSound_ok();
     buttonlayout = caller_menu->selected_entry;
     refreshkeys = 1;
+    caller_menu->quit = 1;
+}
+
+/* ==================== FAST FORWARD MENU =========================== */
+
+static void callback_selectedffwhotkey(menu_t *caller_menu);
+
+static void callback_ffwhotkey(menu_t *caller_menu) {
+
+    menu_t *menu;
+    menu_entry_t *menu_entry;
+    (void) caller_menu;
+    menu = new_menu();
+
+    menu_set_header(menu, menu_main_title.c_str());
+    menu_set_title(menu, "Fast Forward");
+    menu->back_callback = callback_back;
+
+    menu_entry = new_menu_entry(0);
+    menu_entry_set_text(menu_entry, "Hotkey OFF");
+    menu_add_entry(menu, menu_entry);
+    menu_entry->callback = callback_selectedffwhotkey;
+
+    menu_entry = new_menu_entry(0);
+    menu_entry_set_text(menu_entry, "Hotkey ON");
+    menu_add_entry(menu, menu_entry);
+    menu_entry->callback = callback_selectedffwhotkey;
+
+    menu->selected_entry = ffwhotkey;
+
+    playMenuSound_in();
+    menu_main(menu);
+
+    delete_menu(menu);
+}
+
+static void callback_selectedffwhotkey(menu_t *caller_menu) {
+    playMenuSound_ok();
+    ffwhotkey = caller_menu->selected_entry;
     caller_menu->quit = 1;
 }
 
@@ -1895,17 +1965,7 @@ static void callback_about(menu_t *caller_menu) {
     menu_entry->callback = callback_back;
 
     menu_entry = new_menu_entry(0);
-#if defined VERSION_OPENDINGUX
-    menu_entry_set_text(menu_entry, "OpenDingux port");
-#elif defined VERSION_RETROFW
-    menu_entry_set_text(menu_entry, "RetroFW port");
-#elif defined VERSION_BITTBOY
-    menu_entry_set_text(menu_entry, "Bittboy port");
-#elif defined VERSION_POCKETGO
-    menu_entry_set_text(menu_entry, "PocketGo port");
-#else
-    menu_entry_set_text(menu_entry, "This port");
-#endif
+    menu_entry_set_text(menu_entry, "Gambatte-DMS fork");
     menu_add_entry(menu, menu_entry);
     menu_entry->selectable = 0;
     menu_entry->callback = callback_back;

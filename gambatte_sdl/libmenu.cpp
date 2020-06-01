@@ -56,7 +56,7 @@ Mix_Chunk *menusound_move = NULL;
 Mix_Chunk *menusound_ok = NULL;
 
 // Default config values
-int selectedscaler = 0, showfps = 0, ghosting = 1, biosenabled = 0, colorfilter = 0, gameiscgb = 0, buttonlayout = 0, stereosound = 0, prefercgb = 0;
+int selectedscaler = 0, showfps = 0, ghosting = 1, biosenabled = 0, colorfilter = 0, gameiscgb = 0, buttonlayout = 0, stereosound = 0, prefercgb = 0, ffwhotkey = 1;
 uint32_t menupalblack = 0x000000, menupaldark = 0x505450, menupallight = 0xA8A8A8, menupalwhite = 0xF8FCF8;
 int filtervalue[12] = {135, 20, 0, 25, 0, 125, 20, 25, 0, 20, 105, 30};
 std::string dmgbordername = "DEFAULT", gbcbordername = "DEFAULT", palname = "DEFAULT", filtername = "NONE", currgamename = "default";
@@ -74,6 +74,11 @@ int firstframe = 0;
 std::string gamename = "NONE";
 #endif
 
+#ifdef MIYOO_BATTERY_WARNING
+uint32_t curr_batt_time = SDL_GetTicks();
+uint32_t old_batt_time = curr_batt_time;
+bool lowbattery = false;
+#endif
 
 std::string getSaveStateFilename(int statenum){
 	std::string result = gambatte_p->getSaveStatePath(statenum);
@@ -97,6 +102,79 @@ std::string const strip_Dir(std::string const &str) {
 
 	return str;
 }
+
+#ifdef MIYOO_BATTERY_WARNING
+void saveBattLog(const char *text){
+	std::string battlogfile = (homedir + "/.gambatte/batterylog.log");
+	FILE * cfile;
+    cfile = fopen(battlogfile.c_str(), "a");
+    if (cfile == NULL) {
+		printf("Failed to open log file for writing.\n");
+		return;
+	}
+    if (fprintf(cfile,
+		"%s\n",
+		text) < 0) {
+    	printf("Failed to write log file.\n");
+    } else {
+    	//printf("Log file successfully updated.\n");
+    }
+    fclose(cfile);
+}
+
+void checkBatt(){
+	curr_batt_time = SDL_GetTicks();
+	if ((curr_batt_time >= old_batt_time + BATTCHECKINTERVAL) || ((lowbattery == true) && (curr_batt_time >= old_batt_time + (BATTCHECKINTERVAL / 8)))) {
+		old_batt_time = curr_batt_time;
+		FILE *battery_file;
+		FILE *status_file;
+		char battlvl[8];
+		char battstatus[16];
+		int battery_level;
+
+		battery_file = fopen("/sys/class/power_supply/miyoo-battery/voltage_now", "r");
+		if (battery_file != NULL) {
+			if ((fgets(battlvl,8,battery_file)) != NULL ) {
+				battery_level = atoi(battlvl);
+			} else {
+				battery_level = 9999;
+				sprintf(battlvl, "%d", battery_level);
+			}
+			fclose(battery_file);
+
+			if (battery_level < 3300) {
+				lowbattery = true;
+				printOverlay("Low Battery!"); //low battery warning
+				/*if (battery_level < 3000) {
+				    printf("emergency shutdown!\n");
+				    gambatte_p->saveSavedata();
+				    SDL_Quit();
+				    system("poweroff"); //emergency shutdown
+				    exit(0);
+				}*/
+			} else {
+				lowbattery = false;
+			}
+		}
+
+		/*status_file = fopen("/sys/class/power_supply/miyoo-battery/batt_tune_intput_charge_current", "r");
+		if (status_file != NULL) {
+			if ((fgets(battstatus,16,status_file)) != NULL ) {
+				//cool, there is content in the file
+				printOverlay(battstatus);
+			} else {
+				//not cool, file is empty
+			}
+			fclose(status_file);
+		} else {
+			printOverlay("status not found");
+		}*/
+
+		//printOverlay(battstatus);
+		//saveBattLog(battlvl); //save battery values in log file (FOR TESTING)
+	}
+}
+#endif
 
 void getSaveStatePreview(int statenum){
 	uint32_t pixels[80 * 72];
@@ -384,6 +462,9 @@ int menu_main(menu_t *menu) {
 	}
     redraw(menu);
     while (menu->quit == 0){
+#ifdef MIYOO_BATTERY_WARNING
+		checkBatt();
+#endif
         dirty = 0;
 		while (SDL_PollEvent(&event)) {
 			switch (event.type) {
@@ -594,6 +675,9 @@ int menu_cheat(menu_t *menu) {
 	footer_alt = 0;
     redraw_cheat(menu);
     while (menu->quit == 0) {
+#ifdef MIYOO_BATTERY_WARNING
+		checkBatt();
+#endif
         dirty = 0;
 		while (SDL_PollEvent(&event)) {
 			switch (event.type) {
@@ -1998,6 +2082,7 @@ void saveConfig(int pergame){
 		"BIOSENABLED %d\n"
 		"GHOSTING %d\n"
 		"BUTTONLAYOUT %d\n"
+		"FFWHOTKEY %d\n"
 		"STEREOSOUND %d\n",
 		showfps,
 		selectedscaler,
@@ -2009,6 +2094,7 @@ void saveConfig(int pergame){
 		biosenabled,
 		ghosting,
 		buttonlayout,
+		ffwhotkey,
 		stereosound) < 0) {
     	printf("Failed to save config file.\n");
     } else {
@@ -2111,6 +2197,9 @@ void loadConfig(){
 		} else if (!strcmp(line, "BUTTONLAYOUT")) {
 			sscanf(arg, "%d", &value);
 			buttonlayout = value;
+		} else if (!strcmp(line, "FFWHOTKEY")) {
+			sscanf(arg, "%d", &value);
+			ffwhotkey = value;
 		} else if (!strcmp(line, "STEREOSOUND")) {
 			sscanf(arg, "%d", &value);
 			stereosound = value;

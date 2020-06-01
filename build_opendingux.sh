@@ -7,11 +7,11 @@ echo "cd libgambatte && scons"
 (cd libgambatte && scons -Q target=opendingux) || exit
 echo "cd gambatte_sdl && scons"
 (cd gambatte_sdl && scons -Q target=opendingux)
-mv gambatte_sdl/gambatte_sdl gambatte_sdl/gambatte.opendingux
+mv gambatte_sdl/gambatte_sdl gambatte_sdl/gambatte-dms.opendingux
 
-rm -f gambatte-opendingux-r572u4-$BDAT.opk
+rm -f gambatte-dms-opendingux-r572u4-$BDAT.opk
 
-mksquashfs ./dist/gcw0/default.gcw0.desktop ./gambatte_sdl/gambatte.opendingux ./dist/gcw0/gambatte.png ./dist/gcw0/manual.txt gambatte-opendingux-r572u4-$BDAT.opk -all-root -no-xattrs -noappend -no-exports
+mksquashfs ./dist/gcw0/default.gcw0.desktop ./gambatte_sdl/gambatte-dms.opendingux ./dist/gcw0/gambatte.png ./dist/gcw0/manual.txt gambatte-dms-opendingux-r572u4-$BDAT.opk -all-root -no-xattrs -noappend -no-exports
 
 echo "cd gambatte_sdl && scons -c"
 (cd gambatte_sdl && scons -c)
@@ -24,4 +24,4 @@ rm -rf *gambatte*/.scon*
 find . -type f -iname \*.o -delete
 find . -type f -iname gambatte_sdl -delete
 
-find . -type f -iname gambatte.opendingux -delete
+find . -type f -iname gambatte-dms.opendingux -delete

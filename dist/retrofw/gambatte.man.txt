@@ -1,5 +1,5 @@
 
-Gambatte Emulator for RetroFW devices
+Gambatte-DMS emulator for RetroFW devices
 ------------------------------------------------
 
 Gambatte is an accuracy-focused, open-source, 
@@ -9,7 +9,7 @@ hardware tests, as well as previous documentation
 and reverse engineering efforts.
 
 
-Ingame Controls
+Default Ingame Controls
 ------------------------------------------------
 
 D-PAD               D-PAD
@@ -17,7 +17,7 @@ B Button            B Button
 A Button            A Button
 Select              Select
 Start               Start
-POWER               Menu
+R trigger / POWER   Menu
 L trigger           Fast Forward
 
 
@@ -88,7 +88,7 @@ Here is a list of the available config options:
     Default is "DMG only".
 
 - Controls:
-    Allows the user to swap the B/A buttons.
+    Allows the user to tune the controls.
 
 - Sound:
     Allows the user to select between Mono and
@@ -251,8 +251,8 @@ Boston, MA  02111-1307, USA
 
 ------------------------------------------------
 
-RetroFW port, additional features and menu
-rework by Hi-Ban.
+Additional features and menu rework from the
+Gambatte-DMS version by Hi-Ban.
 Special thanks to Surkow, Senquack and Pingflood
 for helping this noob.
 Source code available at:

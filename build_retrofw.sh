@@ -10,14 +10,14 @@ echo "cd gambatte_sdl && scons"
 
 rm -rf /tmp/.gambatte-ipk/ && mkdir -p /tmp/.gambatte-ipk/root/home/retrofw/emus/gambatte /tmp/.gambatte-ipk/root/home/retrofw/apps/gmenu2x/sections/emulators /tmp/.gambatte-ipk/root/home/retrofw/apps/gmenu2x/sections/emulators.systems
 cp dist/retrofw/gambatte.man.txt dist/retrofw/gambatte.png /tmp/.gambatte-ipk/root/home/retrofw/emus/gambatte
-cp gambatte_sdl/gambatte_sdl /tmp/.gambatte-ipk/root/home/retrofw/emus/gambatte/gambatte.dge
+cp gambatte_sdl/gambatte_sdl /tmp/.gambatte-ipk/root/home/retrofw/emus/gambatte/gambatte-dms.dge
 cp dist/retrofw/gambatte.lnk /tmp/.gambatte-ipk/root/home/retrofw/apps/gmenu2x/sections/emulators
 cp dist/retrofw/gb.gambatte.lnk dist/retrofw/gbc.gambatte.lnk /tmp/.gambatte-ipk/root/home/retrofw/apps/gmenu2x/sections/emulators.systems
 sed "s/^Version:.*/Version: `date +%Y%m%d`/" dist/retrofw/control > /tmp/.gambatte-ipk/control
 tar --owner=0 --group=0 -czvf /tmp/.gambatte-ipk/control.tar.gz -C /tmp/.gambatte-ipk/ control
 tar --owner=0 --group=0 -czvf /tmp/.gambatte-ipk/data.tar.gz -C /tmp/.gambatte-ipk/root/ .
 echo 2.0 > /tmp/.gambatte-ipk/debian-binary
-ar r gambatte-retrofw-r572u4-$BDAT.ipk /tmp/.gambatte-ipk/control.tar.gz /tmp/.gambatte-ipk/data.tar.gz /tmp/.gambatte-ipk/debian-binary
+ar r gambatte-dms-retrofw-r572u4-$BDAT.ipk /tmp/.gambatte-ipk/control.tar.gz /tmp/.gambatte-ipk/data.tar.gz /tmp/.gambatte-ipk/debian-binary
 
 echo "cd gambatte_sdl && scons -c"
 (cd gambatte_sdl && scons -c)

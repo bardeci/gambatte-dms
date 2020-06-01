@@ -381,6 +381,23 @@ public:
 		return std::make_pair(ids_[i], gbbuts_alt[i]);
 	}
 
+	std::pair<InputId, InputGetter::Button> mapping_mirrorssinxy(std::size_t i) const {
+		static InputGetter::Button const gbbuts_mirrorssinxy[] = {
+			InputGetter::START,
+			InputGetter::SELECT,
+			InputGetter::B,
+			InputGetter::A,
+			InputGetter::UP,
+			InputGetter::DOWN,
+			InputGetter::LEFT,
+			InputGetter::RIGHT,
+			InputGetter::SELECT,
+			InputGetter::START,
+		};
+
+		return std::make_pair(ids_[i], gbbuts_mirrorssinxy[i]);
+	}
+
 	std::size_t numMappings() const { return sizeof ids_ / sizeof *ids_; }
 
 private:
@@ -718,8 +735,10 @@ int GambatteSdl::exec(int const argc, char const *const argv[]) {
 		std::pair<InputId, InputGetter::Button> m;
 		if(buttonlayout == 0){
 			m = inputOption.mapping(i);
-		} else {
+		} else if(buttonlayout == 1){
 			m = inputOption.mapping_alt(i);
+		} else if(buttonlayout == 2){
+			m = inputOption.mapping_mirrorssinxy(i);
 		}
 		if (m.first.type == InputId::type_key) {
 			keyMap.insert(std::make_pair(m.first.keydata, m.second));
@@ -888,8 +907,10 @@ int GambatteSdl::exec(int const argc, char const *const argv[]) {
 		std::pair<InputId, InputGetter::Button> m;
 		if(buttonlayout == 0){
 			m = inputOption.mapping(i);
-		} else {
+		} else if(buttonlayout == 1){
 			m = inputOption.mapping_alt(i);
+		} else if(buttonlayout == 2){
+			m = inputOption.mapping_mirrorssinxy(i);
 		}
 		if (m.first.type == InputId::type_key) {
 			keyMap.insert(std::make_pair(m.first.keydata, m.second));
@@ -980,8 +1001,11 @@ void GambatteSdl::refreshKeymaps() {
 		if(buttonlayout == 0){
 			std::pair<InputId, InputGetter::Button> m = inputOption.mapping(i);
 			keyMap.insert(std::make_pair(m.first.keydata, m.second));
-		} else {
+		} else if(buttonlayout == 1){
 			std::pair<InputId, InputGetter::Button> m = inputOption.mapping_alt(i);
+			keyMap.insert(std::make_pair(m.first.keydata, m.second));
+		} else if(buttonlayout == 2){
+			std::pair<InputId, InputGetter::Button> m = inputOption.mapping_mirrorssinxy(i);
 			keyMap.insert(std::make_pair(m.first.keydata, m.second));
 		}
 	}
@@ -1104,7 +1128,10 @@ static std::size_t const gb_samples_per_frame = 35112;
 static std::size_t const gambatte_max_overproduction = 2064;
 
 static bool isFastForward(Uint8 const *keys) {
-	return keys[SDLK_TAB];
+	if (ffwhotkey == 1) {
+		return keys[SDLK_TAB];
+	}
+	return keys[SDLK_F12];
 }
 
 int GambatteSdl::run(long const sampleRate, int const latency, int const periods,
@@ -1125,6 +1152,10 @@ int GambatteSdl::run(long const sampleRate, int const latency, int const periods
 
 		if (handleEvents(blitter))
 			return 0;
+
+#ifdef MIYOO_BATTERY_WARNING
+		checkBatt();
+#endif
 
 		BlitterWrapper::Buf const &vbuf = blitter.inBuf();
 		std::size_t runsamples = gb_samples_per_frame - bufsamples;

@@ -1,7 +1,7 @@
 [Desktop Entry]
 Name=GBC
-Comment=Gambatte emulator
-Exec=gambatte.retrofw
+Comment=Gambatte-DMS emulator
+Exec=gambatte-dms.retrofw
 Terminal=false
 Type=Application
 StartupNotify=true

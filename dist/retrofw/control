@@ -1,6 +1,6 @@
-Package: gambatte
+Package: Gambatte-DMS
 Version: 
-Description: RetroGame port of Gambatte
+Description: port of Gambatte
 Section: emus
 Priority: optional
 Maintainer: hi-ban

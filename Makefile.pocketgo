@@ -6,7 +6,7 @@ CXX = $(CROSS_COMPILE)g++
 SYSROOT     := $(CHAINPREFIX)/arm-miyoo-linux-musleabi/sysroot
 SDL_CFLAGS  := $(shell $(SYSROOT)/usr/bin/sdl-config --cflags)
 
-OUTPUTNAME = gambatte-pocketgo
+OUTPUTNAME = gambatte-dms-pocketgo
 
 DEFINES = -DHAVE_STDINT_H -DVERSION_POCKETGO
 INCLUDES = -Isrc/gambatte_sdl -Ilibgambatte -Icommon -Iinclude -Ilibgambatte/include -Ilibgambatte/src $(SDL_CFLAGS)
