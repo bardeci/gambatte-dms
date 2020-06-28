@@ -9,7 +9,7 @@ echo "cd gambatte_sdl && scons"
 (cd gambatte_sdl && scons -Q target=retrofw)
 
 rm -rf /tmp/.gambatte-ipk/ && mkdir -p /tmp/.gambatte-ipk/root/home/retrofw/emus/gambatte /tmp/.gambatte-ipk/root/home/retrofw/apps/gmenu2x/sections/emulators /tmp/.gambatte-ipk/root/home/retrofw/apps/gmenu2x/sections/emulators.systems
-cp dist/retrofw/gambatte.man.txt dist/retrofw/gambatte.png /tmp/.gambatte-ipk/root/home/retrofw/emus/gambatte
+cp dist/retrofw/gambatte.man.txt dist/retrofw/gambatte_dms.png dist/retrofw/gambatte_dmg.png dist/retrofw/gambatte_gbc.png /tmp/.gambatte-ipk/root/home/retrofw/emus/gambatte
 cp gambatte_sdl/gambatte_sdl /tmp/.gambatte-ipk/root/home/retrofw/emus/gambatte/gambatte-dms.dge
 cp dist/retrofw/gambatte.lnk /tmp/.gambatte-ipk/root/home/retrofw/apps/gmenu2x/sections/emulators
 cp dist/retrofw/gb.gambatte.lnk dist/retrofw/gbc.gambatte.lnk /tmp/.gambatte-ipk/root/home/retrofw/apps/gmenu2x/sections/emulators.systems

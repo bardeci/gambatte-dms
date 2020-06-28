@@ -11,7 +11,7 @@ mv gambatte_sdl/gambatte_sdl gambatte_sdl/gambatte-dms.opendingux
 
 rm -f gambatte-dms-opendingux-r572u4-$BDAT.opk
 
-mksquashfs ./dist/gcw0/default.gcw0.desktop ./gambatte_sdl/gambatte-dms.opendingux ./dist/gcw0/gambatte.png ./dist/gcw0/manual.txt gambatte-dms-opendingux-r572u4-$BDAT.opk -all-root -no-xattrs -noappend -no-exports
+mksquashfs ./dist/gcw0/default.gcw0.desktop ./gambatte_sdl/gambatte-dms.opendingux ./dist/gcw0/gambatte_dms.png ./dist/gcw0/manual.txt gambatte-dms-opendingux-r572u4-$BDAT.opk -all-root -no-xattrs -noappend -no-exports
 
 echo "cd gambatte_sdl && scons -c"
 (cd gambatte_sdl && scons -c)

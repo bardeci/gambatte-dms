@@ -26,9 +26,9 @@ echo "cd gambatte_sdl && scons"
 (cd gambatte_sdl && scons -Q target=opendingux)
 mv gambatte_sdl/gambatte_sdl gambatte_sdl/gambatte-dms.opendingux
 
+BDAT=$(date +"%Y%m%d")
 rm -f gambatte-dms-multi-r572u4-$BDAT.opk
-
-mksquashfs ./dist/gcw0/default.gcw0.desktop ./dist/retrofw/default.retrofw.desktop ./dist/retrofw/gb.retrofw.desktop ./dist/retrofw/gbc.retrofw.desktop ./gambatte_sdl/gambatte-dms.opendingux ./gambatte_sdl/gambatte-dms.retrofw ./dist/gcw0/gambatte.png ./dist/gcw0/manual.txt ./dist/retrofw/gambatte.man.txt gambatte-dms-multi-r572u4-$BDAT.opk -all-root -no-xattrs -noappend -no-exports
+mksquashfs ./dist/gcw0/default.gcw0.desktop ./dist/retrofw/default.retrofw.desktop ./dist/retrofw/gb.retrofw.desktop ./dist/retrofw/gbc.retrofw.desktop ./gambatte_sdl/gambatte-dms.opendingux ./gambatte_sdl/gambatte-dms.retrofw ./dist/gcw0/gambatte_dms.png ./dist/retrofw/gambatte_dmg.png ./dist/retrofw/gambatte_gbc.png ./dist/gcw0/manual.txt ./dist/retrofw/gambatte.man.txt gambatte-dms-multi-r572u4-$BDAT.opk -all-root -no-xattrs -noappend -no-exports
 
 echo "cd gambatte_sdl && scons -c"
 (cd gambatte_sdl && scons -c)
