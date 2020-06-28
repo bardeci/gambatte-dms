@@ -265,6 +265,7 @@ void main_menu() {
 
     SDL_EnableKeyRepeat(250, 83);
     forcemenuexit = 0;
+    ffwdtoggle = 0;
 
     menu_t *menu;
     menu_entry_t *menu_entry;
@@ -1200,6 +1201,22 @@ static void callback_scaler(menu_t *caller_menu) {
         menu_entry_set_text(menu_entry, "Hw FullScreen");
         menu_add_entry(menu, menu_entry);
         menu_entry->callback = callback_selectedscaler;
+#ifdef VGA_SCREEN
+        menu_entry = new_menu_entry(0);
+        menu_entry_set_text(menu_entry, "Dot Matrix 3x");
+        menu_add_entry(menu, menu_entry);
+        menu_entry->callback = callback_selectedscaler;
+
+        menu_entry = new_menu_entry(0);
+        menu_entry_set_text(menu_entry, "CRT 3x");
+        menu_add_entry(menu, menu_entry);
+        menu_entry->callback = callback_selectedscaler;
+
+        menu_entry = new_menu_entry(0);
+        menu_entry_set_text(menu_entry, "CRT FullScreen");
+        menu_add_entry(menu, menu_entry);
+        menu_entry->callback = callback_selectedscaler;
+#endif
     }
 
     menu->selected_entry = selectedscaler; 
@@ -1214,6 +1231,7 @@ static void callback_selectedscaler(menu_t *caller_menu) {
     playMenuSound_ok();
     selectedscaler = caller_menu->selected_entry;
     if(gameiscgb == 0){
+        loadPalette(palname);
         load_border(dmgbordername);
     } else if(gameiscgb == 1){
         load_border(gbcbordername);
@@ -1876,7 +1894,12 @@ static void callback_ffwhotkey(menu_t *caller_menu) {
     menu_entry->callback = callback_selectedffwhotkey;
 
     menu_entry = new_menu_entry(0);
-    menu_entry_set_text(menu_entry, "Hotkey ON");
+    menu_entry_set_text(menu_entry, "Hotkey HOLD");
+    menu_add_entry(menu, menu_entry);
+    menu_entry->callback = callback_selectedffwhotkey;
+
+    menu_entry = new_menu_entry(0);
+    menu_entry_set_text(menu_entry, "Hotkey TOGGLE");
     menu_add_entry(menu, menu_entry);
     menu_entry->callback = callback_selectedffwhotkey;
 

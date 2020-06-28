@@ -67,7 +67,7 @@ int textanim = 0, textanimpos = 0, textanimdirection = 0, textanimtimer = 0, tex
 int ggcheats[NUM_GG_CODES *9] = {0};
 int gscheats[NUM_GS_CODES *8] = {0};
 int gscheatsenabled[NUM_GS_CODES] = {0};
-int menuin = -1, menuout = -1, showoverlay = -1, overlay_inout = 0, is_using_bios = 0, can_reset = 1, forcemenuexit = 0, refreshkeys = 0;
+int menuin = -1, menuout = -1, showoverlay = -1, overlay_inout = 0, is_using_bios = 0, can_reset = 1, forcemenuexit = 0, refreshkeys = 0, ffwdtoggle = 0;
 int firstframe = 0;
 
 #ifdef ROM_BROWSER
@@ -1373,9 +1373,16 @@ void paint_titlebar(SDL_Surface *surface){
 
 void createBorderSurface(){
 	switch(selectedscaler) {
-		case 0:		/* no scaler */
-			borderimg = SDL_CreateRGBSurface(SDL_SWSURFACE, 320, 240, 16, 0, 0, 0, 0);
+		case 5:		/* Ayla's fullscreen scaler */
+		case 6:		/* Bilinear fullscreen scaler */
+		case 11:	/* Hardware Fullscreen */
+#ifdef VGA_SCREEN
+		case 14:	/* CRT Fullscreen scaler */
+			borderimg = SDL_CreateRGBSurface(SDL_SWSURFACE, 8, 8, 16, 0, 0, 0, 0);
 			break;
+		case 12:	/* Dot Matrix 3x scaler */
+		case 13:	/* CRT 3x scaler */
+#endif
 		case 1:		/* Ayla's 1.5x scaler */
 		case 2:		/* Bilinear 1.5x scaler */
 			borderimg = SDL_CreateRGBSurface(SDL_SWSURFACE, 212, 160, 16, 0, 0, 0, 0);
@@ -1384,13 +1391,11 @@ void createBorderSurface(){
 		case 4:		/* Bilinear 1.66x scaler */
 			borderimg = SDL_CreateRGBSurface(SDL_SWSURFACE, 192, 144, 16, 0, 0, 0, 0);
 			break;
-		case 5:		/* Ayla's fullscreen scaler */
-		case 6:		/* Bilinear fullscreen scaler */
+		case 0:		/* no scaler */
 		case 7:		/* Hardware 1.25x */
 		case 8:		/* Hardware 1.36x */
 		case 9:		/* Hardware 1.5x */
-		case 10:		/* Hardware 1.66x */
-		case 11:		/* Hardware Fullscreen */
+		case 10:	/* Hardware 1.66x */
 		default:
 			borderimg = SDL_CreateRGBSurface(SDL_SWSURFACE, 320, 240, 16, 0, 0, 0, 0);
 			break;
@@ -1533,14 +1538,6 @@ void paint_border(SDL_Surface *surface){
     		SDL_FillRect(surface, &rect, barcolor);
 			SDL_FillRect(surface, &rectb, barcolor);
 			break;
-		case 5:		/* Ayla's fullscreen scaler */
-		case 6:		/* Bilinear fullscreen scaler */
-    		rect.x = 0;
-    		rect.y = 0;
-    		rect.w = 0;
-    		rect.h = 0;
-    		SDL_BlitSurface(borderimg, &rect, surface, NULL);
-			break;
 		case 7:		/* Hardware 1.25x */
 			rect.x = 32;
     		rect.y = 24;
@@ -1562,14 +1559,47 @@ void paint_border(SDL_Surface *surface){
     		rect.h = 160;
     		SDL_BlitSurface(borderimg, &rect, surface, NULL);
 			break;
-		case 10:		/* Hardware 1.66x*/
+		case 10:	/* Hardware 1.66x*/
 			rect.x = 64;
     		rect.y = 48;
     		rect.w = 192;
     		rect.h = 144;
     		SDL_BlitSurface(borderimg, &rect, surface, NULL);
 			break;
-		case 11:		/* Hardware Fullscreen */
+#ifdef VGA_SCREEN
+		case 12:	/* Dot Matrix 3x scaler */
+			rect.x = 0;
+    		rect.y = 0;
+    		rect.w = 2;
+    		rect.h = 480;
+			rectb.x = 638;
+    		rectb.y = 0;
+    		rectb.w = 2;
+    		rectb.h = 480;
+    		SDL_FillRect(surface, &rect, barcolor);
+			SDL_FillRect(surface, &rectb, barcolor);
+    		offset = 2;
+			scaleborder3x((uint32_t*)((uint8_t *)surface->pixels + offset * bpp), (uint32_t*)borderimg->pixels);
+			break;
+		case 13:	/* CRT 3x scaler */
+			rect.x = 0;
+    		rect.y = 0;
+    		rect.w = 2;
+    		rect.h = 480;
+			rectb.x = 638;
+    		rectb.y = 0;
+    		rectb.w = 2;
+    		rectb.h = 480;
+    		SDL_FillRect(surface, &rect, barcolor);
+			SDL_FillRect(surface, &rectb, barcolor);
+    		offset = 2;
+			scaleborder3x_crt((uint32_t*)((uint8_t *)surface->pixels + offset * bpp), (uint32_t*)borderimg->pixels);
+			break;
+		case 14:	/* CRT Fullscreen */
+#endif
+		case 5:		/* Ayla's fullscreen scaler */
+		case 6:		/* Bilinear fullscreen scaler */
+		case 11:	/* Hardware Fullscreen */
 			rect.x = 0;
     		rect.y = 0;
     		rect.w = 0;
@@ -1919,20 +1949,41 @@ void loadPalette(std::string palettefile){
     	return;
     } else if(palettefile == "DEFAULT"){
 		Uint32 value;
-	    for (int i = 0; i < 3; ++i) {
-	        for (int k = 0; k < 4; ++k) {
-	            if(k == 0)
-	                value = 0x64960a;
-	            if(k == 1)
-	                value = 0x1b7e3e;
-	            if(k == 2)
-	                value = 0x084e3c;
-	            if(k == 3)
-	                value = 0x003236;
-	            gambatte_p->setDmgPaletteColor(i, k, value);
-	        }
-	    }
-	    set_menu_palette(0x64960a, 0x1b7e3e, 0x084e3c, 0x003236);
+#ifdef VGA_SCREEN
+		if (selectedscaler == 12) {
+			for (int i = 0; i < 3; ++i) {
+		        for (int k = 0; k < 4; ++k) {
+		            if(k == 0)
+		                value = 0x5B8C07;
+		            if(k == 1)
+		                value = 0x187048;
+		            if(k == 2)
+		                value = 0x084448;
+		            if(k == 3)
+		                value = 0x002038;
+		            gambatte_p->setDmgPaletteColor(i, k, value);
+		        }
+		    }
+		    set_menu_palette(0x5B8C07, 0x187048, 0x084448, 0x002038);
+		} else {
+#endif
+		    for (int i = 0; i < 3; ++i) {
+		        for (int k = 0; k < 4; ++k) {
+		            if(k == 0)
+		                value = 0x64960a;
+		            if(k == 1)
+		                value = 0x1b7e3e;
+		            if(k == 2)
+		                value = 0x084e3c;
+		            if(k == 3)
+		                value = 0x003236;
+		            gambatte_p->setDmgPaletteColor(i, k, value);
+		        }
+		    }
+	    	set_menu_palette(0x64960a, 0x1b7e3e, 0x084e3c, 0x003236);
+#ifdef VGA_SCREEN
+		}
+#endif
 		return;
 	} else {
 		Uint32 values[12];
@@ -1952,20 +2003,41 @@ void loadPalette(std::string palettefile){
 				if (fpal == NULL) {
 					printf("Palette file %s not found. Loading default palette...\n", filepath.c_str());
 					Uint32 value;
-				    for (int i = 0; i < 3; ++i) {
-				        for (int k = 0; k < 4; ++k) {
-				            if(k == 0)
-				                value = 0x64960a;
-				            if(k == 1)
-				                value = 0x1b7e3e;
-				            if(k == 2)
-				                value = 0x084e3c;
-				            if(k == 3)
-				                value = 0x003236;
-				            gambatte_p->setDmgPaletteColor(i, k, value);
-				        }
-				    }
-				    set_menu_palette(0x64960a, 0x1b7e3e, 0x084e3c, 0x003236);
+#ifdef VGA_SCREEN
+					if (selectedscaler == 12) {
+						for (int i = 0; i < 3; ++i) {
+					        for (int k = 0; k < 4; ++k) {
+					            if(k == 0)
+					                value = 0x5B8C07;
+					            if(k == 1)
+					                value = 0x187048;
+					            if(k == 2)
+					                value = 0x084448;
+					            if(k == 3)
+					                value = 0x002038;
+					            gambatte_p->setDmgPaletteColor(i, k, value);
+					        }
+					    }
+					    set_menu_palette(0x5B8C07, 0x187048, 0x084448, 0x002038);
+					} else {
+#endif
+					    for (int i = 0; i < 3; ++i) {
+					        for (int k = 0; k < 4; ++k) {
+					            if(k == 0)
+					                value = 0x64960a;
+					            if(k == 1)
+					                value = 0x1b7e3e;
+					            if(k == 2)
+					                value = 0x084e3c;
+					            if(k == 3)
+					                value = 0x003236;
+					            gambatte_p->setDmgPaletteColor(i, k, value);
+					        }
+					    }
+				    	set_menu_palette(0x64960a, 0x1b7e3e, 0x084e3c, 0x003236);
+#ifdef VGA_SCREEN
+					}
+#endif
 					return;
 				}
 			} else {

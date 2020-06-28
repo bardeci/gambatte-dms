@@ -180,6 +180,19 @@ void SdlBlitter::setBufferDimensions() {
 			}
 			SetVid(160, 144, 16);
 			break;
+#ifdef VGA_SCREEN
+		case 12:		/* Dot Matrix 3x */
+		case 13:		/* CRT 3x scaler */
+			SetVid(640, 480, 16);
+			break;
+		case 14:		/* CRT Fullscreen */
+			if (aspect_ratio_file) {
+				fwrite("0", 1, 1, aspect_ratio_file);
+				fclose(aspect_ratio_file);
+			}
+			SetVid(480, 432, 16);
+			break;
+#endif
 		default:
 			SetVid(320, 240, 16);
 			break;
@@ -249,6 +262,22 @@ void SdlBlitter::setScreenRes() {
 				SetVid(160, 144, 16);
 			}
 			break;
+#ifdef VGA_SCREEN
+		case 12:		/* Dot Matrix 3x */
+		case 13:		/* CRT 3x scaler */
+			if(screen->w != 640 || screen->h != 480)
+				SetVid(640, 480, 16);
+			break;
+		case 14:		/* CRT Fullscreen */
+			if (aspect_ratio_file) {
+				fwrite("0", 1, 1, aspect_ratio_file);
+				fclose(aspect_ratio_file);
+			}
+			if(screen->w != 480 || screen->h != 432) {
+				SetVid(480, 432, 16);
+			}
+			break;
+#endif
 		default:
 			if(screen->w != 320 || screen->h != 240)
 				SetVid(320, 240, 16);
@@ -467,6 +496,23 @@ void SdlBlitter::draw() {
 			case 6:		/* Bilinear fullscreen scaler */
 				fullscreen_upscale_pseudobilinear((uint32_t*)screen->pixels, (uint32_t*)surface->pixels);
 				break;
+#ifdef VGA_SCREEN
+			case 12:		/* Dot Matrix 3x scaler */
+				offset = (2 * (640 - 480) / 2) + ((480 - 432) / 2) * screen->pitch;
+				if (gameiscgb == 1){
+					scale3x_dotmatrix((uint32_t*)((uint8_t *)screen->pixels + offset), (uint32_t*)surface->pixels, menupalblack);
+				} else {
+					scale3x_dotmatrix((uint32_t*)((uint8_t *)screen->pixels + offset), (uint32_t*)surface->pixels, menupalwhite);
+				}
+				break;
+			case 13:		/* CRT 3x scaler */
+				offset = (2 * (640 - 480) / 2) + ((480 - 432) / 2) * screen->pitch;
+				scale3x_crt((uint32_t*)((uint8_t *)screen->pixels + offset), (uint32_t*)surface->pixels);
+				break;
+			case 14:	/* CRT Fullscreen */
+				fullscreen_crt((uint32_t*)screen->pixels, (uint32_t*)surface->pixels);
+				break;
+#endif
 			case 7:		/* Hardware 1.25x */
 			case 8:		/* Hardware 1.36x */
 			case 9:		/* Hardware 1.5x */
@@ -531,6 +577,23 @@ void SdlBlitter::draw() {
 			case 6:		/* Bilinear fullscreen scaler */
 				fullscreen_upscale_pseudobilinear((uint32_t*)screen->pixels, (uint32_t*)currframe->pixels);
 				break;
+#ifdef VGA_SCREEN
+			case 12:		/* Dot Matrix 3x scaler */
+				offset = (2 * (640 - 480) / 2) + ((480 - 432) / 2) * screen->pitch;
+				if (gameiscgb == 1){
+					scale3x_dotmatrix((uint32_t*)((uint8_t *)screen->pixels + offset), (uint32_t*)currframe->pixels, menupalblack);
+				} else {
+					scale3x_dotmatrix((uint32_t*)((uint8_t *)screen->pixels + offset), (uint32_t*)currframe->pixels, menupalwhite);
+				}
+				break;
+			case 13:		/* CRT 3x scaler */
+				offset = (2 * (640 - 480) / 2) + ((480 - 432) / 2) * screen->pitch;
+				scale3x_crt((uint32_t*)((uint8_t *)screen->pixels + offset), (uint32_t*)currframe->pixels);
+				break;
+			case 14:		/* CRT Fullscreen */
+				fullscreen_crt((uint32_t*)screen->pixels, (uint32_t*)currframe->pixels);
+				break;
+#endif
 			case 7:		/* Hardware 1.25x */
 			case 8:		/* Hardware 1.36x */
 			case 9:		/* Hardware 1.5x */
@@ -610,6 +673,23 @@ void SdlBlitter::scaleMenu() {
 		case 6:		/* Bilinear fullscreen scaler */
 			fullscreen_upscale_pseudobilinear((uint32_t*)screen->pixels, (uint32_t*)menuscreen->pixels);
 			break;
+#ifdef VGA_SCREEN
+		case 12:		/* Dot Matrix 3x scaler */
+			offset = (2 * (640 - 480) / 2) + ((480 - 432) / 2) * screen->pitch;
+			if (gameiscgb == 1){
+				scale3x_dotmatrix((uint32_t*)((uint8_t *)screen->pixels + offset), (uint32_t*)menuscreen->pixels, menupalblack);
+			} else {
+				scale3x_dotmatrix((uint32_t*)((uint8_t *)screen->pixels + offset), (uint32_t*)menuscreen->pixels, menupalwhite);
+			}
+			break;
+		case 13:		/* CRT 3x scaler */
+			offset = (2 * (640 - 480) / 2) + ((480 - 432) / 2) * screen->pitch;
+			scale3x_crt((uint32_t*)((uint8_t *)screen->pixels + offset), (uint32_t*)menuscreen->pixels);
+			break;
+		case 14:		/* CRT Fullscreen */
+			fullscreen_crt((uint32_t*)screen->pixels, (uint32_t*)menuscreen->pixels);
+			break;
+#endif
 		case 7:		/* Hardware 1.25x */
 		case 8:		/* Hardware 1.36x */
 		case 9:		/* Hardware 1.5x */

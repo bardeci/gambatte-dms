@@ -1083,6 +1083,17 @@ bool GambatteSdl::handleEvents(BlitterWrapper &blitter) {
 							inputGetter.is = 0;
 						}
 						break;
+					case SDLK_TAB: // L/L1 button
+						if (ffwhotkey == 2) {
+							if (ffwdtoggle == 0){
+								ffwdtoggle = 1;
+							} else if (ffwdtoggle == 1){
+								ffwdtoggle = 0;
+							}
+						} else {
+							ffwdtoggle = 0;
+						}
+						break;
 					/*
 					case SDLK_F5:
 						gambatte.saveState(blitter.inBuf().pixels, blitter.inBuf().pitch);
@@ -1130,6 +1141,12 @@ static std::size_t const gambatte_max_overproduction = 2064;
 static bool isFastForward(Uint8 const *keys) {
 	if (ffwhotkey == 1) {
 		return keys[SDLK_TAB];
+	} else if (ffwhotkey == 2) {
+		if (ffwdtoggle == 0){
+			return false;
+		} else if (ffwdtoggle == 1){
+			return true;
+		}
 	}
 	return keys[SDLK_F12];
 }

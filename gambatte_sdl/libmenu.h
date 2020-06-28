@@ -117,7 +117,7 @@ extern int numcodes_gg, numcodes_gs, selectedcode, editmode;
 extern int ggcheats[NUM_GG_CODES*9];
 extern int gscheats[NUM_GS_CODES*8];
 extern int gscheatsenabled[NUM_GS_CODES];
-extern int menuin, menuout, showoverlay, overlay_inout, is_using_bios, can_reset, forcemenuexit, refreshkeys;
+extern int menuin, menuout, showoverlay, overlay_inout, is_using_bios, can_reset, forcemenuexit, refreshkeys, ffwdtoggle;
 extern int firstframe;
 
 #ifdef ROM_BROWSER

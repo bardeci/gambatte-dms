@@ -19,7 +19,13 @@ void fullscreen_upscale(uint32_t *to, uint32_t *from);
 void fullscreen_upscale_pseudobilinear(uint32_t* dst, uint32_t* src);
 void scaleborder15x(uint32_t* dst, uint32_t* src);
 void scaleborder166x(uint32_t* dst, uint32_t* src);
-
+#ifdef VGA_SCREEN
+void scale3x_dotmatrix(uint32_t* dst, uint32_t* src, const uint32_t gridcolor);
+void scale3x_crt(uint32_t* dst, uint32_t* src);
+void fullscreen_crt(uint32_t* dst, uint32_t* src);
+void scaleborder3x(uint32_t* dst, uint32_t* src);
+void scaleborder3x_crt(uint32_t* dst, uint32_t* src);
+#endif
 
 #ifdef __cplusplus
 }
