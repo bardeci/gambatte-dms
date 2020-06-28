@@ -265,7 +265,6 @@ void main_menu() {
 
     SDL_EnableKeyRepeat(250, 83);
     forcemenuexit = 0;
-    ffwdtoggle = 0;
 
     menu_t *menu;
     menu_entry_t *menu_entry;

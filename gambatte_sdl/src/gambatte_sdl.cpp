@@ -1078,7 +1078,7 @@ bool GambatteSdl::handleEvents(BlitterWrapper &blitter) {
 					case SDLK_HOME: // Power button in Opendingux devices
 					case SDLK_END: // Power/Suspend button in RetroFW devices
 						if((menuout == -1) && (menuin == -1)){
-							//main_menu();
+							ffwdtoggle = 0;
 							main_menu_with_anim();
 							inputGetter.is = 0;
 						}
