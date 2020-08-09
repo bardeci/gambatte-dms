@@ -135,6 +135,11 @@ void SdlBlitter::SetVid(int w, int h, int bpp){
 void SdlBlitter::setBufferDimensions() {
 	
 	FILE* aspect_ratio_file = fopen(ipuscaling.c_str(), "w");
+#ifdef VGA_SCREEN
+	FILE* sharpness_file = fopen("/sys/devices/platform/jz-lcd.0/sharpness_upscaling", "w");
+	fwrite("1", 1, 1, sharpness_file);
+	fclose(sharpness_file);
+#endif
 	switch(selectedscaler) {
 		case 0:		/* no scaler */
 		case 1:		/* Ayla's 1.5x scaler */
@@ -205,7 +210,11 @@ void SdlBlitter::setBufferDimensions() {
 
 void SdlBlitter::setScreenRes() {
 	FILE* aspect_ratio_file = fopen(ipuscaling.c_str(), "w");
-
+#ifdef VGA_SCREEN
+	FILE* sharpness_file = fopen("/sys/devices/platform/jz-lcd.0/sharpness_upscaling", "w");
+	fwrite("1", 1, 1, sharpness_file);
+	fclose(sharpness_file);
+#endif
 	switch(selectedscaler) {
 		case 0:		/* no scaler */
 		case 1:		/* Ayla's 1.5x scaler */

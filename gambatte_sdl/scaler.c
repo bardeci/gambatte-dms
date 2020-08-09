@@ -898,12 +898,13 @@ void scale3x_dotmatrix(uint32_t* dst, uint32_t* src, const uint32_t gridcolor)
         for (BlockX = 0; BlockX < 160; BlockX++)
         {
             // Before:          After:
-            // (a)              (x)(a)(a)
-            //                  (x)(a)(a)
-            //                  (x)(x)(x)
+            // (a)              (2)(1)(1)
+            //                  (2)(1)(1)
+            //                  (3)(2)(2)
 
             uint16_t  _1 = *(BlockSrc);
             uint16_t  _2 = Weight3_2( _1, gcolor);
+            uint16_t  _3 = Weight2_3( _1, gcolor);
 
             // -- Row 1 --
             *(BlockDst               ) = _2;
@@ -916,7 +917,7 @@ void scale3x_dotmatrix(uint32_t* dst, uint32_t* src, const uint32_t gridcolor)
             *(BlockDst + 640 *  1 + 2) = _1;
 
             // -- Row 3 --
-            *(BlockDst + 640 *  2    ) = _2;
+            *(BlockDst + 640 *  2    ) = _3;
             *(BlockDst + 640 *  2 + 1) = _2;
             *(BlockDst + 640 *  2 + 2) = _2;
 
