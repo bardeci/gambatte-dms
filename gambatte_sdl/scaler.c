@@ -10,6 +10,19 @@
 #   define prefetch(x, y)
 #endif
 
+uint16_t hexcolor_to_rgb565(const uint32_t color)
+{
+    uint8_t colorr = ((color >> 16) & 0xFF);
+    uint8_t colorg = ((color >> 8) & 0xFF);
+    uint8_t colorb = ((color) & 0xFF);
+
+    uint16_t r = ((colorr >> 3) & 0x1f) << 11;
+    uint16_t g = ((colorg >> 2) & 0x3f) << 5;
+    uint16_t b = (colorb >> 3) & 0x1f;
+
+    return (uint16_t) (r | g | b);
+}
+
 /* Ayla's fullscreen upscaler */
 /* Upscale from 160x144 to 320x240 */
 void fullscreen_upscale(uint32_t *to, uint32_t *from)
@@ -855,20 +868,176 @@ void scale166x_pseudobilinear(uint32_t* dst, uint32_t* src)
     }
 }
 
-#ifdef VGA_SCREEN
+#ifdef OGA_SCREEN
 
-uint16_t hexcolor_to_rgb565(const uint32_t color)
+/* Upscales a 160x144 image to 320x288 using a grid-looking upscaler algorithm.
+ *
+ * Input:
+ *   src: A packed 160x144 pixel image. The pixel format of this image is RGB 565.
+ *   gridcolor: An hexadecimal color. The format of this color is 0xRRGGBB.
+ * Output:
+ *   dst: A packed 320x288 pixel image. The pixel format of this image is RGB 565.
+ */
+
+void scale2x_dotmatrix(uint32_t* dst, uint32_t* src, const uint32_t gridcolor)
 {
-    uint8_t colorr = ((color >> 16) & 0xFF);
-    uint8_t colorg = ((color >> 8) & 0xFF);
-    uint8_t colorb = ((color) & 0xFF);
+    uint16_t* Src16 = (uint16_t*) src;
+    uint16_t* Dst16 = (uint16_t*) dst;
+    uint16_t gcolor = hexcolor_to_rgb565(gridcolor);
 
-    uint16_t r = ((colorr >> 3) & 0x1f) << 11;
-    uint16_t g = ((colorg >> 2) & 0x3f) << 5;
-    uint16_t b = (colorb >> 3) & 0x1f;
+    // There are 160 pixels horizontally, and 144 vertically.
+    // Each pixel becomes 2x2 with an added grid pattern.
 
-    return (uint16_t) (r | g | b);
+    uint32_t BlockX, BlockY;
+    uint16_t* BlockSrc;
+    uint16_t* BlockDst;
+    for (BlockY = 0; BlockY < 144; BlockY++)
+    {
+        BlockSrc = Src16 + BlockY * 160 * 1;
+        BlockDst = Dst16 + BlockY * 480 * 2;
+        for (BlockX = 0; BlockX < 160; BlockX++)
+        {
+            // Before:          After:
+            // (a)              (2)(1)
+            //                  (3)(2)
+
+            uint16_t  _1 = *(BlockSrc);
+            uint16_t  _2 = Weight2_1( _1, gcolor);
+            uint16_t  _3 = Weight1_1( _1, gcolor);
+
+            // -- Row 1 --
+            *(BlockDst               ) = _2;
+            *(BlockDst            + 1) = _1;
+
+            // -- Row 2 --
+            *(BlockDst + 480 *  1    ) = _3;
+            *(BlockDst + 480 *  1 + 1) = _2;
+
+            BlockSrc += 1;
+            BlockDst += 2;
+        }
+    }
 }
+
+/* Upscales a 160x144 image to 320x288 using a CRT-looking upscaler algorithm.
+ *
+ * Input:
+ *   src: A packed 160x144 pixel image. The pixel format of this image is RGB 565.
+ *   gridcolor: An hexadecimal color. The format of this color is 0xRRGGBB.
+ * Output:
+ *   dst: A packed 320x288 pixel image. The pixel format of this image is RGB 565.
+ */
+
+void scale2x_crt(uint32_t* dst, uint32_t* src)
+{
+    uint16_t* Src16 = (uint16_t*) src;
+    uint16_t* Dst16 = (uint16_t*) dst;
+    uint16_t gcolor = hexcolor_to_rgb565(0x000000);
+
+    // There are 160 pixels horizontally, and 144 vertically.
+    // Each pixel becomes 2x2 with an added scanline pattern.
+
+    uint32_t BlockX, BlockY;
+    uint16_t* BlockSrc;
+    uint16_t* BlockDst;
+    for (BlockY = 0; BlockY < 144; BlockY++)
+    {
+        BlockSrc = Src16 + BlockY * 160 * 1;
+        BlockDst = Dst16 + BlockY * 480 * 2;
+        for (BlockX = 0; BlockX < 160; BlockX++)
+        {
+            // Before:          After:
+            // (a)              (1)(1)
+            //                  (2)(2)
+
+            uint16_t  _1 = *(BlockSrc);
+            uint16_t  _2 = Weight2_1( _1, gcolor);
+
+            // -- Row 1 --
+            *(BlockDst               ) = _1;
+            *(BlockDst            + 1) = _1;
+
+            // -- Row 2 --
+            *(BlockDst + 480 *  1    ) = _2;
+            *(BlockDst + 480 *  1 + 1) = _2;
+
+            BlockSrc += 1;
+            BlockDst += 2;
+        }
+    }
+}
+
+void scaleborder2x(uint32_t* dst, uint32_t* src)
+{
+    uint16_t* Src16 = (uint16_t*) src;
+    uint16_t* Dst16 = (uint16_t*) dst;
+
+    uint32_t BlockX, BlockY;
+    uint16_t* BlockSrc;
+    uint16_t* BlockDst;
+    for (BlockY = 0; BlockY < 160; BlockY++)
+    {
+        BlockSrc = Src16 + BlockY * 240 * 1;
+        BlockDst = Dst16 + BlockY * 480 * 2;
+        for (BlockX = 0; BlockX < 240; BlockX++)
+        {
+            // Before:          After:
+            // (a)              (a)(a)
+            //                  (a)(a)
+
+            uint16_t  _1 = *(BlockSrc);
+
+            // -- Row 1 --
+            *(BlockDst               ) = _1;
+            *(BlockDst            + 1) = _1;
+
+            // -- Row 2 --
+            *(BlockDst + 480 *  1    ) = _1;
+            *(BlockDst + 480 *  1 + 1) = _1;
+
+            BlockSrc += 1;
+            BlockDst += 2;
+        }
+    }
+}
+
+void scaleborder2x_crt(uint32_t* dst, uint32_t* src)
+{
+    uint16_t* Src16 = (uint16_t*) src;
+    uint16_t* Dst16 = (uint16_t*) dst;
+    uint16_t gcolor = hexcolor_to_rgb565(0x000000);
+
+    uint32_t BlockX, BlockY;
+    uint16_t* BlockSrc;
+    uint16_t* BlockDst;
+    for (BlockY = 0; BlockY < 160; BlockY++)
+    {
+        BlockSrc = Src16 + BlockY * 240 * 1;
+        BlockDst = Dst16 + BlockY * 480 * 2;
+        for (BlockX = 0; BlockX < 240; BlockX++)
+        {
+            // Before:          After:
+            // (a)              (1)(1)
+            //                  (2)(2)
+
+            uint16_t  _1 = *(BlockSrc);
+            uint16_t  _2 = Weight2_1( _1, gcolor);
+
+            // -- Row 1 --
+            *(BlockDst               ) = _1;
+            *(BlockDst            + 1) = _1;
+
+            // -- Row 2 --
+            *(BlockDst + 480 *  1    ) = _2;
+            *(BlockDst + 480 *  1 + 1) = _2;
+
+            BlockSrc += 1;
+            BlockDst += 2;
+        }
+    }
+}
+
+#elif VGA_SCREEN
 
 /* Upscales a 160x144 image to 480x432 using a grid-looking upscaler algorithm.
  *

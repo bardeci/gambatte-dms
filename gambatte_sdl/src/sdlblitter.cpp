@@ -27,6 +27,7 @@
 #include <SDL/SDL.h>
 #include <SDL/SDL_image.h>
 #include <cmath>
+#include <dirent.h>
 
 SDL_Surface *lastframe;
 SDL_Surface *currframe;
@@ -91,15 +92,17 @@ void init_border(SDL_Surface *dst){
 
 void SdlBlitter::CheckIPU(){
 	FILE *aspect_ratio_file = NULL;
-	std::string ipu_OpenDingux = ("/sys/devices/platform/jz-lcd.0/keep_aspect_ratio");
+	DIR *ipu_dir = NULL;
+	std::string ipu_OpenDinguxLegacy = ("/sys/devices/platform/jz-lcd.0/keep_aspect_ratio");
 	std::string ipu_RetroFW10 = ("/proc/jz/ipu_ratio");
 	std::string ipu_RetroFW20 = ("/proc/jz/ipu");
+	std::string ipu_OpenDingux = ("/sys/devices/platform/13080000.ipu");
 
-	aspect_ratio_file = fopen(ipu_OpenDingux.c_str(), "r+");
+	aspect_ratio_file = fopen(ipu_OpenDinguxLegacy.c_str(), "r+");
 	if (aspect_ratio_file != NULL) {
 		fclose(aspect_ratio_file);
-		ipuscaling = ipu_OpenDingux;
-		printf("Detected IPU scaling - OpenDingux\n");
+		ipuscaling = ipu_OpenDinguxLegacy;
+		printf("Detected IPU scaling - OpenDinguxLegacy\n");
 		return;
 	}
 	aspect_ratio_file = fopen(ipu_RetroFW10.c_str(), "r+");
@@ -114,6 +117,13 @@ void SdlBlitter::CheckIPU(){
 		fclose(aspect_ratio_file);
 		ipuscaling = ipu_RetroFW20;
 		printf("Detected IPU scaling - RetroFW 2.X\n");
+		return;
+	}
+	ipu_dir = opendir("/sys/devices/platform/13080000.ipu");
+	if (ipu_dir != NULL) {
+		closedir(ipu_dir);
+		ipuscaling = "NEW_OD_IPU";
+		printf("Detected IPU scaling - OpenDingux\n");
 		return;
 	}
 	printf("Could not detect IPU scaling\n");
@@ -137,8 +147,10 @@ void SdlBlitter::setBufferDimensions() {
 	FILE* aspect_ratio_file = fopen(ipuscaling.c_str(), "w");
 #ifdef VGA_SCREEN
 	FILE* sharpness_file = fopen("/sys/devices/platform/jz-lcd.0/sharpness_upscaling", "w");
-	fwrite("1", 1, 1, sharpness_file);
-	fclose(sharpness_file);
+	if (sharpness_file) {
+		fwrite("1", 1, 1, sharpness_file);
+		fclose(sharpness_file);
+	}
 #endif
 	switch(selectedscaler) {
 		case 0:		/* no scaler */
@@ -212,8 +224,10 @@ void SdlBlitter::setScreenRes() {
 	FILE* aspect_ratio_file = fopen(ipuscaling.c_str(), "w");
 #ifdef VGA_SCREEN
 	FILE* sharpness_file = fopen("/sys/devices/platform/jz-lcd.0/sharpness_upscaling", "w");
-	fwrite("1", 1, 1, sharpness_file);
-	fclose(sharpness_file);
+	if (sharpness_file) {
+		fwrite("1", 1, 1, sharpness_file);
+		fclose(sharpness_file);
+	}
 #endif
 	switch(selectedscaler) {
 		case 0:		/* no scaler */
