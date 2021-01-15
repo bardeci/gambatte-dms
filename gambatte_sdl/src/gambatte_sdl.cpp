@@ -385,8 +385,8 @@ public:
 		static InputGetter::Button const gbbuts_mirrorssinxy[] = {
 			InputGetter::START,
 			InputGetter::SELECT,
-			InputGetter::B,
 			InputGetter::A,
+			InputGetter::B,
 			InputGetter::UP,
 			InputGetter::DOWN,
 			InputGetter::LEFT,
