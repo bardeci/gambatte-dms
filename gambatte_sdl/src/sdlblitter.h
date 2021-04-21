@@ -50,9 +50,12 @@ public:
 	void toggleFullScreen();
 	void CheckIPU();
 	void SetVid(int w, int h, int bpp);
+	void SetIPUAspectRatio(const char *ratiovalue);
+	void SetIPUSharpness(const char *svalue);
 	void setBufferDimensions();
 	void setScreenRes();
 	void force320x240();
+	void applyScalerToSurface(SDL_Surface *sourcesurface);
 	void scaleMenu();
 	SDL_Surface *screen;
 	SDL_Surface *surface;

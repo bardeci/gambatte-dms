@@ -56,10 +56,10 @@ Mix_Chunk *menusound_move = NULL;
 Mix_Chunk *menusound_ok = NULL;
 
 // Default config values
-int selectedscaler = 0, showfps = 0, ghosting = 1, biosenabled = 0, colorfilter = 0, gameiscgb = 0, buttonlayout = 0, stereosound = 0, prefercgb = 0, ffwhotkey = 1;
+int showfps = 0, ghosting = 1, biosenabled = 0, colorfilter = 0, gameiscgb = 0, buttonlayout = 0, stereosound = 1, prefercgb = 0, ffwhotkey = 1;
 uint32_t menupalblack = 0x000000, menupaldark = 0x505450, menupallight = 0xA8A8A8, menupalwhite = 0xF8FCF8;
 int filtervalue[12] = {135, 20, 0, 25, 0, 125, 20, 25, 0, 20, 105, 30};
-std::string dmgbordername = "DEFAULT", gbcbordername = "DEFAULT", palname = "DEFAULT", filtername = "NONE", currgamename = "default";
+std::string selectedscaler= "No Scaling", dmgbordername = "DEFAULT", gbcbordername = "DEFAULT", palname = "DEFAULT", filtername = "NONE", currgamename = "default";
 std::string homedir = getenv("HOME");
 std::string ipuscaling = "NONE";
 int numcodes_gg = NUM_GG_CODES, numcodes_gs = NUM_GS_CODES, selectedcode = 0, editmode = 0, blink = 0, footer_alt = 0;
@@ -261,7 +261,7 @@ void clearAllCheats(){ // NOTE: This does not turn off cheats from the game, it 
 }
 
 void openMenuAudio(){
-#ifdef VERSION_OPENDINGUX
+#ifdef VERSION_GCW0
 	Mix_OpenAudio(44100, AUDIO_S16SYS, 2, 1792);
 #elif VERSION_RETROFW
 	Mix_OpenAudio(44100, AUDIO_S16SYS, 2, 1024);
@@ -1331,22 +1331,32 @@ void free_menusurfaces(){ //currently unused
 	SDL_FreeSurface(textoverlaycolored);
 }
 
-int currentEntryInList(menu_t *menu, std::string fname){
-	if(fname == "NONE"){
-		return 0;
-	} else if (fname == "DEFAULT"){
-		return 1;
-	} else if (fname == "AUTO"){
-		return 2;
+int currentEntryInList(menu_t *menu, std::string fname, int isfile){
+	if (isfile == 1){
+		if(fname == "NONE"){
+			return 0;
+		} else if (fname == "DEFAULT"){
+			return 1;
+		} else if (fname == "AUTO"){
+			return 2;
+		}
+		fname = fname.substr(0, fname.length() - 4);
+	    int count = menu->n_entries;
+	    int i;
+	    for (i = 0; i < count; ++i) {
+	    	if(strcmp(fname.c_str(), menu->entries[i]->text) == 0){
+	    		return i;
+	    	}
+	    }
+	} else if (isfile == 0){
+		int count = menu->n_entries;
+	    int i;
+	    for (i = 0; i < count; ++i) {
+	    	if(strcmp(fname.c_str(), menu->entries[i]->text) == 0){
+	    		return i;
+	    	}
+	    }
 	}
-	fname = fname.substr(0, fname.length() - 4);
-    int count = menu->n_entries;
-    int i;
-    for (i = 0; i < count; ++i) {
-    	if(strcmp(fname.c_str(), menu->entries[i]->text) == 0){
-    		return i;
-    	}
-    }
     return 0;
 }
 
@@ -1372,34 +1382,51 @@ void paint_titlebar(SDL_Surface *surface){
 }
 
 void createBorderSurface(){
-	switch(selectedscaler) {
-		case 5:		/* Ayla's fullscreen scaler */
-		case 6:		/* Bilinear fullscreen scaler */
-		case 11:	/* Hardware Fullscreen */
-#ifdef VGA_SCREEN
-		case 14:	/* CRT Fullscreen scaler */
-			borderimg = SDL_CreateRGBSurface(SDL_SWSURFACE, 8, 8, 16, 0, 0, 0, 0);
-			break;
-		case 12:	/* Dot Matrix 3x scaler */
-		case 13:	/* CRT 3x scaler */
-#endif
-		case 1:		/* Ayla's 1.5x scaler */
-		case 2:		/* Bilinear 1.5x scaler */
-			borderimg = SDL_CreateRGBSurface(SDL_SWSURFACE, 212, 160, 16, 0, 0, 0, 0);
-			break;
-		case 3:		/* Fast 1.66x scaler */
-		case 4:		/* Bilinear 1.66x scaler */
-			borderimg = SDL_CreateRGBSurface(SDL_SWSURFACE, 192, 144, 16, 0, 0, 0, 0);
-			break;
-		case 0:		/* no scaler */
-		case 7:		/* Hardware 1.25x */
-		case 8:		/* Hardware 1.36x */
-		case 9:		/* Hardware 1.5x */
-		case 10:	/* Hardware 1.66x */
-		default:
-			borderimg = SDL_CreateRGBSurface(SDL_SWSURFACE, 320, 240, 16, 0, 0, 0, 0);
-			break;
+	if (selectedscaler == "FullScreen Fast" ||
+		selectedscaler == "FullScreen Smooth" ||
+		selectedscaler == "FullScreen IPU" ||
+		selectedscaler == "FullScreen IPU-2x" ||
+		selectedscaler == "FullScreen DMG-2x" ||
+		selectedscaler == "FullScreen DMG-3x" ||
+		selectedscaler == "FullScreen Scan-2x" ||
+		selectedscaler == "FullScreen Scan-3x")
+	{
+		borderimg = SDL_CreateRGBSurface(SDL_SWSURFACE, 8, 8, 16, 0, 0, 0, 0);
 	}
+	else if (selectedscaler == "1.5x IPU-2x" ||
+		selectedscaler == "1.5x DMG-2x" ||
+		selectedscaler == "1.5x Scan-2x")
+	{
+		borderimg = SDL_CreateRGBSurface(SDL_SWSURFACE, 214, 160, 16, 0, 0, 0, 0);
+	}
+	else if (selectedscaler == "1.5x Fast" ||
+		selectedscaler == "1.5x Smooth" ||
+		selectedscaler == "1.5x DMG-3x" ||
+		selectedscaler == "1.5x Scan-3x")
+	{
+		borderimg = SDL_CreateRGBSurface(SDL_SWSURFACE, 212, 160, 16, 0, 0, 0, 0);
+	}
+	else if (selectedscaler == "Aspect 1.66x Fast" ||
+		selectedscaler == "Aspect 1.66x Smooth" ||
+		selectedscaler == "Aspect IPU-2x" ||
+		selectedscaler == "Aspect DMG-2x" ||
+		selectedscaler == "Aspect DMG-3x" ||
+		selectedscaler == "Aspect Scan-2x" ||
+		selectedscaler == "Aspect Scan-3x")
+	{
+		borderimg = SDL_CreateRGBSurface(SDL_SWSURFACE, 192, 144, 16, 0, 0, 0, 0);
+	}
+	else if (selectedscaler == "No Scaling" ||
+		selectedscaler == "1.5x IPU" ||
+		selectedscaler == "Aspect IPU")
+	{
+		borderimg = SDL_CreateRGBSurface(SDL_SWSURFACE, 320, 240, 16, 0, 0, 0, 0);
+	}
+	else
+	{
+		borderimg = SDL_CreateRGBSurface(SDL_SWSURFACE, 320, 240, 16, 0, 0, 0, 0);
+	}
+
 	if(gameiscgb == 0){
 		if(dmgbordername != "NONE") {
 			clear_surface(borderimg, convert_hexcolor(borderimg, menupalwhite));
@@ -1501,118 +1528,146 @@ void paint_border(SDL_Surface *surface){
 	SDL_Rect rect, rectb;
 	uint32_t barcolor = SDL_MapRGB(surface->format, 0, 0, 0);
 	int bpp = surface->format->BytesPerPixel;
-	switch(selectedscaler) {
-		case 0:		/* no scaler */
-			rect.x = 0;
-    		rect.y = 0;
-    		rect.w = 320;
-    		rect.h = 240;
-			SDL_BlitSurface(borderimg, &rect, surface, NULL);
-			break;
-		case 1:		/* Ayla's 1.5x scaler */
-		case 2:		/* Bilinear 1.5x scaler */
-			rect.x = 0;
-    		rect.y = 0;
-    		rect.w = 1;
-    		rect.h = 240;
-			rectb.x = 319;
-    		rectb.y = 0;
-    		rectb.w = 1;
-    		rectb.h = 240;
-    		SDL_FillRect(surface, &rect, barcolor);
-			SDL_FillRect(surface, &rectb, barcolor);
-    		offset = 1;
-			scaleborder15x((uint32_t*)((uint8_t *)surface->pixels + offset * bpp), (uint32_t*)borderimg->pixels);
-			break;
-		case 3:		/* Fast 1.66x scaler */
-		case 4:		/* Bilinear 1.66x scaler */
-			scaleborder166x((uint32_t*)((uint8_t *)surface->pixels), (uint32_t*)borderimg->pixels);
-			rect.x = 0;
-    		rect.y = 0;
-    		rect.w = 1;
-    		rect.h = 240;
-			rectb.x = 319;
-    		rectb.y = 0;
-    		rectb.w = 1;
-    		rectb.h = 240;
-    		SDL_FillRect(surface, &rect, barcolor);
-			SDL_FillRect(surface, &rectb, barcolor);
-			break;
-		case 7:		/* Hardware 1.25x */
-			rect.x = 32;
-    		rect.y = 24;
-    		rect.w = 256;
-    		rect.h = 192;
-    		SDL_BlitSurface(borderimg, &rect, surface, NULL);
-			break;
-		case 8:		/* Hardware 1.36x */
-			rect.x = 48;
-    		rect.y = 32;
-    		rect.w = 224;
-    		rect.h = 176;
-    		SDL_BlitSurface(borderimg, &rect, surface, NULL);
-			break;
-		case 9:		/* Hardware 1.5x */
-			rect.x = 56;
-    		rect.y = 40;
-    		rect.w = 208;
-    		rect.h = 160;
-    		SDL_BlitSurface(borderimg, &rect, surface, NULL);
-			break;
-		case 10:	/* Hardware 1.66x*/
-			rect.x = 64;
-    		rect.y = 48;
-    		rect.w = 192;
-    		rect.h = 144;
-    		SDL_BlitSurface(borderimg, &rect, surface, NULL);
-			break;
-#ifdef VGA_SCREEN
-		case 12:	/* Dot Matrix 3x scaler */
-			rect.x = 0;
-    		rect.y = 0;
-    		rect.w = 2;
-    		rect.h = 480;
-			rectb.x = 638;
-    		rectb.y = 0;
-    		rectb.w = 2;
-    		rectb.h = 480;
-    		SDL_FillRect(surface, &rect, barcolor);
-			SDL_FillRect(surface, &rectb, barcolor);
-    		offset = 2;
-			scaleborder3x((uint32_t*)((uint8_t *)surface->pixels + offset * bpp), (uint32_t*)borderimg->pixels);
-			break;
-		case 13:	/* CRT 3x scaler */
-			rect.x = 0;
-    		rect.y = 0;
-    		rect.w = 2;
-    		rect.h = 480;
-			rectb.x = 638;
-    		rectb.y = 0;
-    		rectb.w = 2;
-    		rectb.h = 480;
-    		SDL_FillRect(surface, &rect, barcolor);
-			SDL_FillRect(surface, &rectb, barcolor);
-    		offset = 2;
-			scaleborder3x_crt((uint32_t*)((uint8_t *)surface->pixels + offset * bpp), (uint32_t*)borderimg->pixels);
-			break;
-		case 14:	/* CRT Fullscreen */
-#endif
-		case 5:		/* Ayla's fullscreen scaler */
-		case 6:		/* Bilinear fullscreen scaler */
-		case 11:	/* Hardware Fullscreen */
-			rect.x = 0;
-    		rect.y = 0;
-    		rect.w = 0;
-    		rect.h = 0;
-    		SDL_BlitSurface(borderimg, &rect, surface, NULL);
-			break;
-		default:
-			rect.x = 0;
-    		rect.y = 0;
-    		rect.w = 320;
-    		rect.h = 240;
-    		SDL_BlitSurface(borderimg, &rect, surface, NULL);
-			break;
+	if (selectedscaler == "No Scaling")
+	{
+		rect.x = 0;
+    	rect.y = 0;
+    	rect.w = 320;
+    	rect.h = 240;
+		SDL_BlitSurface(borderimg, &rect, surface, NULL);
+	}
+	else if (selectedscaler == "1.5x Fast" ||
+		selectedscaler == "1.5x Smooth")
+	{
+		rect.x = 0;
+		rect.y = 0;
+		rect.w = 1;
+		rect.h = 240;
+		rectb.x = 319;
+		rectb.y = 0;
+		rectb.w = 1;
+		rectb.h = 240;
+		SDL_FillRect(surface, &rect, barcolor);
+		SDL_FillRect(surface, &rectb, barcolor);
+		offset = 1;
+		scaleborder15x((uint32_t*)((uint8_t *)surface->pixels + offset * bpp), (uint32_t*)borderimg->pixels);
+	}
+	else if (selectedscaler == "Aspect 1.66x Fast" ||
+		selectedscaler == "Aspect 1.66x Smooth")
+	{
+		scaleborder166x((uint32_t*)((uint8_t *)surface->pixels), (uint32_t*)borderimg->pixels);
+		rect.x = 0;
+		rect.y = 0;
+		rect.w = 1;
+		rect.h = 240;
+		rectb.x = 319;
+		rectb.y = 0;
+		rectb.w = 1;
+		rectb.h = 240;
+		SDL_FillRect(surface, &rect, barcolor);
+		SDL_FillRect(surface, &rectb, barcolor);
+	}
+	else if (selectedscaler == "1.5x IPU")
+	{
+		rect.x = 56;
+		rect.y = 40;
+		rect.w = 208;
+		rect.h = 160;
+		SDL_BlitSurface(borderimg, &rect, surface, NULL);
+	}
+	else if (selectedscaler == "Aspect IPU")
+	{
+		rect.x = 64;
+    	rect.y = 48;
+    	rect.w = 192;
+    	rect.h = 144;
+    	SDL_BlitSurface(borderimg, &rect, surface, NULL);
+	}
+	else if (selectedscaler == "1.5x IPU-2x" ||
+		selectedscaler == "1.5x DMG-2x")
+	{
+		offset = 0;
+		scaleborder15x_2((uint32_t*)((uint8_t *)surface->pixels + offset * bpp), (uint32_t*)borderimg->pixels);
+	}
+	else if (selectedscaler == "1.5x Scan-2x")
+	{
+		offset = 0;
+		scaleborder15x_crt2((uint32_t*)((uint8_t *)surface->pixels + offset * bpp), (uint32_t*)borderimg->pixels);
+	}
+	else if (selectedscaler == "Aspect IPU-2x" ||
+		selectedscaler == "Aspect DMG-2x")
+	{
+		offset = 0;
+		scaleborder166x_2((uint32_t*)((uint8_t *)surface->pixels + offset * bpp), (uint32_t*)borderimg->pixels);
+	}
+	else if (selectedscaler == "Aspect Scan-2x")
+	{
+		offset = 0;
+		scaleborder166x_crt2((uint32_t*)((uint8_t *)surface->pixels + offset * bpp), (uint32_t*)borderimg->pixels);
+	}
+	else if (selectedscaler == "1.5x DMG-3x")
+	{
+		rect.x = 0;
+		rect.y = 0;
+		rect.w = 2;
+		rect.h = 480;
+		rectb.x = 638;
+		rectb.y = 0;
+		rectb.w = 2;
+		rectb.h = 480;
+		SDL_FillRect(surface, &rect, barcolor);
+		SDL_FillRect(surface, &rectb, barcolor);
+		offset = 2;
+		scaleborder15x_3((uint32_t*)((uint8_t *)surface->pixels + offset * bpp), (uint32_t*)borderimg->pixels);
+	}
+	else if (selectedscaler == "1.5x Scan-3x")
+	{
+		rect.x = 0;
+		rect.y = 0;
+		rect.w = 2;
+		rect.h = 480;
+		rectb.x = 638;
+		rectb.y = 0;
+		rectb.w = 2;
+		rectb.h = 480;
+		SDL_FillRect(surface, &rect, barcolor);
+		SDL_FillRect(surface, &rectb, barcolor);
+		offset = 2;
+		scaleborder15x_crt3((uint32_t*)((uint8_t *)surface->pixels + offset * bpp), (uint32_t*)borderimg->pixels);
+	}
+	else if (selectedscaler == "Aspect DMG-3x")
+	{
+		offset = 0;
+		scaleborder166x_3((uint32_t*)((uint8_t *)surface->pixels + offset * bpp), (uint32_t*)borderimg->pixels);
+	}
+	else if (selectedscaler == "Aspect Scan-3x")
+	{
+		offset = 0;
+		scaleborder166x_crt3((uint32_t*)((uint8_t *)surface->pixels + offset * bpp), (uint32_t*)borderimg->pixels);
+	}
+	else if (
+		selectedscaler == "FullScreen Fast" ||
+		selectedscaler == "FullScreen Smooth" ||
+		selectedscaler == "FullScreen IPU" ||
+		selectedscaler == "FullScreen IPU-2x" ||
+		selectedscaler == "FullScreen DMG-2x" ||
+		selectedscaler == "FullScreen DMG-3x" ||
+		selectedscaler == "FullScreen Scan-2x" ||
+		selectedscaler == "FullScreen Scan-3x")
+	{
+		rect.x = 0;
+    	rect.y = 0;
+    	rect.w = 0;
+    	rect.h = 0;
+    	SDL_BlitSurface(borderimg, &rect, surface, NULL);
+	}
+	else
+	{
+		rect.x = 0;
+    	rect.y = 0;
+    	rect.w = 320;
+    	rect.h = 240;
+    	SDL_BlitSurface(borderimg, &rect, surface, NULL);
 	}
 }
 
@@ -1949,12 +2004,16 @@ void loadPalette(std::string palettefile){
     	return;
     } else if(palettefile == "DEFAULT"){
 		Uint32 value;
-#ifdef VGA_SCREEN
-		if (selectedscaler == 12) {
+		if (selectedscaler == "1.5x DMG-2x" ||
+			selectedscaler == "1.5x DMG-3x" ||
+			selectedscaler == "Aspect DMG-2x" ||
+			selectedscaler == "Aspect DMG-3x" ||
+			selectedscaler == "FullScreen DMG-2x"||
+			selectedscaler == "FullScreen DMG-3x") {
 			for (int i = 0; i < 3; ++i) {
 		        for (int k = 0; k < 4; ++k) {
 		            if(k == 0)
-		                value = 0x5B8C07;
+		                value = 0x64960a;
 		            if(k == 1)
 		                value = 0x187048;
 		            if(k == 2)
@@ -1964,9 +2023,8 @@ void loadPalette(std::string palettefile){
 		            gambatte_p->setDmgPaletteColor(i, k, value);
 		        }
 		    }
-		    set_menu_palette(0x5B8C07, 0x187048, 0x084448, 0x002038);
+		    set_menu_palette(0x64960a, 0x187048, 0x084448, 0x002038);
 		} else {
-#endif
 		    for (int i = 0; i < 3; ++i) {
 		        for (int k = 0; k < 4; ++k) {
 		            if(k == 0)
@@ -1981,9 +2039,7 @@ void loadPalette(std::string palettefile){
 		        }
 		    }
 	    	set_menu_palette(0x64960a, 0x1b7e3e, 0x084e3c, 0x003236);
-#ifdef VGA_SCREEN
 		}
-#endif
 		return;
 	} else {
 		Uint32 values[12];
@@ -2003,12 +2059,16 @@ void loadPalette(std::string palettefile){
 				if (fpal == NULL) {
 					printf("Palette file %s not found. Loading default palette...\n", filepath.c_str());
 					Uint32 value;
-#ifdef VGA_SCREEN
-					if (selectedscaler == 12) {
+					if (selectedscaler == "1.5x DMG-2x" ||
+						selectedscaler == "1.5x DMG-3x" ||
+						selectedscaler == "Aspect DMG-2x" ||
+						selectedscaler == "Aspect DMG-3x" ||
+						selectedscaler == "FullScreen DMG-2x"||
+						selectedscaler == "FullScreen DMG-3x") {
 						for (int i = 0; i < 3; ++i) {
 					        for (int k = 0; k < 4; ++k) {
 					            if(k == 0)
-					                value = 0x5B8C07;
+					                value = 0x64960a;
 					            if(k == 1)
 					                value = 0x187048;
 					            if(k == 2)
@@ -2018,9 +2078,8 @@ void loadPalette(std::string palettefile){
 					            gambatte_p->setDmgPaletteColor(i, k, value);
 					        }
 					    }
-					    set_menu_palette(0x5B8C07, 0x187048, 0x084448, 0x002038);
+					    set_menu_palette(0x64960a, 0x187048, 0x084448, 0x002038);
 					} else {
-#endif
 					    for (int i = 0; i < 3; ++i) {
 					        for (int k = 0; k < 4; ++k) {
 					            if(k == 0)
@@ -2035,9 +2094,7 @@ void loadPalette(std::string palettefile){
 					        }
 					    }
 				    	set_menu_palette(0x64960a, 0x1b7e3e, 0x084e3c, 0x003236);
-#ifdef VGA_SCREEN
 					}
-#endif
 					return;
 				}
 			} else {
@@ -2145,7 +2202,7 @@ void saveConfig(int pergame){
 	}
     if (fprintf(cfile,
 		"SHOWFPS %d\n"
-		"SELECTEDSCALER %d\n"
+		"SELECTEDSCALER %s\n"
 		"PALNAME %s\n"
 		"FILTERNAME %s\n"
 		"DMGBORDERNAME %s\n"
@@ -2157,7 +2214,7 @@ void saveConfig(int pergame){
 		"FFWHOTKEY %d\n"
 		"STEREOSOUND %d\n",
 		showfps,
-		selectedscaler,
+		selectedscaler.c_str(),
 		palname.c_str(),
 		filtername.c_str(),
 		dmgbordername.c_str(),
@@ -2215,8 +2272,15 @@ void loadConfig(){
 			sscanf(arg, "%d", &value);
 			showfps = value;
 		} else if (!strcmp(line, "SELECTEDSCALER")) {
-			sscanf(arg, "%d", &value);
-			selectedscaler = value;
+			unsigned int len = strlen(arg);
+			if (len == 0 || len > sizeof(charvalue) - 1) {
+				continue;
+			}
+			if (arg[len-1] == '\n') {
+				arg[len-1] = '\0';
+			}
+			strcpy(charvalue, arg);
+			selectedscaler = std::string(charvalue);
 		} else if (!strcmp(line, "PALNAME")) {
 			unsigned int len = strlen(arg);
 			if (len == 0 || len > sizeof(charvalue) - 1) {

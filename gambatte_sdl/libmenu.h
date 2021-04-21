@@ -14,7 +14,7 @@ extern "C" {
 #define NUM_GG_CODES 20
 #define NUM_GS_CODES 20
 
-#if defined VERSION_OPENDINGUX
+#if defined VERSION_GCW0
 
 	#define BLINK_SPEED 12
 	#define FOOTER_ALT_SPEED 100
@@ -109,10 +109,10 @@ extern SDL_Surface *menuscreen;
 extern SDL_Surface *surface_menuinout;
 extern SDL_Surface *textoverlay;
 extern SDL_Surface *textoverlaycolored;
-extern int selectedscaler, showfps, ghosting, biosenabled, colorfilter, gameiscgb, buttonlayout, stereosound, prefercgb, ffwhotkey;
+extern int showfps, ghosting, biosenabled, colorfilter, gameiscgb, buttonlayout, stereosound, prefercgb, ffwhotkey;
 extern uint32_t menupalblack, menupaldark, menupallight, menupalwhite;
 extern int filtervalue[12];
-extern std::string dmgbordername, gbcbordername, palname, filtername, currgamename, homedir, ipuscaling;
+extern std::string selectedscaler, dmgbordername, gbcbordername, palname, filtername, currgamename, homedir, ipuscaling;
 extern int numcodes_gg, numcodes_gs, selectedcode, editmode;
 extern int ggcheats[NUM_GG_CODES*9];
 extern int gscheats[NUM_GS_CODES*8];
@@ -155,7 +155,7 @@ void convert_bw_surface_colors(SDL_Surface *surface, SDL_Surface *surface2, cons
 void load_border(std::string borderfilename);
 void paint_border(SDL_Surface *surface);
 uint32_t convert_hexcolor(SDL_Surface *surface, const uint32_t color);
-int currentEntryInList(menu_t *menu, std::string text);
+int currentEntryInList(menu_t *menu, std::string fname, int isfile);
 void clear_surface(SDL_Surface *surface, Uint32 color);
 void loadPalette(std::string palettefile);
 void loadFilter(std::string filterfile);

@@ -7,6 +7,6 @@ Type=Application
 StartupNotify=true
 Icon=gambatte_gbc
 Categories=emulators.systems;
-X-OD-Manual=gambatte.man.txt
+X-OD-Manual=manual.txt
 X-OD-Selector=/home/retrofw/roms/gbc
 X-OD-Filter=.zip,.gbc

@@ -21,6 +21,6 @@ find . -type f -iname \*.o -delete
 find . -type f -iname gambatte_sdl -delete
 
 rm -f gambatte-dms-retrofw-r572u4-$BDAT.opk
-mksquashfs ./dist/gcw0/default.gcw0.desktop ./gambatte_sdl/gambatte-dms.gcw0 ./dist/gcw0/gambatte_dms.png ./dist/manual.txt gambatte-dms-gcw0-r572u4-$BDAT.opk -all-root -no-xattrs -noappend -no-exports
+mksquashfs ./dist/retrofw/default.retrofw.desktop ./dist/retrofw/gb.retrofw.desktop ./dist/retrofw/gbc.retrofw.desktop ./gambatte_sdl/gambatte-dms.retrofw ./dist/gambatte_dms.png ./dist/gambatte_dmg.png ./dist/gambatte_gbc.png ./dist/manual.txt gambatte-dms-retrofw-r572u4-$BDAT.opk -all-root -no-xattrs -noappend -no-exports
 
 find . -type f -iname gambatte-dms.retrofw -delete

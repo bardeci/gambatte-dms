@@ -131,7 +131,7 @@ void SdlBlitter::CheckIPU(){
 }
 
 void SdlBlitter::SetVid(int w, int h, int bpp){	
-#ifdef VERSION_OPENDINGUX
+#ifdef VERSION_GCW0
 	screen = SDL_SetVideoMode(w, h, bpp, SDL_HWSURFACE | SDL_TRIPLEBUF);
 #elif VERSION_RETROFW
 	screen = SDL_SetVideoMode(w, h, bpp, SDL_HWSURFACE | SDL_TRIPLEBUF);
@@ -142,169 +142,237 @@ void SdlBlitter::SetVid(int w, int h, int bpp){
 #endif
 }
 
-void SdlBlitter::setBufferDimensions() {
-	
-	FILE* aspect_ratio_file = fopen(ipuscaling.c_str(), "w");
-#ifdef VGA_SCREEN
-	FILE* sharpness_file = fopen("/sys/devices/platform/jz-lcd.0/sharpness_upscaling", "w");
-	if (sharpness_file) {
-		fwrite("1", 1, 1, sharpness_file);
+void SdlBlitter::SetIPUAspectRatio(const char *ratiovalue){
+	if (ipuscaling == "NEW_OD_IPU") {
+		if(ratiovalue == "0"){
+			SDL_putenv("SDL_VIDEO_KMSDRM_SCALING_MODE=0");
+		} else if(ratiovalue == "1"){
+			SDL_putenv("SDL_VIDEO_KMSDRM_SCALING_MODE=1");
+		}
+		return;
+	}
+	FILE *aspect_ratio_file = NULL;
+	aspect_ratio_file = fopen(ipuscaling.c_str(), "r+");
+	if (aspect_ratio_file != NULL) {
+		fclose(aspect_ratio_file);
+		aspect_ratio_file = fopen(ipuscaling.c_str(), "w");
+		fwrite(ratiovalue, 1, 1, aspect_ratio_file);
+		fclose(aspect_ratio_file);
+	}
+}
+
+void SdlBlitter::SetIPUSharpness(const char *svalue){
+	if (ipuscaling == "NEW_OD_IPU") {
+		if(svalue == "0"){
+			SDL_putenv("SDL_VIDEO_KMSDRM_SCALING_SHARPNESS=0");
+		} else if(svalue == "1"){
+			SDL_putenv("SDL_VIDEO_KMSDRM_SCALING_SHARPNESS=1");
+		} else if(svalue == "2"){
+			SDL_putenv("SDL_VIDEO_KMSDRM_SCALING_SHARPNESS=2");
+		} else if(svalue == "3"){
+			SDL_putenv("SDL_VIDEO_KMSDRM_SCALING_SHARPNESS=3");
+		} else if(svalue == "4"){
+			SDL_putenv("SDL_VIDEO_KMSDRM_SCALING_SHARPNESS=4");
+		} else if(svalue == "5"){
+			SDL_putenv("SDL_VIDEO_KMSDRM_SCALING_SHARPNESS=5");
+		} else if(svalue == "6"){
+			SDL_putenv("SDL_VIDEO_KMSDRM_SCALING_SHARPNESS=6");
+		} else if(svalue == "7"){
+			SDL_putenv("SDL_VIDEO_KMSDRM_SCALING_SHARPNESS=7");
+		} else if(svalue == "8"){
+			SDL_putenv("SDL_VIDEO_KMSDRM_SCALING_SHARPNESS=8");
+		}
+		return;
+	}
+	FILE *sharpness_file = NULL;
+	sharpness_file = fopen("/sys/devices/platform/jz-lcd.0/sharpness_upscaling", "r+");
+	if (sharpness_file != NULL) {
+		fclose(sharpness_file);
+		sharpness_file = fopen("/sys/devices/platform/jz-lcd.0/sharpness_upscaling", "w");
+		fwrite(svalue, 1, 1, sharpness_file);
 		fclose(sharpness_file);
 	}
-#endif
-	switch(selectedscaler) {
-		case 0:		/* no scaler */
-		case 1:		/* Ayla's 1.5x scaler */
-		case 2:		/* Bilinear 1.5x scaler */
-		case 3:		/* Fast 1.66x scaler */
-		case 4:		/* Bilinear 1.66x scaler */
-		case 5:		/* Ayla's fullscreen scaler */
-		case 6:		/* Bilinear fullscreen scaler */
-			SetVid(320, 240, 16);
-			break;
-		case 7:		/* Hardware 1.25x */
-			if (aspect_ratio_file) {
-				fwrite("1", 1, 1, aspect_ratio_file);
-				fclose(aspect_ratio_file);
-			}
-			SetVid(256, 192, 16);
-			break;
-		case 8:		/* Hardware 1.36x */
-			if (aspect_ratio_file) {
-				fwrite("1", 1, 1, aspect_ratio_file);
-				fclose(aspect_ratio_file);
-			}
-			SetVid(224, 176, 16);
-			break;
-		case 9:		/* Hardware 1.5x */
-			if (aspect_ratio_file) {
-				fwrite("1", 1, 1, aspect_ratio_file);
-				fclose(aspect_ratio_file);
-			}
-			SetVid(208, 160, 16);
-			break;
-		case 10:		/* Hardware 1.66x */
-			if (aspect_ratio_file) {
-				fwrite("1", 1, 1, aspect_ratio_file);
-				fclose(aspect_ratio_file);
-			}
-			SetVid(192, 144, 16);
-			break;
-		case 11:		/* Hardware Fullscreen */
-			if (aspect_ratio_file) {
-				fwrite("0", 1, 1, aspect_ratio_file);
-				fclose(aspect_ratio_file);
-			}
-			SetVid(160, 144, 16);
-			break;
-#ifdef VGA_SCREEN
-		case 12:		/* Dot Matrix 3x */
-		case 13:		/* CRT 3x scaler */
-			SetVid(640, 480, 16);
-			break;
-		case 14:		/* CRT Fullscreen */
-			if (aspect_ratio_file) {
-				fwrite("0", 1, 1, aspect_ratio_file);
-				fclose(aspect_ratio_file);
-			}
-			SetVid(480, 432, 16);
-			break;
-#endif
-		default:
-			SetVid(320, 240, 16);
-			break;
+}
+
+void SdlBlitter::setBufferDimensions() {
+	SetIPUSharpness("1");
+	if (selectedscaler == "No Scaling" ||
+		selectedscaler == "1.5x Fast" ||
+		selectedscaler == "1.5x Smooth" ||
+		selectedscaler == "Aspect 1.66x Fast" ||
+		selectedscaler == "Aspect 1.66x Smooth" ||
+		selectedscaler == "FullScreen Fast" ||
+		selectedscaler == "FullScreen Smooth")
+	{
+		SetVid(320, 240, 16);
 	}
-
+	else if (selectedscaler == "1.5x IPU")
+	{
+		SetIPUSharpness("2");
+		SetIPUAspectRatio("1");
+		SetVid(208, 160, 16);
+	}
+	else if (selectedscaler == "Aspect IPU")
+	{
+		SetIPUSharpness("2");
+		SetIPUAspectRatio("1");
+		SetVid(192, 144, 16);
+	}
+	else if (selectedscaler == "FullScreen IPU")
+	{
+		SetIPUSharpness("2");
+		SetIPUAspectRatio("0");
+		SetVid(160, 144, 16);
+	}
+	else if (selectedscaler == "1.5x IPU-2x" ||
+		selectedscaler == "1.5x DMG-2x" ||
+		selectedscaler == "1.5x Scan-2x")
+	{
+		SetIPUSharpness("2");
+		SetIPUAspectRatio("1");
+		SetVid(428, 320, 16);
+	}
+	else if (selectedscaler == "Aspect IPU-2x" ||
+		selectedscaler == "Aspect DMG-2x" ||
+		selectedscaler == "Aspect Scan-2x")
+	{
+		SetIPUSharpness("2");
+		SetIPUAspectRatio("1");
+		SetVid(384, 288, 16);
+	}
+	else if (selectedscaler == "FullScreen IPU-2x" ||
+		selectedscaler == "FullScreen DMG-2x" ||
+		selectedscaler == "FullScreen Scan-2x")
+	{
+		SetIPUSharpness("2");
+		SetIPUAspectRatio("0");
+		SetVid(320, 288, 16);
+	}
+	else if (selectedscaler == "1.5x DMG-3x" ||
+		selectedscaler == "1.5x Scan-3x")
+	{
+		SetVid(640, 480, 16);
+	}
+	else if (selectedscaler == "Aspect DMG-3x" ||
+		selectedscaler == "Aspect Scan-3x")
+	{
+		SetIPUSharpness("7");
+		SetIPUAspectRatio("1");
+		SetVid(576, 432, 16);
+	}
+	else if (selectedscaler == "FullScreen DMG-3x" ||
+		selectedscaler == "FullScreen Scan-3x")
+	{
+		SetIPUSharpness("7");
+		SetIPUAspectRatio("0");
+		SetVid(480, 432, 16);
+	}
+	else
+	{
+		SetVid(320, 240, 16);
+	}
 	menu_set_screen(screen);
-
 	init_ghostframes();
 }
 
 void SdlBlitter::setScreenRes() {
-	FILE* aspect_ratio_file = fopen(ipuscaling.c_str(), "w");
-#ifdef VGA_SCREEN
-	FILE* sharpness_file = fopen("/sys/devices/platform/jz-lcd.0/sharpness_upscaling", "w");
-	if (sharpness_file) {
-		fwrite("1", 1, 1, sharpness_file);
-		fclose(sharpness_file);
+	SetIPUSharpness("1");
+	if (selectedscaler == "No Scaling" ||
+		selectedscaler == "1.5x Fast" ||
+		selectedscaler == "1.5x Smooth" ||
+		selectedscaler == "Aspect 1.66x Fast" ||
+		selectedscaler == "Aspect 1.66x Smooth" ||
+		selectedscaler == "FullScreen Fast" ||
+		selectedscaler == "FullScreen Smooth")
+	{
+		if(screen->w != 320 || screen->h != 240) {
+			SetVid(320, 240, 16);
+		}
 	}
-#endif
-	switch(selectedscaler) {
-		case 0:		/* no scaler */
-		case 1:		/* Ayla's 1.5x scaler */
-		case 2:		/* Bilinear 1.5x scaler */
-		case 3:		/* Fast 1.66x scaler */
-		case 4:		/* Bilinear 1.66x scaler */
-		case 5:		/* Ayla's fullscreen scaler */
-		case 6:		/* Bilinear fullscreen scaler */
-			if(screen->w != 320 || screen->h != 240)
-				SetVid(320, 240, 16);
-			break;
-		case 7:		/* Hardware 1.25x */
-			if (aspect_ratio_file) {
-				fwrite("1", 1, 1, aspect_ratio_file);
-				fclose(aspect_ratio_file);
-			}
-			if(screen->w != 256 || screen->h != 192) {
-				SetVid(256, 192, 16);
-			}
-			break;
-		case 8:		/* Hardware 1.36x */
-			if (aspect_ratio_file) {
-				fwrite("1", 1, 1, aspect_ratio_file);
-				fclose(aspect_ratio_file);
-			}
-			if(screen->w != 224 || screen->h != 176) {
-				SetVid(224, 176, 16);
-			}
-			break;
-		case 9:		/* Hardware 1.5x */
-			if (aspect_ratio_file) {
-				fwrite("1", 1, 1, aspect_ratio_file);
-				fclose(aspect_ratio_file);
-			}
-			if(screen->w != 208 || screen->h != 160) {
-				SetVid(208, 160, 16);
-			}
-			break;
-		case 10:		/* Hardware 1.66x */
-			if (aspect_ratio_file) {
-				fwrite("1", 1, 1, aspect_ratio_file);
-				fclose(aspect_ratio_file);
-			}
-			if(screen->w != 192 || screen->h != 144) {
-				SetVid(192, 144, 16);
-			}
-			break;
-		case 11:		/* Hardware Fullscreen */
-			if (aspect_ratio_file) {
-				fwrite("0", 1, 1, aspect_ratio_file);
-				fclose(aspect_ratio_file);
-			}
-			if(screen->w != 160 || screen->h != 144) {
-				SetVid(160, 144, 16);
-			}
-			break;
-#ifdef VGA_SCREEN
-		case 12:		/* Dot Matrix 3x */
-		case 13:		/* CRT 3x scaler */
-			if(screen->w != 640 || screen->h != 480)
-				SetVid(640, 480, 16);
-			break;
-		case 14:		/* CRT Fullscreen */
-			if (aspect_ratio_file) {
-				fwrite("0", 1, 1, aspect_ratio_file);
-				fclose(aspect_ratio_file);
-			}
-			if(screen->w != 480 || screen->h != 432) {
-				SetVid(480, 432, 16);
-			}
-			break;
-#endif
-		default:
-			if(screen->w != 320 || screen->h != 240)
-				SetVid(320, 240, 16);
-			break;
+	else if (selectedscaler == "1.5x IPU")
+	{
+		SetIPUSharpness("2");
+		SetIPUAspectRatio("1");
+		if(screen->w != 208 || screen->h != 160) {
+			SetVid(208, 160, 16);
+		}
+	}
+	else if (selectedscaler == "Aspect IPU")
+	{
+		SetIPUSharpness("2");
+		SetIPUAspectRatio("1");
+		if(screen->w != 192 || screen->h != 144) {
+			SetVid(192, 144, 16);
+		}
+	}
+	else if (selectedscaler == "FullScreen IPU")
+	{
+		SetIPUSharpness("2");
+		SetIPUAspectRatio("0");
+		if(screen->w != 160 || screen->h != 144) {
+			SetVid(160, 144, 16);
+		}
+	}
+	else if (selectedscaler == "1.5x IPU-2x" ||
+		selectedscaler == "1.5x DMG-2x" ||
+		selectedscaler == "1.5x Scan-2x")
+	{
+		SetIPUSharpness("2");
+		SetIPUAspectRatio("1");
+		if(screen->w != 428 || screen->h != 320){
+			SetVid(428, 320, 16);
+		}
+	}
+	else if (selectedscaler == "Aspect IPU-2x" ||
+		selectedscaler == "Aspect DMG-2x" ||
+		selectedscaler == "Aspect Scan-2x")
+	{
+		SetIPUSharpness("2");
+		SetIPUAspectRatio("1");
+		if(screen->w != 384 || screen->h != 288){
+			SetVid(384, 288, 16);
+		}
+	}
+	else if (selectedscaler == "FullScreen IPU-2x" ||
+		selectedscaler == "FullScreen DMG-2x" ||
+		selectedscaler == "FullScreen Scan-2x")
+	{
+		SetIPUSharpness("2");
+		SetIPUAspectRatio("0");
+		if(screen->w != 320 || screen->h != 288) {
+			SetVid(320, 288, 16);
+		}
+	}
+	else if (selectedscaler == "1.5x DMG-3x" ||
+		selectedscaler == "1.5x Scan-3x")
+	{
+		if(screen->w != 640 || screen->h != 480){
+			SetVid(640, 480, 16);
+		}
+	}
+	else if (selectedscaler == "Aspect DMG-3x" ||
+		selectedscaler == "Aspect Scan-3x")
+	{
+		SetIPUSharpness("7");
+		SetIPUAspectRatio("1");
+		if(screen->w != 576 || screen->h != 432){
+			SetVid(576, 432, 16);
+		}
+	}
+	else if (selectedscaler == "FullScreen DMG-3x" ||
+		selectedscaler == "FullScreen Scan-3x")
+	{
+		SetIPUSharpness("7");
+		SetIPUAspectRatio("0");
+		if(screen->w != 480 || screen->h != 432) {
+			SetVid(480, 432, 16);
+		}
+	}
+	else
+	{
+		if(screen->w != 320 || screen->h != 240) {
+			SetVid(320, 240, 16);
+		}
 	}
 }
 
@@ -438,6 +506,165 @@ void anim_textoverlay(SDL_Surface *surface) {
 	}	
 }
 
+void SdlBlitter::applyScalerToSurface(SDL_Surface *sourcesurface) {
+	size_t offset;
+	if (selectedscaler == "No Scaling")
+	{
+		SDL_Rect dst;
+		dst.x = (screen->w - sourcesurface->w) / 2;
+		dst.y = (screen->h - sourcesurface->h) / 2;
+		dst.w = sourcesurface->w;
+		dst.h = sourcesurface->h;
+		SDL_BlitSurface(sourcesurface, NULL, screen, &dst);
+	}
+	else if (selectedscaler == "1.5x Fast")
+	{
+		offset = (2 * (320 - 240) / 2) + ((240 - 216) / 2) * screen->pitch;
+		scale15x((uint32_t*)((uint8_t *)screen->pixels + offset), (uint32_t*)sourcesurface->pixels);
+	}
+	else if (selectedscaler == "1.5x Smooth")
+	{
+		offset = (2 * (320 - 240) / 2) + ((240 - 216) / 2) * screen->pitch;
+		scale15x_pseudobilinear((uint32_t*)((uint8_t *)screen->pixels + offset), (uint32_t*)sourcesurface->pixels);
+	}
+	else if (selectedscaler == "Aspect 1.66x Fast")
+	{
+		offset = (2 * (320 - 266) / 2) + ((240 - 240) / 2) * screen->pitch;
+		scale166x_fast((uint32_t*)((uint8_t *)screen->pixels + offset), (uint32_t*)sourcesurface->pixels);
+	}
+	else if (selectedscaler == "Aspect 1.66x Smooth")
+	{
+		offset = (2 * (320 - 266) / 2) + ((240 - 240) / 2) * screen->pitch;
+		scale166x_pseudobilinear((uint32_t*)((uint8_t *)screen->pixels + offset), (uint32_t*)sourcesurface->pixels);
+	}
+	else if (selectedscaler == "FullScreen Fast")
+	{
+		fullscreen_upscale((uint32_t*)screen->pixels, (uint32_t*)sourcesurface->pixels);
+	}
+	else if (selectedscaler == "FullScreen Smooth")
+	{
+		fullscreen_upscale_pseudobilinear((uint32_t*)screen->pixels, (uint32_t*)sourcesurface->pixels);
+	}
+	else if (selectedscaler == "1.5x IPU-2x")
+	{
+		offset = (2 * (428 - 320) / 2) + ((320 - 288) / 2) * screen->pitch;
+		scale15x_2((uint32_t*)((uint8_t *)screen->pixels + offset), (uint32_t*)sourcesurface->pixels);
+	}
+	else if (selectedscaler == "1.5x DMG-2x")
+	{
+		offset = (2 * (428 - 320) / 2) + ((320 - 288) / 2) * screen->pitch;
+		if (gameiscgb == 1){
+			scale15x_dotmatrix2((uint32_t*)((uint8_t *)screen->pixels + offset), (uint32_t*)sourcesurface->pixels, menupalblack);
+		} else {
+			scale15x_dotmatrix2((uint32_t*)((uint8_t *)screen->pixels + offset), (uint32_t*)sourcesurface->pixels, menupalwhite);
+		}
+	}
+	else if (selectedscaler == "1.5x Scan-2x")
+	{
+		offset = (2 * (428 - 320) / 2) + ((320 - 288) / 2) * screen->pitch;
+		scale15x_crt2((uint32_t*)((uint8_t *)screen->pixels + offset), (uint32_t*)sourcesurface->pixels);
+	}
+	else if (selectedscaler == "Aspect IPU-2x")
+	{
+		offset = (2 * (384 - 320) / 2) + ((288 - 288) / 2) * screen->pitch;
+		scale166x_2((uint32_t*)((uint8_t *)screen->pixels + offset), (uint32_t*)sourcesurface->pixels);
+	}
+	else if (selectedscaler == "Aspect DMG-2x")
+	{
+		offset = (2 * (384 - 320) / 2) + ((288 - 288) / 2) * screen->pitch;
+		if (gameiscgb == 1){
+			scale166x_dotmatrix2((uint32_t*)((uint8_t *)screen->pixels + offset), (uint32_t*)sourcesurface->pixels, menupalblack);
+		} else {
+			scale166x_dotmatrix2((uint32_t*)((uint8_t *)screen->pixels + offset), (uint32_t*)sourcesurface->pixels, menupalwhite);
+		}
+	}
+	else if (selectedscaler == "Aspect Scan-2x")
+	{
+		offset = (2 * (384 - 320) / 2) + ((288 - 288) / 2) * screen->pitch;
+		scale166x_crt2((uint32_t*)((uint8_t *)screen->pixels + offset), (uint32_t*)sourcesurface->pixels);
+	}
+	else if (selectedscaler == "1.5x DMG-3x")
+	{
+		offset = (2 * (640 - 480) / 2) + ((480 - 432) / 2) * screen->pitch;
+		if (gameiscgb == 1){
+			scale15x_dotmatrix3((uint32_t*)((uint8_t *)screen->pixels + offset), (uint32_t*)sourcesurface->pixels, menupalblack);
+		} else {
+			scale15x_dotmatrix3((uint32_t*)((uint8_t *)screen->pixels + offset), (uint32_t*)sourcesurface->pixels, menupalwhite);
+		}
+	}
+	else if (selectedscaler == "1.5x Scan-3x")
+	{
+		offset = (2 * (640 - 480) / 2) + ((480 - 432) / 2) * screen->pitch;
+		scale15x_crt3((uint32_t*)((uint8_t *)screen->pixels + offset), (uint32_t*)sourcesurface->pixels);
+	}
+	else if (selectedscaler == "Aspect DMG-3x")
+	{
+		offset = (2 * (576 - 480) / 2) + ((432 - 432) / 2) * screen->pitch;
+		if (gameiscgb == 1){
+			scale166x_dotmatrix3((uint32_t*)((uint8_t *)screen->pixels + offset), (uint32_t*)sourcesurface->pixels, menupalblack);
+		} else {
+			scale166x_dotmatrix3((uint32_t*)((uint8_t *)screen->pixels + offset), (uint32_t*)sourcesurface->pixels, menupalwhite);
+		}
+	}
+	else if (selectedscaler == "Aspect Scan-3x")
+	{
+		offset = (2 * (576 - 480) / 2) + ((432 - 432) / 2) * screen->pitch;
+		scale166x_crt3((uint32_t*)((uint8_t *)screen->pixels + offset), (uint32_t*)sourcesurface->pixels);
+	}
+	else if (selectedscaler == "FullScreen IPU-2x")
+	{
+		fullscreen_2((uint32_t*)screen->pixels, (uint32_t*)sourcesurface->pixels);
+	}
+	else if (selectedscaler == "FullScreen DMG-2x")
+	{
+		if (gameiscgb == 1){
+			fullscreen_dotmatrix2((uint32_t*)screen->pixels, (uint32_t*)sourcesurface->pixels, menupalblack);
+		} else {
+			fullscreen_dotmatrix2((uint32_t*)screen->pixels, (uint32_t*)sourcesurface->pixels, menupalwhite);
+		}
+	}
+	else if (selectedscaler == "FullScreen Scan-2x")
+	{
+		fullscreen_crt2((uint32_t*)screen->pixels, (uint32_t*)sourcesurface->pixels);
+	}
+	else if (selectedscaler == "FullScreen DMG-3x")
+	{
+		if (gameiscgb == 1){
+			fullscreen_dotmatrix3((uint32_t*)screen->pixels, (uint32_t*)sourcesurface->pixels, menupalblack);
+		} else {
+			fullscreen_dotmatrix3((uint32_t*)screen->pixels, (uint32_t*)sourcesurface->pixels, menupalwhite);
+		}
+	}
+	else if (selectedscaler == "FullScreen Scan-3x")
+	{
+		fullscreen_crt3((uint32_t*)screen->pixels, (uint32_t*)sourcesurface->pixels);
+	}
+	else if (selectedscaler == "1.5x IPU" ||
+		selectedscaler == "Aspect IPU" ||
+		selectedscaler == "FullScreen IPU")
+	{
+		uint16_t *d = (uint16_t*)screen->pixels + (screen->w - sourcesurface->w) / 2 + (screen->h - sourcesurface->h) * screen->pitch / 4;
+        uint16_t *s = (uint16_t*)sourcesurface->pixels;
+        for (int y = 0; y < sourcesurface->h; y++)
+        {
+            memmove(d, s, sourcesurface->w * sizeof(uint16_t));
+            s += sourcesurface->w;
+            d += screen->w;
+        }
+	}
+	else
+	{
+		uint16_t *d = (uint16_t*)screen->pixels + (screen->w - sourcesurface->w) / 2 + (screen->h - sourcesurface->h) * screen->pitch / 4;
+        uint16_t *s = (uint16_t*)sourcesurface->pixels;
+        for (int y = 0; y < sourcesurface->h; y++)
+        {
+            memmove(d, s, sourcesurface->w * sizeof(uint16_t));
+            s += sourcesurface->w;
+            d += screen->w;
+        }
+	}
+}
+
 static int frames = 0;
 static clock_t old_time = 0;
 static int fps = 0;
@@ -445,7 +672,6 @@ static int fps = 0;
 void SdlBlitter::draw() {
 
 	clock_t cur_time;
-	size_t offset;
 	++frames;
 	cur_time = SDL_GetTicks();
 
@@ -488,76 +714,7 @@ void SdlBlitter::draw() {
 		}else if(menuin >= 0){
 			anim_menuin(surface);
 		}
-		switch(selectedscaler) {
-			case 0:		/* no scaler */
-				SDL_Rect dst;
-				dst.x = (screen->w - surface->w) / 2;
-				dst.y = (screen->h - surface->h) / 2;
-				dst.w = surface->w;
-				dst.h = surface->h;
-				SDL_BlitSurface(surface, NULL, screen, &dst);
-				break;
-			case 1:		/* Ayla's 1.5x scaler */
-				offset = (2 * (320 - 240) / 2) + ((240 - 216) / 2) * screen->pitch;
-				scale15x((uint32_t*)((uint8_t *)screen->pixels + offset), (uint32_t*)surface->pixels);
-				break;
-			case 2:		/* Bilinear 1.5x scaler */
-				offset = (2 * (320 - 240) / 2) + ((240 - 216) / 2) * screen->pitch;
-				scale15x_pseudobilinear((uint32_t*)((uint8_t *)screen->pixels + offset), (uint32_t*)surface->pixels);
-				break;
-			case 3:		/* Fast 1.66x scaler */
-				offset = (2 * (320 - 266) / 2) + ((240 - 240) / 2) * screen->pitch;
-				scale166x_fast((uint32_t*)((uint8_t *)screen->pixels + offset), (uint32_t*)surface->pixels);
-				break;
-			case 4:		/* Bilinear 1.66x scaler */
-				offset = (2 * (320 - 266) / 2) + ((240 - 240) / 2) * screen->pitch;
-				scale166x_pseudobilinear((uint32_t*)((uint8_t *)screen->pixels + offset), (uint32_t*)surface->pixels);
-				break;
-			case 5:		/* Ayla's fullscreen scaler */
-				fullscreen_upscale((uint32_t*)screen->pixels, (uint32_t*)surface->pixels);
-				break;
-			case 6:		/* Bilinear fullscreen scaler */
-				fullscreen_upscale_pseudobilinear((uint32_t*)screen->pixels, (uint32_t*)surface->pixels);
-				break;
-#ifdef VGA_SCREEN
-			case 12:		/* Dot Matrix 3x scaler */
-				offset = (2 * (640 - 480) / 2) + ((480 - 432) / 2) * screen->pitch;
-				if (gameiscgb == 1){
-					scale3x_dotmatrix((uint32_t*)((uint8_t *)screen->pixels + offset), (uint32_t*)surface->pixels, menupalblack);
-				} else {
-					scale3x_dotmatrix((uint32_t*)((uint8_t *)screen->pixels + offset), (uint32_t*)surface->pixels, menupalwhite);
-				}
-				break;
-			case 13:		/* CRT 3x scaler */
-				offset = (2 * (640 - 480) / 2) + ((480 - 432) / 2) * screen->pitch;
-				scale3x_crt((uint32_t*)((uint8_t *)screen->pixels + offset), (uint32_t*)surface->pixels);
-				break;
-			case 14:	/* CRT Fullscreen */
-				fullscreen_crt((uint32_t*)screen->pixels, (uint32_t*)surface->pixels);
-				break;
-#endif
-			case 7:		/* Hardware 1.25x */
-			case 8:		/* Hardware 1.36x */
-			case 9:		/* Hardware 1.5x */
-			case 10:		/* Hardware 1.66x */
-			case 11:		/* Hardware Fullscreen */
-			default:
-				/*SDL_Rect dst2;
-				dst2.x = (screen->w - surface->w) / 2;
-				dst2.y = (screen->h - surface->h) / 2;
-				dst2.w = surface->w;
-				dst2.h = surface->h;
-				SDL_BlitSurface(surface, NULL, screen, &dst2);*/
-				uint16_t *d = (uint16_t*)screen->pixels + (screen->w - surface->w) / 2 + (screen->h - surface->h) * screen->pitch / 4;
-	            uint16_t *s = (uint16_t*)surface->pixels;
-	            for (int y = 0; y < surface->h; y++)
-	            {
-	                memmove(d, s, surface->w * sizeof(uint16_t));
-	                s += surface->w;
-	                d += screen->w;
-	            }
-				break;
-		}
+		applyScalerToSurface(surface);
 	} else if((ghosting == 3) || ((ghosting == 1) && (gameiscgb == 0)) || ((ghosting == 2) && (gameiscgb == 1))){ //Ghosting enabled for current system
 		if(showoverlay >= 0){
 			anim_textoverlay(surface);
@@ -569,90 +726,12 @@ void SdlBlitter::draw() {
 		}else if(menuin >= 0){
 			anim_menuin(currframe);
 		}
-		switch(selectedscaler) {
-			case 0:		/* no scaler */
-				SDL_Rect dst;
-				dst.x = (screen->w - currframe->w) / 2;
-				dst.y = (screen->h - currframe->h) / 2;
-				dst.w = currframe->w;
-				dst.h = currframe->h;
-				SDL_BlitSurface(currframe, NULL, screen, &dst);
-				break;
-			case 1:		/* Ayla's 1.5x scaler */
-				offset = (2 * (320 - 240) / 2) + ((240 - 216) / 2) * screen->pitch;
-				scale15x((uint32_t*)((uint8_t *)screen->pixels + offset), (uint32_t*)currframe->pixels);
-				break;
-			case 2:		/* Bilinear 1.5x scaler */
-				offset = (2 * (320 - 240) / 2) + ((240 - 216) / 2) * screen->pitch;
-				scale15x_pseudobilinear((uint32_t*)((uint8_t *)screen->pixels + offset), (uint32_t*)currframe->pixels);
-				break;
-			case 3:		/* Fast 1.66x scaler */
-				offset = (2 * (320 - 266) / 2) + ((240 - 240) / 2) * screen->pitch;
-				scale166x_fast((uint32_t*)((uint8_t *)screen->pixels + offset), (uint32_t*)currframe->pixels);
-				break;
-			case 4:		/* Bilinear 1.66x scaler */
-				offset = (2 * (320 - 266) / 2) + ((240 - 240) / 2) * screen->pitch;
-				scale166x_pseudobilinear((uint32_t*)((uint8_t *)screen->pixels + offset), (uint32_t*)currframe->pixels);
-				break;
-			case 5:		/* Ayla's fullscreen scaler */
-				fullscreen_upscale((uint32_t*)screen->pixels, (uint32_t*)currframe->pixels);
-				break;
-			case 6:		/* Bilinear fullscreen scaler */
-				fullscreen_upscale_pseudobilinear((uint32_t*)screen->pixels, (uint32_t*)currframe->pixels);
-				break;
-#ifdef VGA_SCREEN
-			case 12:		/* Dot Matrix 3x scaler */
-				offset = (2 * (640 - 480) / 2) + ((480 - 432) / 2) * screen->pitch;
-				if (gameiscgb == 1){
-					scale3x_dotmatrix((uint32_t*)((uint8_t *)screen->pixels + offset), (uint32_t*)currframe->pixels, menupalblack);
-				} else {
-					scale3x_dotmatrix((uint32_t*)((uint8_t *)screen->pixels + offset), (uint32_t*)currframe->pixels, menupalwhite);
-				}
-				break;
-			case 13:		/* CRT 3x scaler */
-				offset = (2 * (640 - 480) / 2) + ((480 - 432) / 2) * screen->pitch;
-				scale3x_crt((uint32_t*)((uint8_t *)screen->pixels + offset), (uint32_t*)currframe->pixels);
-				break;
-			case 14:		/* CRT Fullscreen */
-				fullscreen_crt((uint32_t*)screen->pixels, (uint32_t*)currframe->pixels);
-				break;
-#endif
-			case 7:		/* Hardware 1.25x */
-			case 8:		/* Hardware 1.36x */
-			case 9:		/* Hardware 1.5x */
-			case 10:		/* Hardware 1.66x */
-			case 11:		/* Hardware Fullscreen */
-			default:
-				/*SDL_Rect dst2;
-				dst2.x = (screen->w - currframe->w) / 2;
-				dst2.y = (screen->h - currframe->h) / 2;
-				dst2.w = currframe->w;
-				dst2.h = currframe->h;
-				SDL_BlitSurface(currframe, NULL, screen, &dst2);*/
-				uint16_t *d = (uint16_t*)screen->pixels + (screen->w - currframe->w) / 2 + (screen->h - currframe->h) * screen->pitch / 4;
-	            uint16_t *s = (uint16_t*)currframe->pixels;
-	            for (int y = 0; y < currframe->h; y++)
-	            {
-	                memmove(d, s, currframe->w * sizeof(uint16_t));
-	                s += currframe->w;
-	                d += screen->w;
-	            }
-				break;
-		}
+		applyScalerToSurface(currframe);
 	}
-
-	/*if (surface_ && screen_) {
-		if (surface_->format->BitsPerPixel == 16)
-			swScale<Uint16>();
-		else
-			swScale<Uint32>();
-	}*/
-
 	show_fps(screen, fps);
 }
 
 void SdlBlitter::scaleMenu() {
-	size_t offset;
 
 	if (!screen || !menuscreen)
 		return;
@@ -664,77 +743,7 @@ void SdlBlitter::scaleMenu() {
 	} else {
 		convert_bw_surface_colors(menuscreen, menuscreen, menupalblack, menupaldark, menupallight, menupalwhite, 1); //if game is DMG, then menu matches DMG palette
 	}
-
-	switch(selectedscaler) {
-		case 0:		/* no scaler */
-			SDL_Rect dst;
-			dst.x = (screen->w - menuscreen->w) / 2;
-			dst.y = (screen->h - menuscreen->h) / 2;
-			dst.w = menuscreen->w;
-			dst.h = menuscreen->h;
-			SDL_BlitSurface(menuscreen, NULL, screen, &dst);
-			break;
-		case 1:		/* Ayla's 1.5x scaler */
-			offset = (2 * (320 - 240) / 2) + ((240 - 216) / 2) * screen->pitch;
-			scale15x((uint32_t*)((uint8_t *)screen->pixels + offset), (uint32_t*)menuscreen->pixels);
-			break;
-		case 2:		/* Bilinear 1.5x scaler */
-			offset = (2 * (320 - 240) / 2) + ((240 - 216) / 2) * screen->pitch;
-			scale15x_pseudobilinear((uint32_t*)((uint8_t *)screen->pixels + offset), (uint32_t*)menuscreen->pixels);
-			break;
-		case 3:		/* Fast 1.66x scaler */
-			offset = (2 * (320 - 266) / 2) + ((240 - 240) / 2) * screen->pitch;
-			scale166x_fast((uint32_t*)((uint8_t *)screen->pixels + offset), (uint32_t*)menuscreen->pixels);
-			break;
-		case 4:		/* Bilinear 1.66x scaler */
-			offset = (2 * (320 - 266) / 2) + ((240 - 240) / 2) * screen->pitch;
-			scale166x_pseudobilinear((uint32_t*)((uint8_t *)screen->pixels + offset), (uint32_t*)menuscreen->pixels);
-			break;
-		case 5:		/* Ayla's fullscreen scaler */
-			fullscreen_upscale((uint32_t*)screen->pixels, (uint32_t*)menuscreen->pixels);
-			break;
-		case 6:		/* Bilinear fullscreen scaler */
-			fullscreen_upscale_pseudobilinear((uint32_t*)screen->pixels, (uint32_t*)menuscreen->pixels);
-			break;
-#ifdef VGA_SCREEN
-		case 12:		/* Dot Matrix 3x scaler */
-			offset = (2 * (640 - 480) / 2) + ((480 - 432) / 2) * screen->pitch;
-			if (gameiscgb == 1){
-				scale3x_dotmatrix((uint32_t*)((uint8_t *)screen->pixels + offset), (uint32_t*)menuscreen->pixels, menupalblack);
-			} else {
-				scale3x_dotmatrix((uint32_t*)((uint8_t *)screen->pixels + offset), (uint32_t*)menuscreen->pixels, menupalwhite);
-			}
-			break;
-		case 13:		/* CRT 3x scaler */
-			offset = (2 * (640 - 480) / 2) + ((480 - 432) / 2) * screen->pitch;
-			scale3x_crt((uint32_t*)((uint8_t *)screen->pixels + offset), (uint32_t*)menuscreen->pixels);
-			break;
-		case 14:		/* CRT Fullscreen */
-			fullscreen_crt((uint32_t*)screen->pixels, (uint32_t*)menuscreen->pixels);
-			break;
-#endif
-		case 7:		/* Hardware 1.25x */
-		case 8:		/* Hardware 1.36x */
-		case 9:		/* Hardware 1.5x */
-		case 10:		/* Hardware 1.66x */
-		case 11:		/* Hardware Fullscreen */
-		default:
-			/*SDL_Rect dst2;
-			dst2.x = (screen->w - menuscreen->w) / 2;
-			dst2.y = (screen->h - menuscreen->h) / 2;
-			dst2.w = menuscreen->w;
-			dst2.h = menuscreen->h;
-			SDL_BlitSurface(menuscreen, NULL, screen, &dst2);*/
-			uint16_t *d = (uint16_t*)screen->pixels + (screen->w - menuscreen->w) / 2 + (screen->h - menuscreen->h) * screen->pitch / 4;
-	        uint16_t *s = (uint16_t*)menuscreen->pixels;
-	        for (int y = 0; y < menuscreen->h; y++)
-	        {
-	            memmove(d, s, menuscreen->w * sizeof(uint16_t));
-	            s += menuscreen->w;
-	            d += screen->w;
-	        }
-			break;
-	}
+	applyScalerToSurface(menuscreen);
 }
 
 void SdlBlitter::present() {

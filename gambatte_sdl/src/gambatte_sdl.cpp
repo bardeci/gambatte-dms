@@ -1024,9 +1024,7 @@ bool GambatteSdl::handleEvents(BlitterWrapper &blitter) {
 			case SDL_JOYAXISMOTION:
 				jd.dev_num = e.jaxis.which;
 				jd.num = e.jaxis.axis;
-				jd.dir = e.jaxis.value < -8192
-				       ? JoyData::dir_down
-				       : (e.jaxis.value > 8192 ? JoyData::dir_up : JoyData::dir_centered);
+				jd.dir = e.jaxis.value < -8192 ? JoyData::dir_down : (e.jaxis.value > 8192 ? JoyData::dir_up : JoyData::dir_centered);
 
 				for (std::pair<jmap_t::iterator, jmap_t::iterator> range =
 						jaMap.equal_range(jd); range.first != range.second; ++range.first) {

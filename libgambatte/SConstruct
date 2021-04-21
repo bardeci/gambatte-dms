@@ -1,16 +1,14 @@
+# OPTIONAL DEFINES:
+# -DROM_BROWSER: Enables internal rom browser (gb and gbc romdirs are hardcoded for each system)
+# -DPOWEROFF: Replaces the "Quit" option with a "Power Off" option.
+
 target = ARGUMENTS.get('target', 0)
-if target == 'opendingux':
+if target == 'gcw0':
     include_path = ' -I/opt/gcw0-toolchain/usr/mipsel-gcw0-linux-uclibc/sysroot/usr/include'
     bin_path = '/opt/gcw0-toolchain/usr/bin/mipsel-linux-'
-    version_defines = ' -DVERSION_OPENDINGUX'
+    version_defines = ' -DVERSION_GCW0'
     extra_cflags = ''
-    print "Building Gambatte library with OpenDingux toolchain..."
-elif target == 'rg350m':
-    include_path = ' -I/opt/gcw0-toolchain/usr/mipsel-gcw0-linux-uclibc/sysroot/usr/include'
-    bin_path = '/opt/gcw0-toolchain/usr/bin/mipsel-linux-'
-    version_defines = ' -DVERSION_OPENDINGUX -DVGA_SCREEN'
-    extra_cflags = ''
-    print "Building Gambatte library with OpenDingux toolchain..."
+    print "Building Gambatte library with GCW0 toolchain..."
 elif target == 'retrofw':
     include_path = ' -I/opt/rs97-toolchain/mipsel-buildroot-linux-uclibc/sysroot/usr/include'
     bin_path = '/opt/rs97-toolchain/bin/mipsel-linux-'

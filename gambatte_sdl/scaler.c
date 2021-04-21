@@ -870,429 +870,6 @@ void scale166x_pseudobilinear(uint32_t* dst, uint32_t* src)
     }
 }
 
-#ifdef OGA_SCREEN
-
-/* Upscales a 160x144 image to 320x288 using a grid-looking upscaler algorithm.
- *
- * Input:
- *   src: A packed 160x144 pixel image. The pixel format of this image is RGB 565.
- *   gridcolor: An hexadecimal color. The format of this color is 0xRRGGBB.
- * Output:
- *   dst: A packed 320x288 pixel image. The pixel format of this image is RGB 565.
- */
-
-void scale2x_dotmatrix(uint32_t* dst, uint32_t* src, const uint32_t gridcolor)
-{
-    uint16_t* Src16 = (uint16_t*) src;
-    uint16_t* Dst16 = (uint16_t*) dst;
-    uint16_t gcolor = hexcolor_to_rgb565(gridcolor);
-
-    // There are 160 pixels horizontally, and 144 vertically.
-    // Each pixel becomes 2x2 with an added grid pattern.
-
-    uint8_t BlockX, BlockY;
-    uint16_t* BlockSrc;
-    uint16_t* BlockDst;
-    for (BlockY = 0; BlockY < 144; BlockY++)
-    {
-        BlockSrc = Src16 + BlockY * 160 * 1;
-        BlockDst = Dst16 + BlockY * 480 * 2;
-        for (BlockX = 0; BlockX < 160; BlockX++)
-        {
-            // Before:          After:
-            // (a)              (2)(1)
-            //                  (3)(2)
-
-            uint16_t  _1 = *(BlockSrc);
-            uint16_t  _2 = Weight2_1( _1, gcolor);
-            uint16_t  _3 = Weight1_1( _1, gcolor);
-
-            // -- Row 1 --
-            *(BlockDst               ) = _2;
-            *(BlockDst            + 1) = _1;
-
-            // -- Row 2 --
-            *(BlockDst + 480 *  1    ) = _3;
-            *(BlockDst + 480 *  1 + 1) = _2;
-
-            BlockSrc += 1;
-            BlockDst += 2;
-        }
-    }
-}
-
-/* Upscales a 160x144 image to 320x288 using a CRT-looking upscaler algorithm.
- *
- * Input:
- *   src: A packed 160x144 pixel image. The pixel format of this image is RGB 565.
- *   gridcolor: An hexadecimal color. The format of this color is 0xRRGGBB.
- * Output:
- *   dst: A packed 320x288 pixel image. The pixel format of this image is RGB 565.
- */
-
-void scale2x_crt(uint32_t* dst, uint32_t* src)
-{
-    uint16_t* Src16 = (uint16_t*) src;
-    uint16_t* Dst16 = (uint16_t*) dst;
-    uint16_t gcolor = hexcolor_to_rgb565(0x000000);
-
-    // There are 160 pixels horizontally, and 144 vertically.
-    // Each pixel becomes 2x2 with an added scanline pattern.
-
-    uint8_t BlockX, BlockY;
-    uint16_t* BlockSrc;
-    uint16_t* BlockDst;
-    for (BlockY = 0; BlockY < 144; BlockY++)
-    {
-        BlockSrc = Src16 + BlockY * 160 * 1;
-        BlockDst = Dst16 + BlockY * 480 * 2;
-        for (BlockX = 0; BlockX < 160; BlockX++)
-        {
-            // Before:          After:
-            // (a)              (1)(1)
-            //                  (2)(2)
-
-            uint16_t  _1 = *(BlockSrc);
-            uint16_t  _2 = Weight2_1( _1, gcolor);
-
-            // -- Row 1 --
-            *(BlockDst               ) = _1;
-            *(BlockDst            + 1) = _1;
-
-            // -- Row 2 --
-            *(BlockDst + 480 *  1    ) = _2;
-            *(BlockDst + 480 *  1 + 1) = _2;
-
-            BlockSrc += 1;
-            BlockDst += 2;
-        }
-    }
-}
-
-void scaleborder2x(uint32_t* dst, uint32_t* src)
-{
-    uint16_t* Src16 = (uint16_t*) src;
-    uint16_t* Dst16 = (uint16_t*) dst;
-
-    uint8_t BlockX, BlockY;
-    uint16_t* BlockSrc;
-    uint16_t* BlockDst;
-    for (BlockY = 0; BlockY < 160; BlockY++)
-    {
-        BlockSrc = Src16 + BlockY * 240 * 1;
-        BlockDst = Dst16 + BlockY * 480 * 2;
-        for (BlockX = 0; BlockX < 240; BlockX++)
-        {
-            // Before:          After:
-            // (a)              (a)(a)
-            //                  (a)(a)
-
-            uint16_t  _1 = *(BlockSrc);
-
-            // -- Row 1 --
-            *(BlockDst               ) = _1;
-            *(BlockDst            + 1) = _1;
-
-            // -- Row 2 --
-            *(BlockDst + 480 *  1    ) = _1;
-            *(BlockDst + 480 *  1 + 1) = _1;
-
-            BlockSrc += 1;
-            BlockDst += 2;
-        }
-    }
-}
-
-void scaleborder2x_crt(uint32_t* dst, uint32_t* src)
-{
-    uint16_t* Src16 = (uint16_t*) src;
-    uint16_t* Dst16 = (uint16_t*) dst;
-    uint16_t gcolor = hexcolor_to_rgb565(0x000000);
-
-    uint8_t BlockX, BlockY;
-    uint16_t* BlockSrc;
-    uint16_t* BlockDst;
-    for (BlockY = 0; BlockY < 160; BlockY++)
-    {
-        BlockSrc = Src16 + BlockY * 240 * 1;
-        BlockDst = Dst16 + BlockY * 480 * 2;
-        for (BlockX = 0; BlockX < 240; BlockX++)
-        {
-            // Before:          After:
-            // (a)              (1)(1)
-            //                  (2)(2)
-
-            uint16_t  _1 = *(BlockSrc);
-            uint16_t  _2 = Weight2_1( _1, gcolor);
-
-            // -- Row 1 --
-            *(BlockDst               ) = _1;
-            *(BlockDst            + 1) = _1;
-
-            // -- Row 2 --
-            *(BlockDst + 480 *  1    ) = _2;
-            *(BlockDst + 480 *  1 + 1) = _2;
-
-            BlockSrc += 1;
-            BlockDst += 2;
-        }
-    }
-}
-
-#elif VGA_SCREEN
-
-/* Upscales a 160x144 image to 480x432 using a grid-looking upscaler algorithm.
- *
- * Input:
- *   src: A packed 160x144 pixel image. The pixel format of this image is RGB 565.
- *   gridcolor: An hexadecimal color. The format of this color is 0xRRGGBB.
- * Output:
- *   dst: A packed 480x432 pixel image. The pixel format of this image is RGB 565.
- */
-
-void scale3x_dotmatrix(uint32_t* dst, uint32_t* src, const uint32_t gridcolor)
-{
-    uint16_t* Src16 = (uint16_t*) src;
-    uint16_t* Dst16 = (uint16_t*) dst;
-    uint16_t gcolor = hexcolor_to_rgb565(gridcolor);
-
-    // There are 160 pixels horizontally, and 144 vertically.
-    // Each pixel becomes 3x3 with an added grid pattern.
-
-    uint8_t BlockX, BlockY;
-    uint16_t* BlockSrc;
-    uint16_t* BlockDst;
-    for (BlockY = 0; BlockY < 144; BlockY++)
-    {
-        BlockSrc = Src16 + BlockY * 160 * 1;
-        BlockDst = Dst16 + BlockY * 640 * 3;
-        for (BlockX = 0; BlockX < 160; BlockX++)
-        {
-            // Before:          After:
-            // (a)              (2)(1)(1)
-            //                  (2)(1)(1)
-            //                  (3)(2)(2)
-
-            uint16_t  _1 = *(BlockSrc);
-            uint16_t  _2 = Weight3_2( _1, gcolor);
-            uint16_t  _3 = Weight2_3( _1, gcolor);
-
-            // -- Row 1 --
-            *(BlockDst               ) = _2;
-            *(BlockDst            + 1) = _1;
-            *(BlockDst            + 2) = _1;
-
-            // -- Row 2 --
-            *(BlockDst + 640 *  1    ) = _2;
-            *(BlockDst + 640 *  1 + 1) = _1;
-            *(BlockDst + 640 *  1 + 2) = _1;
-
-            // -- Row 3 --
-            *(BlockDst + 640 *  2    ) = _3;
-            *(BlockDst + 640 *  2 + 1) = _2;
-            *(BlockDst + 640 *  2 + 2) = _2;
-
-            BlockSrc += 1;
-            BlockDst += 3;
-        }
-    }
-}
-
-/* Upscales a 160x144 image to 480x432 using a CRT-looking upscaler algorithm.
- *
- * Input:
- *   src: A packed 160x144 pixel image. The pixel format of this image is RGB 565.
- *   gridcolor: An hexadecimal color. The format of this color is 0xRRGGBB.
- * Output:
- *   dst: A packed 480x432 pixel image. The pixel format of this image is RGB 565.
- */
-
-void scale3x_crt(uint32_t* dst, uint32_t* src)
-{
-    uint16_t* Src16 = (uint16_t*) src;
-    uint16_t* Dst16 = (uint16_t*) dst;
-    uint16_t gcolor = hexcolor_to_rgb565(0x000000);
-
-    // There are 160 pixels horizontally, and 144 vertically.
-    // Each pixel becomes 3x3 with an added scanline pattern.
-
-    uint8_t BlockX, BlockY;
-    uint16_t* BlockSrc;
-    uint16_t* BlockDst;
-    for (BlockY = 0; BlockY < 144; BlockY++)
-    {
-        BlockSrc = Src16 + BlockY * 160 * 1;
-        BlockDst = Dst16 + BlockY * 640 * 3;
-        for (BlockX = 0; BlockX < 160; BlockX++)
-        {
-            // Before:          After:
-            // (a)              (a)(a)(a)
-            //                  (x)(x)(x)
-            //                  (y)(y)(y)
-
-            uint16_t  _1 = *(BlockSrc);
-            uint16_t  _2 = Weight4_1( _1, gcolor);
-            uint16_t  _3 = Weight1_1( _1, gcolor);
-
-            // -- Row 1 --
-            *(BlockDst               ) = _1;
-            *(BlockDst            + 1) = _1;
-            *(BlockDst            + 2) = _1;
-
-            // -- Row 2 --
-            *(BlockDst + 640 *  1    ) = _2;
-            *(BlockDst + 640 *  1 + 1) = _2;
-            *(BlockDst + 640 *  1 + 2) = _2;
-
-            // -- Row 3 --
-            *(BlockDst + 640 *  2    ) = _3;
-            *(BlockDst + 640 *  2 + 1) = _3;
-            *(BlockDst + 640 *  2 + 2) = _3;
-
-            BlockSrc += 1;
-            BlockDst += 3;
-        }
-    }
-}
-
-void fullscreen_crt(uint32_t* dst, uint32_t* src)
-{
-    uint16_t* Src16 = (uint16_t*) src;
-    uint16_t* Dst16 = (uint16_t*) dst;
-    uint16_t gcolor = hexcolor_to_rgb565(0x000000);
-
-    // There are 160 pixels horizontally, and 144 vertically.
-    // Each pixel becomes 3x3 with an added scanline pattern.
-
-    uint8_t BlockX, BlockY;
-    uint16_t* BlockSrc;
-    uint16_t* BlockDst;
-    for (BlockY = 0; BlockY < 144; BlockY++)
-    {
-        BlockSrc = Src16 + BlockY * 160 * 1;
-        BlockDst = Dst16 + BlockY * 480 * 3;
-        for (BlockX = 0; BlockX < 160; BlockX++)
-        {
-            // Before:          After:
-            // (a)              (a)(a)(a)
-            //                  (x)(x)(x)
-            //                  (y)(y)(y)
-
-            uint16_t  _1 = *(BlockSrc);
-            uint16_t  _2 = Weight4_1( _1, gcolor);
-            uint16_t  _3 = Weight1_1( _1, gcolor);
-
-            // -- Row 1 --
-            *(BlockDst               ) = _1;
-            *(BlockDst            + 1) = _1;
-            *(BlockDst            + 2) = _1;
-
-            // -- Row 2 --
-            *(BlockDst + 480 *  1    ) = _2;
-            *(BlockDst + 480 *  1 + 1) = _2;
-            *(BlockDst + 480 *  1 + 2) = _2;
-
-            // -- Row 3 --
-            *(BlockDst + 480 *  2    ) = _3;
-            *(BlockDst + 480 *  2 + 1) = _3;
-            *(BlockDst + 480 *  2 + 2) = _3;
-
-            BlockSrc += 1;
-            BlockDst += 3;
-        }
-    }
-}
-
-void scaleborder3x(uint32_t* dst, uint32_t* src)
-{
-    uint16_t* Src16 = (uint16_t*) src;
-    uint16_t* Dst16 = (uint16_t*) dst;
-
-    uint8_t BlockX, BlockY;
-    uint16_t* BlockSrc;
-    uint16_t* BlockDst;
-    for (BlockY = 0; BlockY < 160; BlockY++)
-    {
-        BlockSrc = Src16 + BlockY * 212 * 1;
-        BlockDst = Dst16 + BlockY * 640 * 3;
-        for (BlockX = 0; BlockX < 212; BlockX++)
-        {
-            // Before:          After:
-            // (a)              (a)(a)(a)
-            //                  (a)(a)(a)
-            //                  (a)(a)(a)
-
-            uint16_t  _1 = *(BlockSrc);
-
-            // -- Row 1 --
-            *(BlockDst               ) = _1;
-            *(BlockDst            + 1) = _1;
-            *(BlockDst            + 2) = _1;
-
-            // -- Row 2 --
-            *(BlockDst + 640 *  1    ) = _1;
-            *(BlockDst + 640 *  1 + 1) = _1;
-            *(BlockDst + 640 *  1 + 2) = _1;
-
-            // -- Row 3 --
-            *(BlockDst + 640 *  2    ) = _1;
-            *(BlockDst + 640 *  2 + 1) = _1;
-            *(BlockDst + 640 *  2 + 2) = _1;
-
-            BlockSrc += 1;
-            BlockDst += 3;
-        }
-    }
-}
-
-void scaleborder3x_crt(uint32_t* dst, uint32_t* src)
-{
-    uint16_t* Src16 = (uint16_t*) src;
-    uint16_t* Dst16 = (uint16_t*) dst;
-    uint16_t gcolor = hexcolor_to_rgb565(0x000000);
-
-    uint8_t BlockX, BlockY;
-    uint16_t* BlockSrc;
-    uint16_t* BlockDst;
-    for (BlockY = 0; BlockY < 160; BlockY++)
-    {
-        BlockSrc = Src16 + BlockY * 212 * 1;
-        BlockDst = Dst16 + BlockY * 640 * 3;
-        for (BlockX = 0; BlockX < 212; BlockX++)
-        {
-            // Before:          After:
-            // (a)              (a)(a)(a)
-            //                  (x)(x)(x)
-            //                  (y)(y)(y)
-
-            uint16_t  _1 = *(BlockSrc);
-            uint16_t  _2 = Weight4_1( _1, gcolor);
-            uint16_t  _3 = Weight1_1( _1, gcolor);
-
-            // -- Row 1 --
-            *(BlockDst               ) = _1;
-            *(BlockDst            + 1) = _1;
-            *(BlockDst            + 2) = _1;
-
-            // -- Row 2 --
-            *(BlockDst + 640 *  1    ) = _2;
-            *(BlockDst + 640 *  1 + 1) = _2;
-            *(BlockDst + 640 *  1 + 2) = _2;
-
-            // -- Row 3 --
-            *(BlockDst + 640 *  2    ) = _3;
-            *(BlockDst + 640 *  2 + 1) = _3;
-            *(BlockDst + 640 *  2 + 2) = _3;
-
-            BlockSrc += 1;
-            BlockDst += 3;
-        }
-    }
-}
-#endif
-
-//---------------- BORDER SCALERS ---------------------//
-
 void scaleborder15x(uint32_t* dst, uint32_t* src)
 {
     uint16_t* Src16 = (uint16_t*) src;
@@ -1445,6 +1022,993 @@ void scaleborder166x(uint32_t* dst, uint32_t* src)
 
             BlockSrc += 3;
             BlockDst += 5;
+        }
+    }
+}
+
+/* Upscales a 160x144 image to 320x288 using a grid-looking upscaler algorithm.
+ *
+ * Input:
+ *   src: A packed 160x144 pixel image. The pixel format of this image is RGB 565.
+ *   gridcolor: An hexadecimal color. The format of this color is 0xRRGGBB.
+ * Output:
+ *   dst: A packed 320x288 pixel image. The pixel format of this image is RGB 565.
+ */
+
+void scale15x_2(uint32_t* dst, uint32_t* src)
+{
+    uint16_t* Src16 = (uint16_t*) src;
+    uint16_t* Dst16 = (uint16_t*) dst;
+
+    // There are 160 pixels horizontally, and 144 vertically.
+    // Each pixel becomes 2x2 with an added grid pattern.
+
+    uint8_t BlockX, BlockY;
+    uint16_t* BlockSrc;
+    uint16_t* BlockDst;
+    for (BlockY = 0; BlockY < 144; BlockY++)
+    {
+        BlockSrc = Src16 + BlockY * 160 * 1;
+        BlockDst = Dst16 + BlockY * 428 * 2;
+        for (BlockX = 0; BlockX < 160; BlockX++)
+        {
+            // Before:          After:
+            // (a)              (1)(1)
+            //                  (1)(1)
+
+            uint16_t  _1 = *(BlockSrc);
+
+            // -- Row 1 --
+            *(BlockDst               ) = _1;
+            *(BlockDst            + 1) = _1;
+
+            // -- Row 2 --
+            *(BlockDst + 428 *  1    ) = _1;
+            *(BlockDst + 428 *  1 + 1) = _1;
+
+            BlockSrc += 1;
+            BlockDst += 2;
+        }
+    }
+}
+
+void scale166x_2(uint32_t* dst, uint32_t* src)
+{
+    uint16_t* Src16 = (uint16_t*) src;
+    uint16_t* Dst16 = (uint16_t*) dst;
+
+    // There are 160 pixels horizontally, and 144 vertically.
+    // Each pixel becomes 2x2 with an added grid pattern.
+
+    uint8_t BlockX, BlockY;
+    uint16_t* BlockSrc;
+    uint16_t* BlockDst;
+    for (BlockY = 0; BlockY < 144; BlockY++)
+    {
+        BlockSrc = Src16 + BlockY * 160 * 1;
+        BlockDst = Dst16 + BlockY * 384 * 2;
+        for (BlockX = 0; BlockX < 160; BlockX++)
+        {
+            // Before:          After:
+            // (a)              (1)(1)
+            //                  (1)(1)
+
+            uint16_t  _1 = *(BlockSrc);
+
+            // -- Row 1 --
+            *(BlockDst               ) = _1;
+            *(BlockDst            + 1) = _1;
+
+            // -- Row 2 --
+            *(BlockDst + 384 *  1    ) = _1;
+            *(BlockDst + 384 *  1 + 1) = _1;
+
+            BlockSrc += 1;
+            BlockDst += 2;
+        }
+    }
+}
+
+void fullscreen_2(uint32_t* dst, uint32_t* src)
+{
+    uint16_t* Src16 = (uint16_t*) src;
+    uint16_t* Dst16 = (uint16_t*) dst;
+
+    // There are 160 pixels horizontally, and 144 vertically.
+    // Each pixel becomes 2x2 with an added grid pattern.
+
+    uint8_t BlockX, BlockY;
+    uint16_t* BlockSrc;
+    uint16_t* BlockDst;
+    for (BlockY = 0; BlockY < 144; BlockY++)
+    {
+        BlockSrc = Src16 + BlockY * 160 * 1;
+        BlockDst = Dst16 + BlockY * 320 * 2;
+        for (BlockX = 0; BlockX < 160; BlockX++)
+        {
+            // Before:          After:
+            // (a)              (1)(1)
+            //                  (1)(1)
+
+            uint16_t  _1 = *(BlockSrc);
+
+            // -- Row 1 --
+            *(BlockDst               ) = _1;
+            *(BlockDst            + 1) = _1;
+
+            // -- Row 2 --
+            *(BlockDst + 320 *  1    ) = _1;
+            *(BlockDst + 320 *  1 + 1) = _1;
+
+            BlockSrc += 1;
+            BlockDst += 2;
+        }
+    }
+}
+
+
+void scale15x_dotmatrix2(uint32_t* dst, uint32_t* src, const uint32_t gridcolor)
+{
+    uint16_t* Src16 = (uint16_t*) src;
+    uint16_t* Dst16 = (uint16_t*) dst;
+    uint16_t gcolor = hexcolor_to_rgb565(gridcolor);
+
+    // There are 160 pixels horizontally, and 144 vertically.
+    // Each pixel becomes 2x2 with an added grid pattern.
+
+    uint8_t BlockX, BlockY;
+    uint16_t* BlockSrc;
+    uint16_t* BlockDst;
+    for (BlockY = 0; BlockY < 144; BlockY++)
+    {
+        BlockSrc = Src16 + BlockY * 160 * 1;
+        BlockDst = Dst16 + BlockY * 428 * 2;
+        for (BlockX = 0; BlockX < 160; BlockX++)
+        {
+            // Before:          After:
+            // (a)              (2)(1)
+            //                  (3)(2)
+
+            uint16_t  _1 = *(BlockSrc);
+            uint16_t  _2 = Weight2_1( _1, gcolor);
+            uint16_t  _3 = Weight1_1( _1, gcolor);
+
+            // -- Row 1 --
+            *(BlockDst               ) = _2;
+            *(BlockDst            + 1) = _1;
+
+            // -- Row 2 --
+            *(BlockDst + 428 *  1    ) = _3;
+            *(BlockDst + 428 *  1 + 1) = _2;
+
+            BlockSrc += 1;
+            BlockDst += 2;
+        }
+    }
+}
+
+void scale166x_dotmatrix2(uint32_t* dst, uint32_t* src, const uint32_t gridcolor)
+{
+    uint16_t* Src16 = (uint16_t*) src;
+    uint16_t* Dst16 = (uint16_t*) dst;
+    uint16_t gcolor = hexcolor_to_rgb565(gridcolor);
+
+    // There are 160 pixels horizontally, and 144 vertically.
+    // Each pixel becomes 2x2 with an added grid pattern.
+
+    uint8_t BlockX, BlockY;
+    uint16_t* BlockSrc;
+    uint16_t* BlockDst;
+    for (BlockY = 0; BlockY < 144; BlockY++)
+    {
+        BlockSrc = Src16 + BlockY * 160 * 1;
+        BlockDst = Dst16 + BlockY * 384 * 2;
+        for (BlockX = 0; BlockX < 160; BlockX++)
+        {
+            // Before:          After:
+            // (a)              (2)(1)
+            //                  (3)(2)
+
+            uint16_t  _1 = *(BlockSrc);
+            uint16_t  _2 = Weight2_1( _1, gcolor);
+            uint16_t  _3 = Weight1_1( _1, gcolor);
+
+            // -- Row 1 --
+            *(BlockDst               ) = _2;
+            *(BlockDst            + 1) = _1;
+
+            // -- Row 2 --
+            *(BlockDst + 384 *  1    ) = _3;
+            *(BlockDst + 384 *  1 + 1) = _2;
+
+            BlockSrc += 1;
+            BlockDst += 2;
+        }
+    }
+}
+
+void fullscreen_dotmatrix2(uint32_t* dst, uint32_t* src, const uint32_t gridcolor)
+{
+    uint16_t* Src16 = (uint16_t*) src;
+    uint16_t* Dst16 = (uint16_t*) dst;
+    uint16_t gcolor = hexcolor_to_rgb565(gridcolor);
+
+    // There are 160 pixels horizontally, and 144 vertically.
+    // Each pixel becomes 2x2 with an added grid pattern.
+
+    uint8_t BlockX, BlockY;
+    uint16_t* BlockSrc;
+    uint16_t* BlockDst;
+    for (BlockY = 0; BlockY < 144; BlockY++)
+    {
+        BlockSrc = Src16 + BlockY * 160 * 1;
+        BlockDst = Dst16 + BlockY * 320 * 2;
+        for (BlockX = 0; BlockX < 160; BlockX++)
+        {
+            // Before:          After:
+            // (a)              (2)(1)
+            //                  (3)(2)
+
+            uint16_t  _1 = *(BlockSrc);
+            uint16_t  _2 = Weight2_1( _1, gcolor);
+            uint16_t  _3 = Weight1_1( _1, gcolor);
+
+            // -- Row 1 --
+            *(BlockDst               ) = _2;
+            *(BlockDst            + 1) = _1;
+
+            // -- Row 2 --
+            *(BlockDst + 320 *  1    ) = _3;
+            *(BlockDst + 320 *  1 + 1) = _2;
+
+            BlockSrc += 1;
+            BlockDst += 2;
+        }
+    }
+}
+
+void scaleborder15x_2(uint32_t* dst, uint32_t* src) //212x160 to 424x320
+{
+    uint16_t* Src16 = (uint16_t*) src;
+    uint16_t* Dst16 = (uint16_t*) dst;
+
+    uint8_t BlockX, BlockY;
+    uint16_t* BlockSrc;
+    uint16_t* BlockDst;
+    for (BlockY = 0; BlockY < 160; BlockY++)
+    {
+        BlockSrc = Src16 + BlockY * 214 * 1;
+        BlockDst = Dst16 + BlockY * 428 * 2;
+        for (BlockX = 0; BlockX < 214; BlockX++)
+        {
+            // Before:          After:
+            // (a)              (a)(a)
+            //                  (a)(a)
+
+            uint16_t  _1 = *(BlockSrc);
+
+            // -- Row 1 --
+            *(BlockDst               ) = _1;
+            *(BlockDst            + 1) = _1;
+
+            // -- Row 2 --
+            *(BlockDst + 428 *  1    ) = _1;
+            *(BlockDst + 428 *  1 + 1) = _1;
+
+            BlockSrc += 1;
+            BlockDst += 2;
+        }
+    }
+}
+
+void scaleborder166x_2(uint32_t* dst, uint32_t* src) //192x144 to 384x288
+{
+    uint16_t* Src16 = (uint16_t*) src;
+    uint16_t* Dst16 = (uint16_t*) dst;
+
+    uint8_t BlockX, BlockY;
+    uint16_t* BlockSrc;
+    uint16_t* BlockDst;
+    for (BlockY = 0; BlockY < 144; BlockY++)
+    {
+        BlockSrc = Src16 + BlockY * 192 * 1;
+        BlockDst = Dst16 + BlockY * 384 * 2;
+        for (BlockX = 0; BlockX < 192; BlockX++)
+        {
+            // Before:          After:
+            // (a)              (a)(a)
+            //                  (a)(a)
+
+            uint16_t  _1 = *(BlockSrc);
+
+            // -- Row 1 --
+            *(BlockDst               ) = _1;
+            *(BlockDst            + 1) = _1;
+
+            // -- Row 2 --
+            *(BlockDst + 384 *  1    ) = _1;
+            *(BlockDst + 384 *  1 + 1) = _1;
+
+            BlockSrc += 1;
+            BlockDst += 2;
+        }
+    }
+}
+
+/* Upscales a 160x144 image to 320x288 using a CRT-looking upscaler algorithm.
+ *
+ * Input:
+ *   src: A packed 160x144 pixel image. The pixel format of this image is RGB 565.
+ *   gridcolor: An hexadecimal color. The format of this color is 0xRRGGBB.
+ * Output:
+ *   dst: A packed 320x288 pixel image. The pixel format of this image is RGB 565.
+ */
+
+void scale15x_crt2(uint32_t* dst, uint32_t* src)
+{
+    uint16_t* Src16 = (uint16_t*) src;
+    uint16_t* Dst16 = (uint16_t*) dst;
+    uint16_t gcolor = hexcolor_to_rgb565(0x000000);
+
+    // There are 160 pixels horizontally, and 144 vertically.
+    // Each pixel becomes 2x2 with an added scanline pattern.
+
+    uint8_t BlockX, BlockY;
+    uint16_t* BlockSrc;
+    uint16_t* BlockDst;
+    for (BlockY = 0; BlockY < 144; BlockY++)
+    {
+        BlockSrc = Src16 + BlockY * 160 * 1;
+        BlockDst = Dst16 + BlockY * 428 * 2;
+        for (BlockX = 0; BlockX < 160; BlockX++)
+        {
+            // Before:          After:
+            // (a)              (1)(1)
+            //                  (2)(2)
+
+            uint16_t  _1 = *(BlockSrc);
+            uint16_t  _2 = Weight2_1( _1, gcolor);
+
+            // -- Row 1 --
+            *(BlockDst               ) = _1;
+            *(BlockDst            + 1) = _1;
+
+            // -- Row 2 --
+            *(BlockDst + 428 *  1    ) = _2;
+            *(BlockDst + 428 *  1 + 1) = _2;
+
+            BlockSrc += 1;
+            BlockDst += 2;
+        }
+    }
+}
+
+void scale166x_crt2(uint32_t* dst, uint32_t* src)
+{
+    uint16_t* Src16 = (uint16_t*) src;
+    uint16_t* Dst16 = (uint16_t*) dst;
+    uint16_t gcolor = hexcolor_to_rgb565(0x000000);
+
+    // There are 160 pixels horizontally, and 144 vertically.
+    // Each pixel becomes 2x2 with an added scanline pattern.
+
+    uint8_t BlockX, BlockY;
+    uint16_t* BlockSrc;
+    uint16_t* BlockDst;
+    for (BlockY = 0; BlockY < 144; BlockY++)
+    {
+        BlockSrc = Src16 + BlockY * 160 * 1;
+        BlockDst = Dst16 + BlockY * 384 * 2;
+        for (BlockX = 0; BlockX < 160; BlockX++)
+        {
+            // Before:          After:
+            // (a)              (1)(1)
+            //                  (2)(2)
+
+            uint16_t  _1 = *(BlockSrc);
+            uint16_t  _2 = Weight2_1( _1, gcolor);
+
+            // -- Row 1 --
+            *(BlockDst               ) = _1;
+            *(BlockDst            + 1) = _1;
+
+            // -- Row 2 --
+            *(BlockDst + 384 *  1    ) = _2;
+            *(BlockDst + 384 *  1 + 1) = _2;
+
+            BlockSrc += 1;
+            BlockDst += 2;
+        }
+    }
+}
+
+void fullscreen_crt2(uint32_t* dst, uint32_t* src)
+{
+    uint16_t* Src16 = (uint16_t*) src;
+    uint16_t* Dst16 = (uint16_t*) dst;
+    uint16_t gcolor = hexcolor_to_rgb565(0x000000);
+
+    // There are 160 pixels horizontally, and 144 vertically.
+    // Each pixel becomes 2x2 with an added scanline pattern.
+
+    uint8_t BlockX, BlockY;
+    uint16_t* BlockSrc;
+    uint16_t* BlockDst;
+    for (BlockY = 0; BlockY < 144; BlockY++)
+    {
+        BlockSrc = Src16 + BlockY * 160 * 1;
+        BlockDst = Dst16 + BlockY * 320 * 2;
+        for (BlockX = 0; BlockX < 160; BlockX++)
+        {
+            // Before:          After:
+            // (a)              (1)(1)
+            //                  (2)(2)
+
+            uint16_t  _1 = *(BlockSrc);
+            uint16_t  _2 = Weight2_1( _1, gcolor);
+
+            // -- Row 1 --
+            *(BlockDst               ) = _1;
+            *(BlockDst            + 1) = _1;
+
+            // -- Row 2 --
+            *(BlockDst + 320 *  1    ) = _2;
+            *(BlockDst + 320 *  1 + 1) = _2;
+
+            BlockSrc += 1;
+            BlockDst += 2;
+        }
+    }
+}
+
+void scaleborder15x_crt2(uint32_t* dst, uint32_t* src) //212x160 to 424x320
+{
+    uint16_t* Src16 = (uint16_t*) src;
+    uint16_t* Dst16 = (uint16_t*) dst;
+    uint16_t gcolor = hexcolor_to_rgb565(0x000000);
+
+    uint8_t BlockX, BlockY;
+    uint16_t* BlockSrc;
+    uint16_t* BlockDst;
+    for (BlockY = 0; BlockY < 160; BlockY++)
+    {
+        BlockSrc = Src16 + BlockY * 214 * 1;
+        BlockDst = Dst16 + BlockY * 428 * 2;
+        for (BlockX = 0; BlockX < 214; BlockX++)
+        {
+            // Before:          After:
+            // (a)              (1)(1)
+            //                  (2)(2)
+
+            uint16_t  _1 = *(BlockSrc);
+            uint16_t  _2 = Weight2_1( _1, gcolor);
+
+            // -- Row 1 --
+            *(BlockDst               ) = _1;
+            *(BlockDst            + 1) = _1;
+
+            // -- Row 2 --
+            *(BlockDst + 428 *  1    ) = _2;
+            *(BlockDst + 428 *  1 + 1) = _2;
+
+            BlockSrc += 1;
+            BlockDst += 2;
+        }
+    }
+}
+
+void scaleborder166x_crt2(uint32_t* dst, uint32_t* src) //192x144 to 384x288
+{
+    uint16_t* Src16 = (uint16_t*) src;
+    uint16_t* Dst16 = (uint16_t*) dst;
+    uint16_t gcolor = hexcolor_to_rgb565(0x000000);
+
+    uint8_t BlockX, BlockY;
+    uint16_t* BlockSrc;
+    uint16_t* BlockDst;
+    for (BlockY = 0; BlockY < 144; BlockY++)
+    {
+        BlockSrc = Src16 + BlockY * 192 * 1;
+        BlockDst = Dst16 + BlockY * 384 * 2;
+        for (BlockX = 0; BlockX < 192; BlockX++)
+        {
+            // Before:          After:
+            // (a)              (1)(1)
+            //                  (2)(2)
+
+            uint16_t  _1 = *(BlockSrc);
+            uint16_t  _2 = Weight2_1( _1, gcolor);
+
+            // -- Row 1 --
+            *(BlockDst               ) = _1;
+            *(BlockDst            + 1) = _1;
+
+            // -- Row 2 --
+            *(BlockDst + 384 *  1    ) = _2;
+            *(BlockDst + 384 *  1 + 1) = _2;
+
+            BlockSrc += 1;
+            BlockDst += 2;
+        }
+    }
+}
+
+/* Upscales a 160x144 image to 480x432 using a grid-looking upscaler algorithm.
+ *
+ * Input:
+ *   src: A packed 160x144 pixel image. The pixel format of this image is RGB 565.
+ *   gridcolor: An hexadecimal color. The format of this color is 0xRRGGBB.
+ * Output:
+ *   dst: A packed 480x432 pixel image. The pixel format of this image is RGB 565.
+ */
+
+void scale15x_dotmatrix3(uint32_t* dst, uint32_t* src, const uint32_t gridcolor)
+{
+    uint16_t* Src16 = (uint16_t*) src;
+    uint16_t* Dst16 = (uint16_t*) dst;
+    uint16_t gcolor = hexcolor_to_rgb565(gridcolor);
+
+    // There are 160 pixels horizontally, and 144 vertically.
+    // Each pixel becomes 3x3 with an added grid pattern.
+
+    uint8_t BlockX, BlockY;
+    uint16_t* BlockSrc;
+    uint16_t* BlockDst;
+    for (BlockY = 0; BlockY < 144; BlockY++)
+    {
+        BlockSrc = Src16 + BlockY * 160 * 1;
+        BlockDst = Dst16 + BlockY * 640 * 3;
+        for (BlockX = 0; BlockX < 160; BlockX++)
+        {
+            // Before:          After:
+            // (a)              (2)(1)(1)
+            //                  (2)(1)(1)
+            //                  (3)(2)(2)
+
+            uint16_t  _1 = *(BlockSrc);
+            uint16_t  _2 = Weight3_2( _1, gcolor);
+            uint16_t  _3 = Weight2_3( _1, gcolor);
+
+            // -- Row 1 --
+            *(BlockDst               ) = _2;
+            *(BlockDst            + 1) = _1;
+            *(BlockDst            + 2) = _1;
+
+            // -- Row 2 --
+            *(BlockDst + 640 *  1    ) = _2;
+            *(BlockDst + 640 *  1 + 1) = _1;
+            *(BlockDst + 640 *  1 + 2) = _1;
+
+            // -- Row 3 --
+            *(BlockDst + 640 *  2    ) = _3;
+            *(BlockDst + 640 *  2 + 1) = _2;
+            *(BlockDst + 640 *  2 + 2) = _2;
+
+            BlockSrc += 1;
+            BlockDst += 3;
+        }
+    }
+}
+
+void scale166x_dotmatrix3(uint32_t* dst, uint32_t* src, const uint32_t gridcolor)
+{
+    uint16_t* Src16 = (uint16_t*) src;
+    uint16_t* Dst16 = (uint16_t*) dst;
+    uint16_t gcolor = hexcolor_to_rgb565(gridcolor);
+
+    // There are 160 pixels horizontally, and 144 vertically.
+    // Each pixel becomes 3x3 with an added grid pattern.
+
+    uint8_t BlockX, BlockY;
+    uint16_t* BlockSrc;
+    uint16_t* BlockDst;
+    for (BlockY = 0; BlockY < 144; BlockY++)
+    {
+        BlockSrc = Src16 + BlockY * 160 * 1;
+        BlockDst = Dst16 + BlockY * 576 * 3;
+        for (BlockX = 0; BlockX < 160; BlockX++)
+        {
+            // Before:          After:
+            // (a)              (2)(1)(1)
+            //                  (2)(1)(1)
+            //                  (3)(2)(2)
+
+            uint16_t  _1 = *(BlockSrc);
+            uint16_t  _2 = Weight3_2( _1, gcolor);
+            uint16_t  _3 = Weight2_3( _1, gcolor);
+
+            // -- Row 1 --
+            *(BlockDst               ) = _2;
+            *(BlockDst            + 1) = _1;
+            *(BlockDst            + 2) = _1;
+
+            // -- Row 2 --
+            *(BlockDst + 576 *  1    ) = _2;
+            *(BlockDst + 576 *  1 + 1) = _1;
+            *(BlockDst + 576 *  1 + 2) = _1;
+
+            // -- Row 3 --
+            *(BlockDst + 576 *  2    ) = _3;
+            *(BlockDst + 576 *  2 + 1) = _2;
+            *(BlockDst + 576 *  2 + 2) = _2;
+
+            BlockSrc += 1;
+            BlockDst += 3;
+        }
+    }
+}
+
+void fullscreen_dotmatrix3(uint32_t* dst, uint32_t* src, const uint32_t gridcolor)
+{
+    uint16_t* Src16 = (uint16_t*) src;
+    uint16_t* Dst16 = (uint16_t*) dst;
+    uint16_t gcolor = hexcolor_to_rgb565(gridcolor);
+
+    // There are 160 pixels horizontally, and 144 vertically.
+    // Each pixel becomes 3x3 with an added grid pattern.
+
+    uint8_t BlockX, BlockY;
+    uint16_t* BlockSrc;
+    uint16_t* BlockDst;
+    for (BlockY = 0; BlockY < 144; BlockY++)
+    {
+        BlockSrc = Src16 + BlockY * 160 * 1;
+        BlockDst = Dst16 + BlockY * 480 * 3;
+        for (BlockX = 0; BlockX < 160; BlockX++)
+        {
+            // Before:          After:
+            // (a)              (2)(1)(1)
+            //                  (2)(1)(1)
+            //                  (3)(2)(2)
+
+            uint16_t  _1 = *(BlockSrc);
+            uint16_t  _2 = Weight3_2( _1, gcolor);
+            uint16_t  _3 = Weight2_3( _1, gcolor);
+
+            // -- Row 1 --
+            *(BlockDst               ) = _2;
+            *(BlockDst            + 1) = _1;
+            *(BlockDst            + 2) = _1;
+
+            // -- Row 2 --
+            *(BlockDst + 480 *  1    ) = _2;
+            *(BlockDst + 480 *  1 + 1) = _1;
+            *(BlockDst + 480 *  1 + 2) = _1;
+
+            // -- Row 3 --
+            *(BlockDst + 480 *  2    ) = _3;
+            *(BlockDst + 480 *  2 + 1) = _2;
+            *(BlockDst + 480 *  2 + 2) = _2;
+
+            BlockSrc += 1;
+            BlockDst += 3;
+        }
+    }
+}
+
+void scaleborder15x_3(uint32_t* dst, uint32_t* src)
+{
+    uint16_t* Src16 = (uint16_t*) src;
+    uint16_t* Dst16 = (uint16_t*) dst;
+
+    uint8_t BlockX, BlockY;
+    uint16_t* BlockSrc;
+    uint16_t* BlockDst;
+    for (BlockY = 0; BlockY < 160; BlockY++)
+    {
+        BlockSrc = Src16 + BlockY * 212 * 1;
+        BlockDst = Dst16 + BlockY * 640 * 3;
+        for (BlockX = 0; BlockX < 212; BlockX++)
+        {
+            // Before:          After:
+            // (a)              (a)(a)(a)
+            //                  (a)(a)(a)
+            //                  (a)(a)(a)
+
+            uint16_t  _1 = *(BlockSrc);
+
+            // -- Row 1 --
+            *(BlockDst               ) = _1;
+            *(BlockDst            + 1) = _1;
+            *(BlockDst            + 2) = _1;
+
+            // -- Row 2 --
+            *(BlockDst + 640 *  1    ) = _1;
+            *(BlockDst + 640 *  1 + 1) = _1;
+            *(BlockDst + 640 *  1 + 2) = _1;
+
+            // -- Row 3 --
+            *(BlockDst + 640 *  2    ) = _1;
+            *(BlockDst + 640 *  2 + 1) = _1;
+            *(BlockDst + 640 *  2 + 2) = _1;
+
+            BlockSrc += 1;
+            BlockDst += 3;
+        }
+    }
+}
+
+void scaleborder166x_3(uint32_t* dst, uint32_t* src) //192x144 to 576x432
+{
+    uint16_t* Src16 = (uint16_t*) src;
+    uint16_t* Dst16 = (uint16_t*) dst;
+
+    uint8_t BlockX, BlockY;
+    uint16_t* BlockSrc;
+    uint16_t* BlockDst;
+    for (BlockY = 0; BlockY < 144; BlockY++)
+    {
+        BlockSrc = Src16 + BlockY * 192 * 1;
+        BlockDst = Dst16 + BlockY * 576 * 3;
+        for (BlockX = 0; BlockX < 192; BlockX++)
+        {
+            // Before:          After:
+            // (a)              (a)(a)(a)
+            //                  (a)(a)(a)
+            //                  (a)(a)(a)
+
+            uint16_t  _1 = *(BlockSrc);
+
+            // -- Row 1 --
+            *(BlockDst               ) = _1;
+            *(BlockDst            + 1) = _1;
+            *(BlockDst            + 2) = _1;
+
+            // -- Row 2 --
+            *(BlockDst + 576 *  1    ) = _1;
+            *(BlockDst + 576 *  1 + 1) = _1;
+            *(BlockDst + 576 *  1 + 2) = _1;
+
+            // -- Row 3 --
+            *(BlockDst + 576 *  2    ) = _1;
+            *(BlockDst + 576 *  2 + 1) = _1;
+            *(BlockDst + 576 *  2 + 2) = _1;
+
+            BlockSrc += 1;
+            BlockDst += 3;
+        }
+    }
+}
+
+/* Upscales a 160x144 image to 480x432 using a CRT-looking upscaler algorithm.
+ *
+ * Input:
+ *   src: A packed 160x144 pixel image. The pixel format of this image is RGB 565.
+ *   gridcolor: An hexadecimal color. The format of this color is 0xRRGGBB.
+ * Output:
+ *   dst: A packed 480x432 pixel image. The pixel format of this image is RGB 565.
+ */
+
+void scale15x_crt3(uint32_t* dst, uint32_t* src)
+{
+    uint16_t* Src16 = (uint16_t*) src;
+    uint16_t* Dst16 = (uint16_t*) dst;
+    uint16_t gcolor = hexcolor_to_rgb565(0x000000);
+
+    // There are 160 pixels horizontally, and 144 vertically.
+    // Each pixel becomes 3x3 with an added scanline pattern.
+
+    uint8_t BlockX, BlockY;
+    uint16_t* BlockSrc;
+    uint16_t* BlockDst;
+    for (BlockY = 0; BlockY < 144; BlockY++)
+    {
+        BlockSrc = Src16 + BlockY * 160 * 1;
+        BlockDst = Dst16 + BlockY * 640 * 3;
+        for (BlockX = 0; BlockX < 160; BlockX++)
+        {
+            // Before:          After:
+            // (a)              (a)(a)(a)
+            //                  (x)(x)(x)
+            //                  (y)(y)(y)
+
+            uint16_t  _1 = *(BlockSrc);
+            uint16_t  _2 = Weight4_1( _1, gcolor);
+            uint16_t  _3 = Weight1_1( _1, gcolor);
+
+            // -- Row 1 --
+            *(BlockDst               ) = _1;
+            *(BlockDst            + 1) = _1;
+            *(BlockDst            + 2) = _1;
+
+            // -- Row 2 --
+            *(BlockDst + 640 *  1    ) = _2;
+            *(BlockDst + 640 *  1 + 1) = _2;
+            *(BlockDst + 640 *  1 + 2) = _2;
+
+            // -- Row 3 --
+            *(BlockDst + 640 *  2    ) = _3;
+            *(BlockDst + 640 *  2 + 1) = _3;
+            *(BlockDst + 640 *  2 + 2) = _3;
+
+            BlockSrc += 1;
+            BlockDst += 3;
+        }
+    }
+}
+
+void scale166x_crt3(uint32_t* dst, uint32_t* src)
+{
+    uint16_t* Src16 = (uint16_t*) src;
+    uint16_t* Dst16 = (uint16_t*) dst;
+    uint16_t gcolor = hexcolor_to_rgb565(0x000000);
+
+    // There are 160 pixels horizontally, and 144 vertically.
+    // Each pixel becomes 3x3 with an added scanline pattern.
+
+    uint8_t BlockX, BlockY;
+    uint16_t* BlockSrc;
+    uint16_t* BlockDst;
+    for (BlockY = 0; BlockY < 144; BlockY++)
+    {
+        BlockSrc = Src16 + BlockY * 160 * 1;
+        BlockDst = Dst16 + BlockY * 576 * 3;
+        for (BlockX = 0; BlockX < 160; BlockX++)
+        {
+            // Before:          After:
+            // (a)              (a)(a)(a)
+            //                  (x)(x)(x)
+            //                  (y)(y)(y)
+
+            uint16_t  _1 = *(BlockSrc);
+            uint16_t  _2 = Weight4_1( _1, gcolor);
+            uint16_t  _3 = Weight1_1( _1, gcolor);
+
+            // -- Row 1 --
+            *(BlockDst               ) = _1;
+            *(BlockDst            + 1) = _1;
+            *(BlockDst            + 2) = _1;
+
+            // -- Row 2 --
+            *(BlockDst + 576 *  1    ) = _2;
+            *(BlockDst + 576 *  1 + 1) = _2;
+            *(BlockDst + 576 *  1 + 2) = _2;
+
+            // -- Row 3 --
+            *(BlockDst + 576 *  2    ) = _3;
+            *(BlockDst + 576 *  2 + 1) = _3;
+            *(BlockDst + 576 *  2 + 2) = _3;
+
+            BlockSrc += 1;
+            BlockDst += 3;
+        }
+    }
+}
+
+void fullscreen_crt3(uint32_t* dst, uint32_t* src)
+{
+    uint16_t* Src16 = (uint16_t*) src;
+    uint16_t* Dst16 = (uint16_t*) dst;
+    uint16_t gcolor = hexcolor_to_rgb565(0x000000);
+
+    // There are 160 pixels horizontally, and 144 vertically.
+    // Each pixel becomes 3x3 with an added scanline pattern.
+
+    uint8_t BlockX, BlockY;
+    uint16_t* BlockSrc;
+    uint16_t* BlockDst;
+    for (BlockY = 0; BlockY < 144; BlockY++)
+    {
+        BlockSrc = Src16 + BlockY * 160 * 1;
+        BlockDst = Dst16 + BlockY * 480 * 3;
+        for (BlockX = 0; BlockX < 160; BlockX++)
+        {
+            // Before:          After:
+            // (a)              (a)(a)(a)
+            //                  (x)(x)(x)
+            //                  (y)(y)(y)
+
+            uint16_t  _1 = *(BlockSrc);
+            uint16_t  _2 = Weight4_1( _1, gcolor);
+            uint16_t  _3 = Weight1_1( _1, gcolor);
+
+            // -- Row 1 --
+            *(BlockDst               ) = _1;
+            *(BlockDst            + 1) = _1;
+            *(BlockDst            + 2) = _1;
+
+            // -- Row 2 --
+            *(BlockDst + 480 *  1    ) = _2;
+            *(BlockDst + 480 *  1 + 1) = _2;
+            *(BlockDst + 480 *  1 + 2) = _2;
+
+            // -- Row 3 --
+            *(BlockDst + 480 *  2    ) = _3;
+            *(BlockDst + 480 *  2 + 1) = _3;
+            *(BlockDst + 480 *  2 + 2) = _3;
+
+            BlockSrc += 1;
+            BlockDst += 3;
+        }
+    }
+}
+
+void scaleborder15x_crt3(uint32_t* dst, uint32_t* src)
+{
+    uint16_t* Src16 = (uint16_t*) src;
+    uint16_t* Dst16 = (uint16_t*) dst;
+    uint16_t gcolor = hexcolor_to_rgb565(0x000000);
+
+    uint8_t BlockX, BlockY;
+    uint16_t* BlockSrc;
+    uint16_t* BlockDst;
+    for (BlockY = 0; BlockY < 160; BlockY++)
+    {
+        BlockSrc = Src16 + BlockY * 212 * 1;
+        BlockDst = Dst16 + BlockY * 640 * 3;
+        for (BlockX = 0; BlockX < 212; BlockX++)
+        {
+            // Before:          After:
+            // (a)              (a)(a)(a)
+            //                  (x)(x)(x)
+            //                  (y)(y)(y)
+
+            uint16_t  _1 = *(BlockSrc);
+            uint16_t  _2 = Weight4_1( _1, gcolor);
+            uint16_t  _3 = Weight1_1( _1, gcolor);
+
+            // -- Row 1 --
+            *(BlockDst               ) = _1;
+            *(BlockDst            + 1) = _1;
+            *(BlockDst            + 2) = _1;
+
+            // -- Row 2 --
+            *(BlockDst + 640 *  1    ) = _2;
+            *(BlockDst + 640 *  1 + 1) = _2;
+            *(BlockDst + 640 *  1 + 2) = _2;
+
+            // -- Row 3 --
+            *(BlockDst + 640 *  2    ) = _3;
+            *(BlockDst + 640 *  2 + 1) = _3;
+            *(BlockDst + 640 *  2 + 2) = _3;
+
+            BlockSrc += 1;
+            BlockDst += 3;
+        }
+    }
+}
+
+void scaleborder166x_crt3(uint32_t* dst, uint32_t* src) //192x144 to 576x432
+{
+    uint16_t* Src16 = (uint16_t*) src;
+    uint16_t* Dst16 = (uint16_t*) dst;
+    uint16_t gcolor = hexcolor_to_rgb565(0x000000);
+
+    uint8_t BlockX, BlockY;
+    uint16_t* BlockSrc;
+    uint16_t* BlockDst;
+    for (BlockY = 0; BlockY < 144; BlockY++)
+    {
+        BlockSrc = Src16 + BlockY * 192 * 1;
+        BlockDst = Dst16 + BlockY * 576 * 3;
+        for (BlockX = 0; BlockX < 192; BlockX++)
+        {
+            // Before:          After:
+            // (a)              (a)(a)(a)
+            //                  (x)(x)(x)
+            //                  (y)(y)(y)
+
+            uint16_t  _1 = *(BlockSrc);
+            uint16_t  _2 = Weight4_1( _1, gcolor);
+            uint16_t  _3 = Weight1_1( _1, gcolor);
+
+            // -- Row 1 --
+            *(BlockDst               ) = _1;
+            *(BlockDst            + 1) = _1;
+            *(BlockDst            + 2) = _1;
+
+            // -- Row 2 --
+            *(BlockDst + 576 *  1    ) = _2;
+            *(BlockDst + 576 *  1 + 1) = _2;
+            *(BlockDst + 576 *  1 + 2) = _2;
+
+            // -- Row 3 --
+            *(BlockDst + 576 *  2    ) = _3;
+            *(BlockDst + 576 *  2 + 1) = _3;
+            *(BlockDst + 576 *  2 + 2) = _3;
+
+            BlockSrc += 1;
+            BlockDst += 3;
         }
     }
 }

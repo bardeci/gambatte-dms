@@ -21,6 +21,6 @@ find . -type f -iname \*.o -delete
 find . -type f -iname gambatte_sdl -delete
 
 rm -f gambatte-dms-gcw0-r572u4-$BDAT.opk
-mksquashfs ./dist/gcw0/default.gcw0.desktop ./gambatte_sdl/gambatte-dms.gcw0 ./dist/gcw0/gambatte_dms.png ./dist/gcw0/manual.txt gambatte-dms-gcw0-r572u4-$BDAT.opk -all-root -no-xattrs -noappend -no-exports
+mksquashfs ./dist/gcw0/default.gcw0.desktop ./gambatte_sdl/gambatte-dms.gcw0 ./dist/gambatte_dms.png ./dist/manual.txt gambatte-dms-gcw0-r572u4-$BDAT.opk -all-root -no-xattrs -noappend -no-exports
 
 find . -type f -iname gambatte-dms.gcw0 -delete
