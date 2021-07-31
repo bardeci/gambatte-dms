@@ -988,6 +988,10 @@ int GambatteSdl::exec(int const argc, char const *const argv[]) {
 		loadPalette(palname); //load palette on startup
 	}
 
+	if (stateautoload == 1) {
+        stateload_dms(0); //autoload state 0
+    }
+
 	return run(rateOption.rate(), latencyOption.latency(), periodsOption.periods(),
 	           resamplerOption.resampler(), blitter);
 }

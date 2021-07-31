@@ -56,7 +56,7 @@ Mix_Chunk *menusound_move = NULL;
 Mix_Chunk *menusound_ok = NULL;
 
 // Default config values
-int showfps = 0, ghosting = 1, biosenabled = 0, colorfilter = 0, gameiscgb = 0, buttonlayout = 0, stereosound = 1, prefercgb = 0, ffwhotkey = 1;
+int showfps = 0, ghosting = 1, biosenabled = 0, colorfilter = 0, gameiscgb = 0, buttonlayout = 0, stereosound = 1, prefercgb = 1, ffwhotkey = 1, stateautoload = 0, stateautosave = 0;
 uint32_t menupalblack = 0x000000, menupaldark = 0x505450, menupallight = 0xA8A8A8, menupalwhite = 0xF8FCF8;
 int filtervalue[12] = {135, 20, 0, 25, 0, 125, 20, 25, 0, 20, 105, 30};
 std::string selectedscaler= "No Scaling", dmgbordername = "DEFAULT", gbcbordername = "DEFAULT", palname = "DEFAULT", filtername = "NONE", currgamename = "default";
@@ -439,6 +439,60 @@ int textanim_reset(){
 	textanimpos = 0;
 	textanimwidth = 0;
 	return 0;
+}
+
+void stateload_dms(int saveslot) {
+    gambatte_p->selectState_NoOsd(saveslot);
+    char overlaytext[20];
+    if(gambatte_p->loadState_NoOsd()){
+        can_reset = 1;//allow user to reset or save state once a savestate is loaded
+        sprintf(overlaytext, "State %d loaded", gambatte_p->currentState());
+        printOverlay(overlaytext);//print overlay text
+    } else {
+        sprintf(overlaytext, "State %d empty", gambatte_p->currentState());
+        printOverlay(overlaytext);//print overlay text
+    }
+}
+
+void statesave_dms(int saveslot) {
+    gambatte_p->selectState_NoOsd(saveslot);
+    if(can_reset == 1){//boot logo already ended, can save state safely
+        if(gameiscgb == 0){ //set palette to greyscale
+            Uint32 value;
+            for (int i = 0; i < 3; ++i) {
+                for (int k = 0; k < 4; ++k) {
+                    if(k == 0)
+                        value = 0xF8FCF8;
+                    if(k == 1)
+                        value = 0xA8A8A8;
+                    if(k == 2)
+                        value = 0x505450;
+                    if(k == 3)
+                        value = 0x000000;
+                    gambatte_p->setDmgPaletteColor(i, k, value);
+                }
+            }
+        } else { // disable color filter
+            gambatte_p->setColorFilter(0, filtervalue);
+        }
+        //run the emulator for 1 frame, so the screen buffer is updated without color palettes
+        std::size_t fakesamples = 35112;
+        Array<Uint32> const fakeBuf(35112 + 2064);
+        gambatte_p->runFor(blitter_p->inBuf().pixels, blitter_p->inBuf().pitch, fakeBuf, fakesamples);
+        //save state. the snapshot will now be in greyscale
+        gambatte_p->saveState_NoOsd(blitter_p->inBuf().pixels, blitter_p->inBuf().pitch);
+        if(gameiscgb == 0){
+            loadPalette(palname); //restore palette
+        } else {
+            loadFilter(filtername); //restore color filter
+        }
+
+        char overlaytext[14];
+        sprintf(overlaytext, "State %d saved", gambatte_p->currentState());
+        printOverlay(overlaytext);//print overlay text
+    } else if (can_reset == 0){//boot logo is still running, can't save state
+        printOverlay("Unable to save");//print overlay text
+    }
 }
 
 int menu_main(menu_t *menu) {
@@ -2208,6 +2262,8 @@ void saveConfig(int pergame){
 		"DMGBORDERNAME %s\n"
 		"GBCBORDERNAME %s\n"
 		"PREFERCGB %d\n"
+		"STATEAUTOLOAD %d\n"
+		"STATEAUTOSAVE %d\n"
 		"BIOSENABLED %d\n"
 		"GHOSTING %d\n"
 		"BUTTONLAYOUT %d\n"
@@ -2220,6 +2276,8 @@ void saveConfig(int pergame){
 		dmgbordername.c_str(),
 		gbcbordername.c_str(),
 		prefercgb,
+		stateautoload,
+		stateautosave,
 		biosenabled,
 		ghosting,
 		buttonlayout,
@@ -2324,6 +2382,12 @@ void loadConfig(){
 		} else if (!strcmp(line, "PREFERCGB")) {
 			sscanf(arg, "%d", &value);
 			prefercgb = value;
+		} else if (!strcmp(line, "STATEAUTOLOAD")) {
+			sscanf(arg, "%d", &value);
+			stateautoload = value;
+		} else if (!strcmp(line, "STATEAUTOSAVE")) {
+			sscanf(arg, "%d", &value);
+			stateautosave = value;
 		} else if (!strcmp(line, "BIOSENABLED")) {
 			sscanf(arg, "%d", &value);
 			biosenabled = value;

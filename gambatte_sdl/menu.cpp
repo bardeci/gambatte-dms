@@ -338,6 +338,9 @@ void main_menu() {
 static void callback_quit(menu_t *caller_menu) {
     playMenuSound_ok();
     SDL_Delay(500);
+    if (stateautosave == 1) {
+        statesave_dms(0); //autosave state 0
+    }
     printf("exiting...\n");
     forcemenuexit = 0;
     gambatte_p->saveSavedata();
@@ -468,6 +471,9 @@ static void callback_loaddmggame(menu_t *caller_menu) {
 static void callback_selecteddmggame(menu_t *caller_menu) {
     playMenuSound_ok();
     SDL_Delay(250);
+    if (stateautosave == 1) {
+        statesave_dms(0); //autosave state 0
+    }
     gamename = gamelist[caller_menu->selected_entry]->d_name;
     currgamename = strip_Extension(gamename);
     loadConfig();
@@ -486,6 +492,9 @@ static void callback_selecteddmggame(menu_t *caller_menu) {
         }
         printOverlay("Game loaded");//print overlay text
         firstframe = 0; //reset the frame counter
+        if (stateautoload == 1) {
+            stateload_dms(0); //autoload state 0
+        }
         forcemenuexit = 2;
         caller_menu->quit = 1;
     }
@@ -540,6 +549,9 @@ static void callback_loadgbcgame(menu_t *caller_menu) {
 static void callback_selectedgbcgame(menu_t *caller_menu) {
     playMenuSound_ok();
     SDL_Delay(250);
+    if (stateautosave == 1) {
+        statesave_dms(0); //autosave state 0
+    }
     gamename = gamelist[caller_menu->selected_entry]->d_name;
     currgamename = strip_Extension(gamename);
     loadConfig();
@@ -558,6 +570,9 @@ static void callback_selectedgbcgame(menu_t *caller_menu) {
         }
         printOverlay("Game loaded");//print overlay text
         firstframe = 0; //reset the frame counter
+        if (stateautoload == 1) {
+            stateload_dms(0); //autoload state 0
+        }
         forcemenuexit = 2;
         caller_menu->quit = 1;
     }
@@ -602,18 +617,9 @@ static void callback_selectstateload(menu_t *caller_menu) {
 }
 
 static void callback_selectedstateload(menu_t *caller_menu) {
-	gambatte_p->selectState_NoOsd(caller_menu->selected_entry);
 	playMenuSound_ok();
     SDL_Delay(250);
-    char overlaytext[20];
-	if(gambatte_p->loadState_NoOsd()){
-        can_reset = 1;//allow user to reset or save state once a savestate is loaded
-        sprintf(overlaytext, "State %d loaded", gambatte_p->currentState());
-        printOverlay(overlaytext);//print overlay text
-    } else {
-        sprintf(overlaytext, "State %d empty", gambatte_p->currentState());
-        printOverlay(overlaytext);//print overlay text
-    }
+    stateload_dms(caller_menu->selected_entry);
     forcemenuexit = 2;
     caller_menu->quit = 1;
 }
@@ -657,46 +663,9 @@ static void callback_selectstatesave(menu_t *caller_menu) {
 }
 
 static void callback_selectedstatesave(menu_t *caller_menu) {
-	gambatte_p->selectState_NoOsd(caller_menu->selected_entry);
 	playMenuSound_ok();
     SDL_Delay(250);
-    if(can_reset == 1){//boot logo already ended, can save state safely
-        if(gameiscgb == 0){ //set palette to greyscale
-            Uint32 value;
-            for (int i = 0; i < 3; ++i) {
-                for (int k = 0; k < 4; ++k) {
-                    if(k == 0)
-                        value = 0xF8FCF8;
-                    if(k == 1)
-                        value = 0xA8A8A8;
-                    if(k == 2)
-                        value = 0x505450;
-                    if(k == 3)
-                        value = 0x000000;
-                    gambatte_p->setDmgPaletteColor(i, k, value);
-                }
-            }
-        } else { // disable color filter
-            gambatte_p->setColorFilter(0, filtervalue);
-        }    
-        //run the emulator for 1 frame, so the screen buffer is updated without color palettes
-        std::size_t fakesamples = 35112;
-        Array<Uint32> const fakeBuf(35112 + 2064);
-        gambatte_p->runFor(blitter_p->inBuf().pixels, blitter_p->inBuf().pitch, fakeBuf, fakesamples);
-        //save state. the snapshot will now be in greyscale
-        gambatte_p->saveState_NoOsd(blitter_p->inBuf().pixels, blitter_p->inBuf().pitch);
-        if(gameiscgb == 0){
-            loadPalette(palname); //restore palette
-        } else {
-            loadFilter(filtername); //restore color filter
-        }
-
-        char overlaytext[14];
-        sprintf(overlaytext, "State %d saved", gambatte_p->currentState());
-        printOverlay(overlaytext);//print overlay text
-    } else if (can_reset == 0){//boot logo is still running, can't save state
-        printOverlay("Unable to save");//print overlay text
-    }
+    statesave_dms(caller_menu->selected_entry);
     forcemenuexit = 2;
     caller_menu->quit = 1;
 }
@@ -710,6 +679,7 @@ static void callback_colorfilter(menu_t *caller_menu);
 static void callback_dmgborderimage(menu_t *caller_menu);
 static void callback_gbcborderimage(menu_t *caller_menu);
 static void callback_system(menu_t *caller_menu);
+static void callback_savestatesettings(menu_t *caller_menu);
 static void callback_usebios(menu_t *caller_menu);
 static void callback_ghosting(menu_t *caller_menu);
 static void callback_controls(menu_t *caller_menu);
@@ -764,9 +734,14 @@ static void callback_settings(menu_t *caller_menu) {
     }
 
     menu_entry = new_menu_entry(0);
-    menu_entry_set_text(menu_entry, "System");
+    menu_entry_set_text(menu_entry, "System Priority");
     menu_add_entry(menu, menu_entry);
     menu_entry->callback = callback_system;
+
+    menu_entry = new_menu_entry(0);
+    menu_entry_set_text(menu_entry, "Savestates");
+    menu_add_entry(menu, menu_entry);
+    menu_entry->callback = callback_savestatesettings;
 
     menu_entry = new_menu_entry(0);
     menu_entry_set_text(menu_entry, "Boot logos");
@@ -1730,7 +1705,7 @@ static void callback_selectedgbcborder(menu_t *caller_menu) {
     }
 }
 
-/* ==================== SYSTEM MENU =========================== */
+/* ==================== SYSTEM PRIORITY MENU =========================== */
 
 static void callback_selectedsystem(menu_t *caller_menu);
 
@@ -1742,16 +1717,16 @@ static void callback_system(menu_t *caller_menu) {
     menu = new_menu();
 
     menu_set_header(menu, menu_main_title.c_str());
-    menu_set_title(menu, "System");
+    menu_set_title(menu, "System Priority");
     menu->back_callback = callback_back;
 
     menu_entry = new_menu_entry(0);
-    menu_entry_set_text(menu_entry, "Priority DMG");
+    menu_entry_set_text(menu_entry, "DMG");
     menu_add_entry(menu, menu_entry);
     menu_entry->callback = callback_selectedsystem;
 
     menu_entry = new_menu_entry(0);
-    menu_entry_set_text(menu_entry, "Priority GBC");
+    menu_entry_set_text(menu_entry, "GBC");
     menu_add_entry(menu, menu_entry);
     menu_entry->callback = callback_selectedsystem;
 
@@ -1766,6 +1741,120 @@ static void callback_system(menu_t *caller_menu) {
 static void callback_selectedsystem(menu_t *caller_menu) {
     playMenuSound_ok();
     prefercgb = caller_menu->selected_entry;
+    caller_menu->quit = 1;
+}
+
+/* ==================== SAVESTATES (SETTINGS) MENU ================================ */
+
+static void callback_autoloadstate(menu_t *caller_menu);
+static void callback_autosavestate(menu_t *caller_menu);
+
+static void callback_savestatesettings(menu_t *caller_menu) {
+    menu_t *menu;
+    menu_entry_t *menu_entry;
+    (void) caller_menu;
+    menu = new_menu();
+
+    menu_set_header(menu, menu_main_title.c_str());
+    menu_set_title(menu, "Savestates");
+    menu->back_callback = callback_back;
+
+    menu_entry = new_menu_entry(0);
+    menu_entry_set_text(menu_entry, "Autoload State 0");
+    menu_add_entry(menu, menu_entry);
+    menu_entry->callback = callback_autoloadstate;
+
+    menu_entry = new_menu_entry(0);
+    menu_entry_set_text(menu_entry, "Autosave State 0");
+    menu_add_entry(menu, menu_entry);
+    menu_entry->callback = callback_autosavestate;
+
+    playMenuSound_in();
+    menu_main(menu);
+
+    delete_menu(menu);
+
+    if(forcemenuexit > 0) {
+        menuout = 0;
+        caller_menu->quit = 1;
+    }
+}
+
+/* ==================== AUTO-LOAD MENU =========================== */
+
+static void callback_selectedautoloadstate(menu_t *caller_menu);
+
+static void callback_autoloadstate(menu_t *caller_menu) {
+
+    menu_t *menu;
+    menu_entry_t *menu_entry;
+    (void) caller_menu;
+    menu = new_menu();
+
+    menu_set_header(menu, menu_main_title.c_str());
+    menu_set_title(menu, "Autoload State 0");
+    menu->back_callback = callback_back;
+
+    menu_entry = new_menu_entry(0);
+    menu_entry_set_text(menu_entry, "OFF");
+    menu_add_entry(menu, menu_entry);
+    menu_entry->callback = callback_selectedautoloadstate;
+
+    menu_entry = new_menu_entry(0);
+    menu_entry_set_text(menu_entry, "ON");
+    menu_add_entry(menu, menu_entry);
+    menu_entry->callback = callback_selectedautoloadstate;
+
+    menu->selected_entry = stateautoload;
+
+    playMenuSound_in();
+    menu_main(menu);
+
+    delete_menu(menu);
+}
+
+static void callback_selectedautoloadstate(menu_t *caller_menu) {
+    playMenuSound_ok();
+    stateautoload = caller_menu->selected_entry;
+    caller_menu->quit = 1;
+}
+
+/* ==================== AUTO-SAVE MENU =========================== */
+
+static void callback_selectedautosavestate(menu_t *caller_menu);
+
+static void callback_autosavestate(menu_t *caller_menu) {
+
+    menu_t *menu;
+    menu_entry_t *menu_entry;
+    (void) caller_menu;
+    menu = new_menu();
+
+    menu_set_header(menu, menu_main_title.c_str());
+    menu_set_title(menu, "Autosave State 0");
+    menu->back_callback = callback_back;
+
+    menu_entry = new_menu_entry(0);
+    menu_entry_set_text(menu_entry, "OFF");
+    menu_add_entry(menu, menu_entry);
+    menu_entry->callback = callback_selectedautosavestate;
+
+    menu_entry = new_menu_entry(0);
+    menu_entry_set_text(menu_entry, "ON");
+    menu_add_entry(menu, menu_entry);
+    menu_entry->callback = callback_selectedautosavestate;
+
+    menu->selected_entry = stateautosave;
+
+    playMenuSound_in();
+    menu_main(menu);
+
+    delete_menu(menu);
+}
+
+static void callback_selectedautosavestate(menu_t *caller_menu) {
+    playMenuSound_ok();
+    stateautosave = caller_menu->selected_entry;
     caller_menu->quit = 1;
 }
 

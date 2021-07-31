@@ -39,8 +39,11 @@ saving states.
 The default slot is always Slot 0.
 
 The default slot will always be selected when
-starting the emulator. Selected savestate slot 
-will not be saved on emulator exit.
+starting the emulator. The slot selection will
+not be saved on emulator exit.
+
+The default slot will be used by the savestate
+autosave/autoload feature when enabled.
 
 
 Emulator Options
@@ -74,9 +77,15 @@ Here is a list of the available config options:
     with the same name as the ROM file, and it
     will load the default border if it fails.
 
-- System:
-    Allows to select the system priority when
+- System Priority:
+    Allows to select the system to use when
     a ROM supports both DMG and GBC modes.
+    Default is "GBC".
+
+- Savestates:
+    Allows to set savestate related options,
+    like autoload on game boot and autosave
+    on game exit.
 
 - Boot Logos:
     Allows to use GB/GBC BIOS files to display
@@ -88,7 +97,8 @@ Here is a list of the available config options:
     Default is "DMG only".
 
 - Controls:
-    Allows the user to tune the controls.
+    Allows the user to tune the control related
+    settings.
 
 - Sound:
     Allows the user to select between Mono and

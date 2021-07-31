@@ -109,7 +109,7 @@ extern SDL_Surface *menuscreen;
 extern SDL_Surface *surface_menuinout;
 extern SDL_Surface *textoverlay;
 extern SDL_Surface *textoverlaycolored;
-extern int showfps, ghosting, biosenabled, colorfilter, gameiscgb, buttonlayout, stereosound, prefercgb, ffwhotkey;
+extern int showfps, ghosting, biosenabled, colorfilter, gameiscgb, buttonlayout, stereosound, prefercgb, ffwhotkey, stateautoload, stateautosave;
 extern uint32_t menupalblack, menupaldark, menupallight, menupalwhite;
 extern int filtervalue[12];
 extern std::string selectedscaler, dmgbordername, gbcbordername, palname, filtername, currgamename, homedir, ipuscaling;
@@ -184,6 +184,9 @@ void printSaveStatePreview(SDL_Surface *surface);
 void apply_cfilter(SDL_Surface *surface);
 void printOverlay(const char *text);
 void clearAllCheats();
+
+void stateload_dms(int saveslot);
+void statesave_dms(int saveslot);
 
 #ifdef MIYOO_BATTERY_WARNING
 void checkBatt();
