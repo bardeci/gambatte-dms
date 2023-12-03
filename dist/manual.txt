@@ -49,7 +49,9 @@ autosave/autoload feature when enabled.
 Emulator Options
 ------------------------------------------------
 
-Here is a list of the available config options:
+Here is a list of the available config options
+(Note that some options may be unavailable on
+some devices):
 
 - Show FPS:
     Shows or hides the FPS counter.

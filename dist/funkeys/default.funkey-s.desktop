@@ -1,0 +1,6 @@
+[Desktop Entry]
+Name=Gambatte-DMS
+Comment=GB/GBC emulator
+Icon=gambatte_dms
+Exec=gambatte-dms.funkeys
+Categories=emulators

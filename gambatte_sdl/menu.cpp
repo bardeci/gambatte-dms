@@ -34,6 +34,8 @@ static std::string gamedir = ("/media/data/roms");
 static std::string gamedir = (homedir + "/roms");
 #elif defined VERSION_BITTBOY || defined VERSION_POCKETGO
 static std::string gamedir = (homedir + "/roms");
+#elif VERSION_FUNKEYS
+static std::string gamedir = (homedir + "/..");
 #else
 static std::string gamedir = (homedir + "/roms");
 #endif
@@ -437,7 +439,11 @@ static void callback_loaddmggame(menu_t *caller_menu) {
     menu_set_title(menu, "Select Game");
     menu->back_callback = callback_back;
 
+#ifdef VERSION_FUNKEYS
+    std::string romdir = (gamedir + "/Game Boy");
+#else
     std::string romdir = (gamedir + "/gb");
+#endif
     numgames = scandir(romdir.c_str(), &gamelist, parse_ext_zip_gb_gbc, alphasort);
     if (numgames <= 0) {
         printf("scandir for %s failed.\n", romdir.c_str());
@@ -477,7 +483,11 @@ static void callback_selecteddmggame(menu_t *caller_menu) {
     gamename = gamelist[caller_menu->selected_entry]->d_name;
     currgamename = strip_Extension(gamename);
     loadConfig();
+#ifdef VERSION_FUNKEYS
+    std::string fullgamepath = (gamedir + "/Game Boy/");
+#else
     std::string fullgamepath = (gamedir + "/gb/");
+#endif
     fullgamepath += (gamename);
     if (gambatte_p->load(fullgamepath.c_str(),0 + 0 + 0, prefercgb) < 0) {
         printf("failed to load ROM: %s\n", fullgamepath.c_str());
@@ -515,7 +525,11 @@ static void callback_loadgbcgame(menu_t *caller_menu) {
     menu_set_title(menu, "Select Game");
     menu->back_callback = callback_back;
 
+#ifdef VERSION_FUNKEYS
+    std::string romdir = (gamedir + "/Game Boy Color");
+#else
     std::string romdir = (gamedir + "/gbc");
+#endif
     numgames = scandir(romdir.c_str(), &gamelist, parse_ext_zip_gb_gbc, alphasort);
     if (numgames <= 0) {
         printf("scandir for %s failed.\n", romdir.c_str());
@@ -555,7 +569,11 @@ static void callback_selectedgbcgame(menu_t *caller_menu) {
     gamename = gamelist[caller_menu->selected_entry]->d_name;
     currgamename = strip_Extension(gamename);
     loadConfig();
+#ifdef VERSION_FUNKEYS
+    std::string fullgamepath = (gamedir + "/Game Boy Color/");
+#else
     std::string fullgamepath = (gamedir + "/gbc/");
+#endif
     fullgamepath += (gamename);
     if (gambatte_p->load(fullgamepath.c_str(),0 + 0 + 0, prefercgb) < 0) {
         printf("failed to load ROM: %s\n", fullgamepath.c_str());
@@ -706,10 +724,12 @@ static void callback_settings(menu_t *caller_menu) {
     menu_add_entry(menu, menu_entry);
     menu_entry->callback = callback_showfps;
 
+#ifndef VERSION_FUNKEYS
     menu_entry = new_menu_entry(0);
     menu_entry_set_text(menu_entry, "Scaler");
     menu_add_entry(menu, menu_entry);
     menu_entry->callback = callback_scaler;
+#endif
 
     if (gameiscgb == 0) { // Display only the DMG relevant options.
         menu_entry = new_menu_entry(0);
@@ -717,20 +737,25 @@ static void callback_settings(menu_t *caller_menu) {
         menu_add_entry(menu, menu_entry);
         menu_entry->callback = callback_dmgpalette;
 
+#ifndef VERSION_FUNKEYS
         menu_entry = new_menu_entry(0);
         menu_entry_set_text(menu_entry, "DMG Border");
         menu_add_entry(menu, menu_entry);
         menu_entry->callback = callback_dmgborderimage;
+#endif
+
     } else if (gameiscgb == 1) { // Display only the GBC relevant options.
         menu_entry = new_menu_entry(0);
         menu_entry_set_text(menu_entry, "Color Filter");
         menu_add_entry(menu, menu_entry);
         menu_entry->callback = callback_colorfilter;
 
+#ifndef VERSION_FUNKEYS
         menu_entry = new_menu_entry(0);
         menu_entry_set_text(menu_entry, "GBC Border");
         menu_add_entry(menu, menu_entry);
         menu_entry->callback = callback_gbcborderimage;
+#endif
     }
 
     menu_entry = new_menu_entry(0);

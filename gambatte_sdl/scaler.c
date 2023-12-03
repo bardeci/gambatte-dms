@@ -248,7 +248,7 @@ void scale15x(uint32_t *to, uint32_t *from)
  *   dst: A packed 240x216 pixel image. The pixel format of this image is RGB 565.
  */
 
-void scale15x_pseudobilinear(uint32_t* dst, uint32_t* src)
+void scale15x_pseudobilinear(uint32_t* dst, uint32_t* src, int dstwidth)
 {
     uint16_t* Src16 = (uint16_t*) src;
     uint16_t* Dst16 = (uint16_t*) dst;
@@ -262,7 +262,7 @@ void scale15x_pseudobilinear(uint32_t* dst, uint32_t* src)
     for (BlockY = 0; BlockY < 72; BlockY++)
     {
         BlockSrc = Src16 + BlockY * 160 * 2;
-        BlockDst = Dst16 + BlockY * 320 * 3;
+        BlockDst = Dst16 + BlockY * dstwidth * 3;
         for (BlockX = 0; BlockX < 80; BlockX++)
         {   
             // HORIZONTAL:
@@ -288,15 +288,15 @@ void scale15x_pseudobilinear(uint32_t* dst, uint32_t* src)
 
                 // -- Row 2 --
                 uint16_t  _4 = *(BlockSrc + 160 *  1    );
-                *(BlockDst + 320 *  1    ) = Weight1_2( _1,  _4);
+                *(BlockDst + dstwidth *  1    ) = Weight1_2( _1,  _4);
                 uint16_t  _5 = *(BlockSrc + 160 *  1 + 1);
-                *(BlockDst + 320 *  1 + 1) = Weight1_2(Weight1_2( _1,  _2), Weight1_2( _4,  _5));
-                *(BlockDst + 320 *  1 + 2) = Weight1_2( _2, _5);
+                *(BlockDst + dstwidth *  1 + 1) = Weight1_2(Weight1_2( _1,  _2), Weight1_2( _4,  _5));
+                *(BlockDst + dstwidth *  1 + 2) = Weight1_2( _2, _5);
 
                 // -- Row 3 --
-                *(BlockDst + 320 *  2    ) = _4;
-                *(BlockDst + 320 *  2 + 1) = Weight1_2( _4,  _5);
-                *(BlockDst + 320 *  2 + 2) = _5;
+                *(BlockDst + dstwidth *  2    ) = _4;
+                *(BlockDst + dstwidth *  2 + 1) = Weight1_2( _4,  _5);
+                *(BlockDst + dstwidth *  2 + 2) = _5;
 
             } else if(BlockX == 79){
                 // -- Row 1 --
@@ -308,17 +308,17 @@ void scale15x_pseudobilinear(uint32_t* dst, uint32_t* src)
 
                 // -- Row 2 --
                 uint16_t  _4 = *(BlockSrc + 160 *  1    );
-                *(BlockDst + 320 *  1    ) = Weight1_2( _1,  _4);
+                *(BlockDst + dstwidth *  1    ) = Weight1_2( _1,  _4);
                 uint16_t  _5 = *(BlockSrc + 160 *  1 + 1);
-                *(BlockDst + 320 *  1 + 1) = Weight1_2(Weight1_2( _1,  _2), Weight1_2( _4,  _5));
-                *(BlockDst + 320 *  1 + 2) = Weight1_2( _2, _5);
+                *(BlockDst + dstwidth *  1 + 1) = Weight1_2(Weight1_2( _1,  _2), Weight1_2( _4,  _5));
+                *(BlockDst + dstwidth *  1 + 2) = Weight1_2( _2, _5);
 
                 // -- Row 3 --
                 _1 = *(BlockSrc + 160 *  2    );
-                *(BlockDst + 320 *  2    ) = Weight2_1( _4,  _1);
+                *(BlockDst + dstwidth *  2    ) = Weight2_1( _4,  _1);
                 _2 = *(BlockSrc + 160 *  2 + 1);
-                *(BlockDst + 320 *  2 + 1) = Weight2_1(Weight1_2( _4,  _5), Weight1_2( _1,  _2));
-                *(BlockDst + 320 *  2 + 2) = Weight2_1( _5, _2);
+                *(BlockDst + dstwidth *  2 + 1) = Weight2_1(Weight1_2( _4,  _5), Weight1_2( _1,  _2));
+                *(BlockDst + dstwidth *  2 + 2) = Weight2_1( _5, _2);
 
             } else if(BlockY == 71){
                 // -- Row 1 --
@@ -331,16 +331,16 @@ void scale15x_pseudobilinear(uint32_t* dst, uint32_t* src)
 
                 // -- Row 2 --
                 uint16_t  _4 = *(BlockSrc + 160 *  1    );
-                *(BlockDst + 320 *  1    ) = Weight1_2( _1,  _4);
+                *(BlockDst + dstwidth *  1    ) = Weight1_2( _1,  _4);
                 uint16_t  _5 = *(BlockSrc + 160 *  1 + 1);
-                *(BlockDst + 320 *  1 + 1) = Weight1_2(Weight1_2( _1,  _2), Weight1_2( _4,  _5));
+                *(BlockDst + dstwidth *  1 + 1) = Weight1_2(Weight1_2( _1,  _2), Weight1_2( _4,  _5));
                 _1 = *(BlockSrc + 160 *  1 + 2);
-                *(BlockDst + 320 *  1 + 2) = Weight1_2(Weight2_1( _2,  _3), Weight2_1( _5,  _1));
+                *(BlockDst + dstwidth *  1 + 2) = Weight1_2(Weight2_1( _2,  _3), Weight2_1( _5,  _1));
 
                 // -- Row 3 --
-                *(BlockDst + 320 *  2    ) = _4;
-                *(BlockDst + 320 *  2 + 1) = Weight1_2( _4,  _5);
-                *(BlockDst + 320 *  2 + 2) = Weight2_1( _5,  _1);
+                *(BlockDst + dstwidth *  2    ) = _4;
+                *(BlockDst + dstwidth *  2 + 1) = Weight1_2( _4,  _5);
+                *(BlockDst + dstwidth *  2 + 2) = Weight2_1( _5,  _1);
 
             } else {
                 // -- Row 1 --
@@ -353,19 +353,19 @@ void scale15x_pseudobilinear(uint32_t* dst, uint32_t* src)
 
                 // -- Row 2 --
                 uint16_t  _4 = *(BlockSrc + 160 *  1    );
-                *(BlockDst + 320 *  1    ) = Weight1_2( _1,  _4);
+                *(BlockDst + dstwidth *  1    ) = Weight1_2( _1,  _4);
                 uint16_t  _5 = *(BlockSrc + 160 *  1 + 1);
-                *(BlockDst + 320 *  1 + 1) = Weight1_2(Weight1_2( _1,  _2), Weight1_2( _4,  _5));
+                *(BlockDst + dstwidth *  1 + 1) = Weight1_2(Weight1_2( _1,  _2), Weight1_2( _4,  _5));
                 _1 = *(BlockSrc + 160 *  1 + 2);
-                *(BlockDst + 320 *  1 + 2) = Weight1_2(Weight2_1( _2,  _3), Weight2_1( _5,  _1));
+                *(BlockDst + dstwidth *  1 + 2) = Weight1_2(Weight2_1( _2,  _3), Weight2_1( _5,  _1));
 
                 // -- Row 3 --
                 _2 = *(BlockSrc + 160 *  2    );
-                *(BlockDst + 320 *  2    ) = Weight2_1( _4,  _2);
+                *(BlockDst + dstwidth *  2    ) = Weight2_1( _4,  _2);
                 _3 = *(BlockSrc + 160 *  2 + 1);
-                *(BlockDst + 320 *  2 + 1) = Weight2_1(Weight1_2( _4,  _5), Weight1_2( _2,  _3));
+                *(BlockDst + dstwidth *  2 + 1) = Weight2_1(Weight1_2( _4,  _5), Weight1_2( _2,  _3));
                 _4 = *(BlockSrc + 160 *  2 + 2);
-                *(BlockDst + 320 *  2 + 2) = Weight2_1(Weight2_1( _5,  _1), Weight2_1( _3,  _4));
+                *(BlockDst + dstwidth *  2 + 2) = Weight2_1(Weight2_1( _5,  _1), Weight2_1( _3,  _4));
             }
 
             BlockSrc += 2;

@@ -327,6 +327,20 @@ class InputOption : public DescOption {
 public:
 	InputOption()
 	: DescOption("input", 'i', 10)
+#if defined VERSION_FUNKEYS
+	{
+		ids_[0].keydata = SDLK_s;
+		ids_[1].keydata = SDLK_k;
+		ids_[2].keydata = SDLK_a;
+		ids_[3].keydata = SDLK_b;
+		ids_[4].keydata = SDLK_u;
+		ids_[5].keydata = SDLK_d;
+		ids_[6].keydata = SDLK_l;
+		ids_[7].keydata = SDLK_r;
+		ids_[8].keydata = SDLK_x;
+		ids_[9].keydata = SDLK_y;
+	}
+#else
 	{
 		ids_[0].keydata = SDLK_RETURN;
 		ids_[1].keydata = SDLK_ESCAPE;
@@ -339,6 +353,7 @@ public:
 		ids_[8].keydata = SDLK_SPACE;
 		ids_[9].keydata = SDLK_LSHIFT;
 	}
+#endif
 
 	virtual void exec(char const *const *argv, int index);
 
@@ -666,10 +681,10 @@ int GambatteSdl::exec(int const argc, char const *const argv[]) {
 
 	basicdirpath = (homedir + "/.gambatte/filters/");
 	mkdir(basicdirpath.c_str(), 0777);
-
+#ifndef VERSION_FUNKEYS
 	basicdirpath = (homedir + "/.gambatte/borders/");
 	mkdir(basicdirpath.c_str(), 0777);
-
+#endif
 	basicdirpath = (homedir + "/.gambatte/saves/");
 	mkdir(basicdirpath.c_str(), 0777);
 
@@ -823,10 +838,10 @@ int GambatteSdl::exec(int const argc, char const *const argv[]) {
 
 	basicdirpath = (homedir + "/.gambatte/filters/");
 	mkdir(basicdirpath.c_str(), 0777);
-
+#ifndef VERSION_FUNKEYS
 	basicdirpath = (homedir + "/.gambatte/borders/");
 	mkdir(basicdirpath.c_str(), 0777);
-
+#endif
 	basicdirpath = (homedir + "/.gambatte/saves/");
 	mkdir(basicdirpath.c_str(), 0777);
 
@@ -1069,8 +1084,8 @@ bool GambatteSdl::handleEvents(BlitterWrapper &blitter) {
 			case SDL_KEYDOWN:
 				if (e.key.keysym.mod & KMOD_CTRL) {
 					switch (e.key.keysym.sym) {
-					case SDLK_f: blitter.toggleFullScreen(); break;
-					case SDLK_r: gambatte.reset(); break;
+					//case SDLK_f: blitter.toggleFullScreen(); break;
+					//case SDLK_r: gambatte.reset(); break;
 					default: break;
 					}
 				} else {
@@ -1079,6 +1094,7 @@ bool GambatteSdl::handleEvents(BlitterWrapper &blitter) {
 					case SDLK_BACKSPACE: // R trigger
 					case SDLK_HOME: // Power button in Opendingux devices
 					case SDLK_END: // Power/Suspend button in RetroFW devices
+					case SDLK_h: // Power/Menu button in Funkey-S devices
 						if((menuout == -1) && (menuin == -1)){
 							ffwdtoggle = 0;
 							main_menu_with_anim();
@@ -1086,6 +1102,7 @@ bool GambatteSdl::handleEvents(BlitterWrapper &blitter) {
 						}
 						break;
 					case SDLK_TAB: // L/L1 button
+					case SDLK_m: // L/ button in RG-Nano
 						if (ffwhotkey == 2) {
 							if (ffwdtoggle == 0){
 								ffwdtoggle = 1;
@@ -1142,7 +1159,11 @@ static std::size_t const gambatte_max_overproduction = 2064;
 
 static bool isFastForward(Uint8 const *keys) {
 	if (ffwhotkey == 1) {
+#if defined VERSION_FUNKEYS
+		return keys[SDLK_m];
+#else
 		return keys[SDLK_TAB];
+#endif
 	} else if (ffwhotkey == 2) {
 		if (ffwdtoggle == 0){
 			return false;

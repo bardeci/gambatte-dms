@@ -59,7 +59,11 @@ Mix_Chunk *menusound_ok = NULL;
 int showfps = 0, ghosting = 1, biosenabled = 0, colorfilter = 0, gameiscgb = 0, buttonlayout = 0, stereosound = 1, prefercgb = 1, ffwhotkey = 1, stateautoload = 0, stateautosave = 0;
 uint32_t menupalblack = 0x000000, menupaldark = 0x505450, menupallight = 0xA8A8A8, menupalwhite = 0xF8FCF8;
 int filtervalue[12] = {135, 20, 0, 25, 0, 125, 20, 25, 0, 20, 105, 30};
+#ifndef VERSION_FUNKEYS
 std::string selectedscaler= "No Scaling", dmgbordername = "DEFAULT", gbcbordername = "DEFAULT", palname = "DEFAULT", filtername = "NONE", currgamename = "default";
+#else
+std::string selectedscaler= "1.5x Smooth", dmgbordername = "NONE", gbcbordername = "NONE", palname = "DEFAULT", filtername = "NONE", currgamename = "default";
+#endif
 std::string homedir = getenv("HOME");
 std::string ipuscaling = "NONE";
 int numcodes_gg = NUM_GG_CODES, numcodes_gs = NUM_GS_CODES, selectedcode = 0, editmode = 0, blink = 0, footer_alt = 0;
@@ -268,7 +272,7 @@ void openMenuAudio(){
 #elif defined VERSION_BITTBOY || defined VERSION_POCKETGO
 	Mix_OpenAudio(44100, AUDIO_S16SYS, 2, 1024);
 #else
-	Mix_OpenAudio(44100, AUDIO_S16SYS, 2, 1792);
+	Mix_OpenAudio(44100, AUDIO_S16SYS, 2, 1024);
 #endif
 	Mix_AllocateChannels(2);
 }
@@ -351,6 +355,7 @@ void clean_menu_screen(menu_t *menu){
 	 * opendingux pre-release hardware surfaces bug */
 	clear_surface(screen, 0);
 	redraw(menu);
+#ifndef VERSION_FUNKEYS
 	//SDL_Flip(screen);
 	clear_surface(screen, 0);
 	redraw(menu); // redraw function also flips the screen. delete and restore sdl_flip if problematic
@@ -358,6 +363,7 @@ void clean_menu_screen(menu_t *menu){
 	clear_surface(screen, 0);
 	redraw(menu); // this third one is for triple-buffer
 	//SDL_Flip(screen);
+#endif
 }
 
 void clean_menu_screen_cheat(menu_t *menu){
@@ -365,6 +371,7 @@ void clean_menu_screen_cheat(menu_t *menu){
 	 * opendingux pre-release hardware surfaces bug */
 	clear_surface(screen, 0);
 	redraw_cheat(menu);
+#ifndef VERSION_FUNKEYS
 	//SDL_Flip(screen);
 	clear_surface(screen, 0);
 	redraw_cheat(menu); // redraw function also flips the screen. delete and restore sdl_flip if problematic
@@ -372,6 +379,7 @@ void clean_menu_screen_cheat(menu_t *menu){
 	clear_surface(screen, 0);
 	redraw_cheat(menu); // this third one is for triple-buffer
 	//SDL_Flip(screen);
+#endif
 }
 
 void menu_message(menu_t *menu) {
@@ -528,6 +536,7 @@ int menu_main(menu_t *menu) {
 				case SDL_KEYDOWN:
 					switch(event.key.keysym.sym) {
 						case SDLK_UP:
+						case SDLK_u:
 							if(num_selectable > 0){
 								playMenuSound_move();
 							}
@@ -544,6 +553,7 @@ int menu_main(menu_t *menu) {
 							textanim_reset();
 							break;
 						case SDLK_DOWN:
+						case SDLK_d:
 							if(num_selectable > 0){
 								playMenuSound_move();
 							}
@@ -560,6 +570,7 @@ int menu_main(menu_t *menu) {
 							textanim_reset();
 							break;
 						case SDLK_LEFT:
+						case SDLK_l:
 							if (menu->entries[menu->selected_entry]->is_shiftable) {
 								if (menu->entries[menu->selected_entry]->selected_entry > 0) {
 									--menu->entries[menu->selected_entry]->selected_entry;
@@ -588,6 +599,7 @@ int menu_main(menu_t *menu) {
 							}			
 							break;
 						case SDLK_RIGHT:
+						case SDLK_r:
 							if (menu->entries[menu->selected_entry]->is_shiftable) {
 								if (menu->entries[menu->selected_entry]->selected_entry < menu->entries[menu->selected_entry]->n_entries - 1) {
 									++menu->entries[menu->selected_entry]->selected_entry;
@@ -741,6 +753,7 @@ int menu_cheat(menu_t *menu) {
 				case SDL_KEYDOWN:
 					switch(event.key.keysym.sym) {
 						case SDLK_LEFT:
+						case SDLK_l:
 							playMenuSound_move();
 							if (editmode == 0){
 								if (collimit == 10){ // gameshark
@@ -766,6 +779,7 @@ int menu_cheat(menu_t *menu) {
 							dirty = 1;
 							break;
 						case SDLK_RIGHT:
+						case SDLK_r:
 							playMenuSound_move();
 							if (editmode == 0){
 								if (collimit == 10){ // gameshark
@@ -791,6 +805,7 @@ int menu_cheat(menu_t *menu) {
 							dirty = 1;
 							break;
 						case SDLK_UP:
+						case SDLK_u:
 							playMenuSound_move();
 							if (editmode == 0){
 								for (i = 0; i < collimit; i++) { // go up 1 line
@@ -814,6 +829,7 @@ int menu_cheat(menu_t *menu) {
 							dirty = 1;
 							break;
 						case SDLK_DOWN:
+						case SDLK_d:
 							playMenuSound_move();
 							if (editmode == 0){
 								for (i = 0; i < collimit; i++) { // go down 1 line
@@ -854,6 +870,7 @@ int menu_cheat(menu_t *menu) {
 							dirty = 1;
 							break;
 						case SDLK_RETURN: 	// start button - Apply
+						case SDLK_s:
 							if (collimit == 11){ // if gamegenie
 								if (menu->entries[menu->n_entries -1]->callback != NULL) {
 									menu->entries[menu->n_entries -1]->callback(menu);
@@ -1937,7 +1954,9 @@ static void redraw(menu_t *menu) {
 			clear_surface(screen, 0x000000);
 			paint_border(screen);
 		} else { //if border image is disabled
+#ifndef VERSION_FUNKEYS
 			clear_surface(screen, 0x000000);
+#endif
 		}
 		display_menu(menuscreen, menu);
 		blitter_p->scaleMenu();
@@ -1964,7 +1983,9 @@ static void redraw_blank(menu_t *menu) {
 			display_menu(menuscreen, menu);
 			SDL_FillRect(menuscreen, &rect, convert_hexcolor(screen, 0xFFFFFF));
 		} else { //if border image is disabled
+#ifndef VERSION_FUNKEYS
 			clear_surface(screen, 0x000000);
+#endif
 			display_menu(menuscreen, menu);
 			SDL_FillRect(menuscreen, &rect, convert_hexcolor(screen, 0xFFFFFF));
 		}
@@ -1983,7 +2004,9 @@ static void redraw_cheat(menu_t *menu) {
 			clear_surface(screen, 0x000000);
 			paint_border(screen);
 		} else { //if border image is disabled
+#ifndef VERSION_FUNKEYS
 			clear_surface(screen, 0x000000);
+#endif
 		}
 		display_menu_cheat(menuscreen, menu);
 		blitter_p->scaleMenu();

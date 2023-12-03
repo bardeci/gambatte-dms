@@ -204,7 +204,11 @@ void SdlBlitter::setBufferDimensions() {
 		selectedscaler == "FullScreen Fast" ||
 		selectedscaler == "FullScreen Smooth")
 	{
+#ifdef VERSION_FUNKEYS
+		SetVid(240, 240, 16);
+#else
 		SetVid(320, 240, 16);
+#endif
 	}
 	else if (selectedscaler == "1.5x IPU")
 	{
@@ -285,9 +289,15 @@ void SdlBlitter::setScreenRes() {
 		selectedscaler == "FullScreen Fast" ||
 		selectedscaler == "FullScreen Smooth")
 	{
+#ifdef VERSION_FUNKEYS
+		if(screen->w != 240 || screen->h != 240) {
+			SetVid(240, 240, 16);
+		}
+#else
 		if(screen->w != 320 || screen->h != 240) {
 			SetVid(320, 240, 16);
 		}
+#endif
 	}
 	else if (selectedscaler == "1.5x IPU")
 	{
@@ -524,8 +534,13 @@ void SdlBlitter::applyScalerToSurface(SDL_Surface *sourcesurface) {
 	}
 	else if (selectedscaler == "1.5x Smooth")
 	{
+#if defined VERSION_FUNKEYS
+		offset = (2 * (240 - 240) / 2) + ((240 - 216) / 2) * screen->pitch;
+		scale15x_pseudobilinear((uint32_t*)((uint8_t *)screen->pixels + offset), (uint32_t*)sourcesurface->pixels, 240);
+#else
 		offset = (2 * (320 - 240) / 2) + ((240 - 216) / 2) * screen->pitch;
-		scale15x_pseudobilinear((uint32_t*)((uint8_t *)screen->pixels + offset), (uint32_t*)sourcesurface->pixels);
+		scale15x_pseudobilinear((uint32_t*)((uint8_t *)screen->pixels + offset), (uint32_t*)sourcesurface->pixels, 320);
+#endif
 	}
 	else if (selectedscaler == "Aspect 1.66x Fast")
 	{
