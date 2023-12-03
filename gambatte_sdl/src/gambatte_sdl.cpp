@@ -1094,7 +1094,7 @@ bool GambatteSdl::handleEvents(BlitterWrapper &blitter) {
 					case SDLK_BACKSPACE: // R trigger
 					case SDLK_HOME: // Power button in Opendingux devices
 					case SDLK_END: // Power/Suspend button in RetroFW devices
-					case SDLK_n: // R trigger in Funkey-S devices
+					case SDLK_q: // Power button in Funkey-S devices
 						if((menuout == -1) && (menuin == -1)){
 							ffwdtoggle = 0;
 							main_menu_with_anim();
