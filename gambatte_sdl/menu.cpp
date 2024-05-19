@@ -103,13 +103,11 @@ void show_fps(SDL_Surface *surface, int fps) {
 }
 
 std::string numtohextext(int num){
-    std::locale loc;
     char buffer[4];
     std::string result;
-    sprintf(buffer, "%x", num);
+    snprintf(buffer, 4, "%X", num);
 
-    result = std::string(buffer);
-    result = std::toupper(buffer[0],loc);
+    result = buffer;
 
     return result;
 }
